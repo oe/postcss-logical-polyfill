@@ -25,7 +25,7 @@ describe('postcss-logical-scope', () => {
         }
       `
     },
-    
+
     {
       name: 'Direction-specific selectors: :dir(rtl)',
       input: `
@@ -47,7 +47,7 @@ describe('postcss-logical-scope', () => {
         }
       `
     },
-    
+
     {
       name: 'Direction-specific selectors: [dir="rtl"]',
       input: `
@@ -69,7 +69,7 @@ describe('postcss-logical-scope', () => {
         }
       `
     },
-    
+
     {
       name: 'Direction-specific selectors: :dir(ltr)',
       input: `
@@ -91,7 +91,7 @@ describe('postcss-logical-scope', () => {
         }
       `
     },
-    
+
     {
       name: 'Complex rules and properties',
       input: `
@@ -123,6 +123,8 @@ describe('postcss-logical-scope', () => {
         [dir="rtl"] .container {
           margin-right: 2rem;
           margin-left: 1rem;
+          padding-right: 1rem;
+          padding-left: 2rem;
           border-right: 1px solid;
           border-left: 1px solid;
         }
@@ -135,7 +137,7 @@ describe('postcss-logical-scope', () => {
         }
       `
     },
-    
+
     {
       name: 'Custom direction selectors',
       input: `
@@ -161,7 +163,7 @@ describe('postcss-logical-scope', () => {
         rtl: { selector: '.rtl' }
       }
     },
-    
+
     {
       name: 'Multiple nested selectors',
       input: `
@@ -225,7 +227,7 @@ describe('postcss-logical-scope', () => {
         }
       `
     },
-    
+
     {
       name: 'Logical block properties',
       input: `
@@ -250,7 +252,7 @@ describe('postcss-logical-scope', () => {
         }
       `
     },
-    
+
     {
       name: 'No direction selector for rules without logical properties',
       input: `

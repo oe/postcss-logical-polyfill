@@ -41,11 +41,8 @@ export async function runTestCase(testCase: TestCase) {
   const normalizedActual = normalizeCSS(result.css);
   const normalizedExpected = normalizeCSS(testCase.expected);
   
-  // Compare the normalized CSS strings
-  expect(
-    normalizedActual,
-    `Expected CSS to match the normalized expected output`
-  ).toEqual(normalizedExpected);
+  // Simple string comparison
+  expect(normalizedActual).toBe(normalizedExpected);
   
   return result;
 }
