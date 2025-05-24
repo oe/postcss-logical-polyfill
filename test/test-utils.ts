@@ -6,11 +6,7 @@ import logicalScope from '../src/index';
 interface TestCase {
   name: string;
   input: string;
-  expected: string | {
-    contains?: string[];
-    notContains?: string[];
-    matches?: Array<{ pattern: RegExp; message?: string }>;
-  };
+  expected: string;
   options?: any;
 }
 
@@ -41,35 +37,15 @@ export async function runTestCase(testCase: TestCase) {
     console.log(`[${testCase.name}] CSS Output:`, result.css);
   }
   
-  // If expected is a string, do a normalized comparison
-  if (typeof testCase.expected === 'string') {
-    const normalizedOutput = normalizeCSS(result.css);
-    const normalizedExpected = normalizeCSS(testCase.expected);
-    
-    expect(normalizedOutput).toBe(normalizedExpected);
-    return result;
-  }
+  // Normalize both the actual and expected CSS for comparison
+  const normalizedActual = normalizeCSS(result.css);
+  const normalizedExpected = normalizeCSS(testCase.expected);
   
-  // Check for strings that should be included
-  if (testCase.expected.contains) {
-    testCase.expected.contains.forEach(str => {
-      expect(result.css).toContain(str);
-    });
-  }
-  
-  // Check for strings that should not be included
-  if (testCase.expected.notContains) {
-    testCase.expected.notContains.forEach(str => {
-      expect(result.css).not.toContain(str);
-    });
-  }
-  
-  // Check for regex patterns that should match
-  if (testCase.expected.matches) {
-    testCase.expected.matches.forEach(({ pattern, message }) => {
-      expect(result.css).toMatch(pattern);
-    });
-  }
+  // Compare the normalized CSS strings
+  expect(
+    normalizedActual,
+    `Expected CSS to match the normalized expected output`
+  ).toEqual(normalizedExpected);
   
   return result;
 }
