@@ -1,0 +1,22 @@
+/* Example of using postcss-logical-scope with LESS */
+.component {
+  /* Logical properties that will be transformed */
+  margin-inline: 1rem;
+  padding-inline-start: 1rem;
+  border-inline-end: 1px solid #ccc;
+
+  /* Direction-specific ruleset */
+  &:dir(rtl) {
+    text-align: right;
+  }
+
+  /* Nested elements with logical properties */
+  .inner {
+    margin-inline-start: 2rem;
+  }
+}
+
+/* Testing with direction attribute selector */
+[dir="rtl"] .rtl-component {
+  border-inline-start: 2px solid blue;
+}

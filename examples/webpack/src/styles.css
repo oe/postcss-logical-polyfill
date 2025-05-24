@@ -1,0 +1,50 @@
+/* Example of using postcss-logical-scope with webpack */
+html {
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 2rem;
+}
+
+.container {
+  max-width: 800px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+.component {
+  /* Logical properties that will be transformed */
+  margin-block: 1rem;
+  padding-inline: 1.5rem;
+  border-inline-start: 3px solid #007bff;
+  
+  /* RTL-specific styling */
+  &:dir(rtl) {
+    text-align: right;
+    background-color: #f8f9fa;
+  }
+}
+
+.card {
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding-block: 1rem;
+  padding-inline: 1.5rem;
+  
+  &-header {
+    border-block-end: 1px solid #eee;
+    margin-block-end: 1rem;
+  }
+  
+  &-footer {
+    margin-block-start: 1rem;
+    border-block-start: 1px solid #eee;
+  }
+}
+
+/* Testing with direction attribute selector */
+[dir="rtl"] .rtl-component {
+  border-inline-end: 3px solid #28a745;
+}

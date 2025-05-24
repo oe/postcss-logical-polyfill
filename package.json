@@ -1,0 +1,71 @@
+{
+  "name": "postcss-logical-scope",
+  "version": "0.1.0",
+  "description": "A PostCSS plugin that extends postcss-logical with direction-aware selectors for RTL support",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "lint": "tsc --noEmit",
+    "preexamples": "pnpm run build",
+    "examples": "tsx scripts/run-examples.ts",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "postcss",
+    "postcss-plugin",
+    "css",
+    "rtl",
+    "logical-properties",
+    "dir",
+    "direction",
+    "typescript"
+  ],
+  "author": "Saiya",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oe/postcss-logical-scope.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oe/postcss-logical-scope/issues"
+  },
+  "homepage": "https://github.com/oe/postcss-logical-scope#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "peerDependencies": {
+    "postcss": "^8.0.0"
+  },
+  "dependencies": {
+    "postcss-logical": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "chalk": "^5.4.1",
+    "css-loader": "^6.8.1",
+    "html-webpack-plugin": "^5.5.3",
+    "less": "^4.2.0",
+    "mini-css-extract-plugin": "^2.7.6",
+    "postcss": "^8.4.0",
+    "postcss-less": "^6.0.0",
+    "postcss-loader": "^7.3.3",
+    "postcss-scss": "^4.0.9",
+    "sass": "^1.69.5",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vite": "^4.0.0",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^0.34.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  }
+}
