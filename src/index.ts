@@ -14,32 +14,27 @@ interface LogicalScopeOptions {
  * Check if a rule has logical properties
  */
 function hasLogicalProperties(rule: Rule): boolean {
-  let found = false;
-  rule.walkDecls(decl => {
-    if (
+  return rule.some(decl => 
+    decl.type === 'decl' && (
       decl.prop.includes('inline') || 
       decl.prop.includes('block') ||
       decl.prop.includes('inset')
-    ) {
-      found = true;
-      return false;
-    }
-  });
-  return found;
+    )
+  );
 }
 
 /**
  * Check if selector is RTL specific
  */
 function isRtlSelector(selector: string): boolean {
-  return selector.includes(':dir(rtl)') || /\[dir=["']?rtl["']?\]/.test(selector);
+  return selector.includes(':dir(rtl)') || selector.includes('[dir="rtl"]') || selector.includes("[dir='rtl']");
 }
 
 /**
  * Check if selector is LTR specific
  */
 function isLtrSelector(selector: string): boolean {
-  return selector.includes(':dir(ltr)') || /\[dir=["']?ltr["']?\]/.test(selector);
+  return selector.includes(':dir(ltr)') || selector.includes('[dir="ltr"]') || selector.includes("[dir='ltr']");
 }
 
 /**
@@ -70,16 +65,14 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
       for (const node of root.nodes || []) {
         if (node.type === 'rule') {
           const rule = node as Rule;
-          const hasLtr = rule.selectors.some(sel => isLtrSelector(sel));
-          const hasRtl = rule.selectors.some(sel => isRtlSelector(sel));
+          const hasLtr = rule.selectors.some(isLtrSelector);
+          const hasRtl = rule.selectors.some(isRtlSelector);
           const hasLogical = hasLogicalProperties(rule);
 
           if (hasLogical || hasLtr || hasRtl) {
             // Process rule for both directions
             const processedRules = await processRuleWithDirections(rule, hasLtr, hasRtl, hasLogical, ltrSelector, rtlSelector);
-            processedRules.forEach(processedRule => {
-              processedNodes.push(processedRule);
-            });
+            processedNodes.push(...processedRules);
           } else {
             // Keep rule as-is
             processedNodes.push(node.clone());
@@ -90,10 +83,9 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
           // Check if any rule inside needs processing
           let needsProcessing = false;
           atRule.walkRules(rule => {
-            const hasLtr = rule.selectors.some(sel => isLtrSelector(sel));
-            const hasRtl = rule.selectors.some(sel => isRtlSelector(sel));
-            const hasLogical = hasLogicalProperties(rule);
-            if (hasLogical || hasLtr || hasRtl) {
+            if (rule.selectors.some(isLtrSelector) || 
+                rule.selectors.some(isRtlSelector) || 
+                hasLogicalProperties(rule)) {
               needsProcessing = true;
               return false; // Stop walking
             }
@@ -205,8 +197,8 @@ async function processAtRuleWithDirections(
   for (const childNode of atRule.nodes || []) {
     if (childNode.type === 'rule') {
       const rule = childNode as Rule;
-      const hasLtr = rule.selectors.some(sel => isLtrSelector(sel));
-      const hasRtl = rule.selectors.some(sel => isRtlSelector(sel));
+      const hasLtr = rule.selectors.some(isLtrSelector);
+      const hasRtl = rule.selectors.some(isRtlSelector);
       const hasLogical = hasLogicalProperties(rule);
 
       if (!hasLogical && !hasLtr && !hasRtl) {
