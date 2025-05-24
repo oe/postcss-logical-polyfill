@@ -6,13 +6,20 @@
 [![Package Size][size-img]][size-url]
 [![License][license-img]][license-url]
 
-A PostCSS plugin that enables scoped directional logical CSS properties by enhancing `postcss-logical` with direction-specific selectors.
+A PostCSS plugin that transforms CSS logical properties to physical properties for both LTR and RTL contexts.
 
 ## Why?
 
-The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Logical_Properties) provides direction-independent layout controls. However, the `postcss-logical` plugin currently doesn't properly handle direction-specific selectors like `:dir(rtl)` or `[dir="rtl"]`.
+The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Logical_Properties) provides direction-independent layout controls. While these properties are increasingly supported in modern browsers, you might need to provide fallbacks for older browsers or generate separate stylesheets for different reading directions.
 
-This plugin wraps `postcss-logical` to add support for direction scoping, making it work properly in both LTR and RTL contexts.
+This plugin helps by transforming logical properties to their physical counterparts with appropriate direction selectors, making it easier to support both LTR and RTL layouts.
+
+## Features
+
+- Transforms logical properties to physical properties for both LTR and RTL contexts
+- Automatically adds `[dir="ltr"]` and `[dir="rtl"]` selectors to styles containing logical properties
+- Respects existing direction-specific selectors (`:dir(rtl)`, `[dir="rtl"]`, etc.)
+- Customizable selectors for RTL and LTR transformations
 
 ## Installation
 
@@ -48,7 +55,7 @@ postcss([
       selector: '[dir="rtl"]'  // Default
     },
     ltr: {
-      selector: '[dir="ltr"]'  // Optional, default is none
+      selector: '[dir="ltr"]'  // Default
     }
   })
 ])
@@ -57,26 +64,59 @@ postcss([
 ### Input
 
 ```css
-.button {
+/* Regular styles with logical properties */
+.container {
+  margin-inline: 1rem;
   padding-inline-start: 1rem;
 }
 
-:dir(rtl) .button {
+/* Direction-specific styles */
+:dir(rtl) .header {
   margin-inline-end: 2rem;
+}
+
+[dir="ltr"] .sidebar {
+  padding-inline: 1.5rem 1rem;
 }
 ```
 
 ### Output
 
 ```css
-.button {
+/* LTR physical properties */
+[dir="ltr"] .container {
+  margin-left: 1rem;
+  margin-right: 1rem;
   padding-left: 1rem;
 }
 
-[dir="rtl"] .button {
+/* RTL physical properties */
+[dir="rtl"] .container {
+  margin-right: 1rem;
+  margin-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Direction-specific styles converted */
+[dir="rtl"] .header {
   margin-left: 2rem;
 }
+
+[dir="ltr"] .sidebar {
+  padding-left: 1.5rem;
+  padding-right: 1rem;
+}
 ```
+
+## How It Works
+
+This plugin:
+
+1. Finds logical properties in your CSS
+2. Creates two versions of each rule - one for LTR and one for RTL
+3. Converts logical properties to their physical equivalents based on direction
+4. Adds the appropriate direction selectors (`[dir="ltr"]` or `[dir="rtl"]`)
+5. Preserves existing direction-specific rules and converts them correctly
 
 ## More Examples
 
@@ -101,16 +141,16 @@ The selector to add for RTL rules.
 ### `ltr`
 
 Type: `Object`
-Default: `{}`
+Default: `{ selector: '[dir="ltr"]' }`
 
 Configuration for LTR processing.
 
 #### `ltr.selector`
 
 Type: `String`
-Default: `undefined`
+Default: `[dir="ltr"]`
 
-The selector to add for LTR rules. By default, no additional selector is added.
+The selector to add for LTR rules.
 
 ## Examples
 

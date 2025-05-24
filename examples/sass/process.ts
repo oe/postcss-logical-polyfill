@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import sass from 'sass';
+import * as sassLib from 'sass';
 import postcss from 'postcss';
 import postcssLogicalScope from '../../dist';
 
@@ -11,7 +11,7 @@ const outputFile = path.join(__dirname, 'output.css');
 async function processSass() {
   try {
     // Compile Sass to CSS
-    const sassResult = sass.compile(inputFile);
+    const sassResult = sassLib.compile(inputFile);
     
     // Process with PostCSS and our plugin
     const postcssResult = await postcss([
@@ -34,6 +34,11 @@ async function processSass() {
     console.log('✅ Successfully processed Sass example');
   } catch (error) {
     console.error('❌ Error processing Sass:', error);
+    // Print more detailed error info
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Stack trace:', error.stack);
+    }
   }
 }
 

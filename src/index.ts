@@ -1,5 +1,5 @@
-import postcss, { PluginCreator, Root } from 'postcss';
-import logical, { DirectionFlow } from 'postcss-logical';
+import postcss, { PluginCreator, Root, Rule, AtRule } from 'postcss';
+import logical from 'postcss-logical';
 
 interface LogicalScopeOptions {
   /**
@@ -16,98 +16,196 @@ interface LogicalScopeOptions {
    */
   ltr?: {
     /**
-     * Selector to add for LTR rules, defaults to none
+     * Selector to add for LTR rules, defaults to '[dir="ltr"]'
      */
     selector?: string;
   };
 }
 
 /**
- * PostCSS plugin that extends postcss-logical to support directional contexts
+ * Check if a rule has logical properties that need to be transformed
+ */
+function hasLogicalProperties(rule: Rule): boolean {
+  let found = false;
+  rule.walkDecls(decl => {
+    if (
+      decl.prop.includes('inline') || 
+      decl.prop.includes('block') ||
+      decl.prop.includes('inset')
+    ) {
+      found = true;
+      return false; // stop walking
+    }
+  });
+  return found;
+}
+
+/**
+ * Check if a selector already has a direction indicator
+ */
+function hasDirectionSelector(selector: string, dirSelector: string): boolean {
+  return selector.includes(dirSelector) || 
+         selector.includes(':dir(') || 
+         selector.includes('[dir=');
+}
+
+/**
+ * Determines if a selector is RTL specific
+ */
+function isRtlSelector(selector: string): boolean {
+  return selector.includes(':dir(rtl)') || 
+         /\[dir=["']rtl["']\]/.test(selector) ||
+         /\[dir=rtl\]/.test(selector);
+}
+
+/**
+ * Determines if a selector is LTR specific
+ */
+function isLtrSelector(selector: string): boolean {
+  return selector.includes(':dir(ltr)') || 
+         /\[dir=["']ltr["']\]/.test(selector) ||
+         /\[dir=ltr\]/.test(selector);
+}
+
+/**
+ * Processes a given CSS root to transform logical properties to physical properties with direction support
+ */
+const processRoot = (root: Root, direction: 'ltr' | 'rtl', dirSelector: string) => {
+  // Create a clone to avoid modifying the input
+  const processedRoot = root.clone();
+  
+  // Process rules to replace :dir() and [dir] selectors
+  processedRoot.walkRules(rule => {
+    const newSelectors: string[] = [];
+    
+    rule.selectors.forEach(selector => {
+      // Determine if this selector is direction-specific
+      const isSpecificToRtl = isRtlSelector(selector);
+      const isSpecificToLtr = isLtrSelector(selector);
+      
+      // Skip selectors for the wrong direction
+      if ((direction === 'ltr' && isSpecificToRtl) || 
+          (direction === 'rtl' && isSpecificToLtr)) {
+        return;
+      }
+      
+      // Remove direction pseudo-classes and attributes
+      let newSelector = selector
+        .replace(/:dir\(rtl\)/g, '')
+        .replace(/:dir\(ltr\)/g, '')
+        .replace(/\[dir=["']rtl["']\]/g, '')
+        .replace(/\[dir=["']ltr["']\]/g, '')
+        .replace(/\[dir=rtl\]/g, '')
+        .replace(/\[dir=ltr\]/g, '');
+      
+      // Clean up the selector
+      newSelector = newSelector.trim();
+      if (!newSelector) {
+        newSelector = '*';
+      }
+      
+      // Add direction selector if needed
+      const hasLogical = hasLogicalProperties(rule);
+      if (hasLogical) {
+        const isDirectionSpecific = isSpecificToRtl || isSpecificToLtr;
+        const needsDirectionSelector = !hasDirectionSelector(newSelector, dirSelector);
+        
+        if (isDirectionSpecific || needsDirectionSelector) {
+          newSelector = `${dirSelector} ${newSelector}`;
+        }
+      }
+      
+      // Clean up any potential double spaces
+      newSelector = newSelector.replace(/\s+/g, ' ').trim();
+      
+      // Add to new selectors
+      if (newSelector && newSelector !== '') {
+        newSelectors.push(newSelector);
+      }
+    });
+    
+    // Update selectors or remove rule if no selectors remain
+    if (newSelectors.length > 0) {
+      rule.selectors = newSelectors;
+    } else {
+      rule.remove();
+    }
+  });
+  
+  return processedRoot;
+};
+
+/**
+ * PostCSS plugin that transforms logical properties to physical properties
+ * for both LTR and RTL contexts.
  */
 const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
+  // Get custom selectors or use defaults
   const rtlSelector = opts.rtl?.selector || '[dir="rtl"]';
-  const ltrSelector = opts.ltr?.selector;
-
-  const ltrPlugin = logical({
-    inlineDirection: 'left-to-right' as DirectionFlow,
-  });
-  const rtlPlugin = logical({
-    inlineDirection: 'right-to-left' as DirectionFlow
-  });
+  const ltrSelector = opts.ltr?.selector || '[dir="ltr"]';
 
   return {
     postcssPlugin: 'postcss-logical-scope',
-    async Once(root, result) {
-      // Create separate roots for LTR and RTL processing
-      const ltrRoot = root.clone();
-      const rtlRoot = root.clone();
+    
+    async Once(root) {
+      // Create a copy for rules without logical properties
+      const nonLogicalRoot = postcss.root();
       
-      // Process RTL-specific rules
-      rtlRoot.walkRules(rule => {
-        // Keep only RTL-specific rules and remove the directional selectors
-        if (!rule.selector.includes(':dir(rtl)') && !rule.selector.includes('[dir="rtl"]')) {
-          rule.remove();
-        } else {
-          // Clean up the selector by removing the directional part
-          rule.selector = rule.selector
-            .replace(/:dir\(rtl\)/g, '')
-            .replace(/\[dir=["']rtl["']\]/g, '')
-            .trim();
+      // First, separate rules with and without logical properties
+      root.each(node => {
+        if (node.type === 'rule') {
+          if (!hasLogicalProperties(node)) {
+            nonLogicalRoot.append(node.clone());
+          }
+        } else if (node.type === 'atrule') {
+          let hasLogical = false;
+          
+          node.walkRules(rule => {
+            if (hasLogicalProperties(rule)) {
+              hasLogical = true;
+              return false; // stop walking
+            }
+          });
+          
+          if (!hasLogical) {
+            nonLogicalRoot.append(node.clone());
+          }
         }
       });
-
-      // Process LTR rules (default)
-      ltrRoot.walkRules(rule => {
-        // Remove RTL-specific rules from LTR processing
-        if (rule.selector.includes(':dir(rtl)') || rule.selector.includes('[dir="rtl"]')) {
-          rule.remove();
-        }
-      });
-
-      // Skip processing if there are no rules left
-      if (rtlRoot.nodes?.length === 0 && ltrRoot.nodes?.length === 0) {
-        return;
-      }
-
-      // Apply the logical property transformations with separate processors
-      const rtlProcessor = postcss([rtlPlugin]);
-      const ltrProcessor = postcss([ltrPlugin]);
       
-      // Process both directions in parallel
-      const [rtlResult, ltrResult] = await Promise.all([
-        rtlRoot.nodes?.length > 0 ? rtlProcessor.process(rtlRoot, { from: undefined }) : { root: new Root() },
-        ltrRoot.nodes?.length > 0 ? ltrProcessor.process(ltrRoot, { from: undefined }) : { root: new Root() }
-      ]);
+      // Process for LTR
+      const ltrRoot = processRoot(root, 'ltr', ltrSelector);
+      const ltrResult = await postcss([
+        logical({ inlineDirection: 'left-to-right' as any })
+      ]).process(ltrRoot, { from: undefined });
       
-      // Clear the original root and populate with processed CSS
+      // Process for RTL
+      const rtlRoot = processRoot(root, 'rtl', rtlSelector);
+      const rtlResult = await postcss([
+        logical({ inlineDirection: 'right-to-left' as any })
+      ]).process(rtlRoot, { from: undefined });
+      
+      // Combine results
       root.removeAll();
       
-      // Add LTR rules first
-      if (ltrResult.root?.nodes?.length > 0) {
-        if (ltrSelector) {
-          // If LTR selector is provided, wrap all LTR rules
-          ltrResult.root.walkRules(rule => {
-            rule.selectors = rule.selectors.map(sel => `${ltrSelector} ${sel}`);
-          });
-        }
-        ltrResult.root.each(node => {
-          root.append(node.clone());
-        });
-      }
+      // Add non-logical rules first
+      nonLogicalRoot.nodes.forEach(node => {
+        root.append(node.clone());
+      });
       
-      // Then add RTL rules with dir="rtl" selector
-      if (rtlResult.root?.nodes?.length > 0) {
-        rtlResult.root.walkRules(rule => {
-          rule.selectors = rule.selectors.map(sel => `${rtlSelector} ${sel}`);
-        });
-        rtlResult.root.each(node => {
-          root.append(node.clone());
-        });
-      }
+      // Add LTR rules
+      ltrResult.root.nodes.forEach(node => {
+        root.append(node.clone());
+      });
+      
+      // Add RTL rules
+      rtlResult.root.nodes.forEach(node => {
+        root.append(node.clone());
+      });
     }
   };
 };
 
 logicalScope.postcss = true;
+
 export default logicalScope;

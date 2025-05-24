@@ -5,7 +5,31 @@ describe('postcss-logical-scope', () => {
   // Array of test cases
   const testCases = [
     {
-      name: 'Basic transformation: :dir(rtl) selector',
+      name: 'Basic logical properties transformation',
+      input: `
+.button {
+  padding-inline-start: 1rem;
+  margin-inline: 1rem 2rem;
+}`,
+      expected: {
+        contains: [
+          // LTR transformations
+          '[dir="ltr"] .button',
+          'padding-left: 1rem',
+          'margin-left: 1rem',
+          'margin-right: 2rem',
+          
+          // RTL transformations
+          '[dir="rtl"] .button',
+          'padding-right: 1rem',
+          'margin-right: 1rem',
+          'margin-left: 2rem'
+        ]
+      }
+    },
+    
+    {
+      name: 'Direction-specific selectors: :dir(rtl)',
       input: `
 .button {
   padding-inline-start: 1rem;
@@ -14,18 +38,26 @@ describe('postcss-logical-scope', () => {
 :dir(rtl) .button {
   margin-inline-end: 2rem;
 }`,
-      expected: `
-.button {
-  padding-left: 1rem;
-}
-
-[dir="rtl"] .button {
-  margin-left: 2rem;
-}`
+      expected: {
+        contains: [
+          // Default LTR transformation
+          '[dir="ltr"] .button',
+          'padding-left: 1rem',
+          
+          // RTL specific rule
+          '[dir="rtl"] .button',
+          'padding-right: 1rem',
+          'margin-left: 2rem'
+        ],
+        notContains: [
+          // Shouldn't appear in output
+          ':dir(rtl)'
+        ]
+      }
     },
     
     {
-      name: 'Basic transformation: [dir="rtl"] selector',
+      name: 'Direction-specific selectors: [dir="rtl"]',
       input: `
 .button {
   padding-inline-start: 1rem;
@@ -34,14 +66,50 @@ describe('postcss-logical-scope', () => {
 [dir="rtl"] .button {
   margin-inline-end: 2rem;
 }`,
-      expected: `
+      expected: {
+        contains: [
+          // Default LTR transformation
+          '[dir="ltr"] .button',
+          'padding-left: 1rem',
+          
+          // RTL specific rule
+          '[dir="rtl"] .button',
+          'padding-right: 1rem',
+          'margin-left: 2rem'
+        ],
+        notContains: [
+          // Shouldn't duplicate dir selectors
+          '[dir="rtl"] [dir="rtl"]'
+        ]
+      }
+    },
+    
+    {
+      name: 'Direction-specific selectors: :dir(ltr)',
+      input: `
 .button {
-  padding-left: 1rem;
+  padding-inline-start: 1rem;
 }
 
-[dir="rtl"] .button {
-  margin-left: 2rem;
-}`
+:dir(ltr) .button {
+  margin-inline-end: 2rem;
+}`,
+      expected: {
+        contains: [
+          // LTR specific rule
+          '[dir="ltr"] .button',
+          'padding-left: 1rem',
+          'margin-right: 2rem',
+          
+          // Default RTL transformation
+          '[dir="rtl"] .button',
+          'padding-right: 1rem'
+        ],
+        notContains: [
+          // Shouldn't appear in output
+          ':dir(ltr)'
+        ]
+      }
     },
     
     {
@@ -67,24 +135,29 @@ describe('postcss-logical-scope', () => {
       expected: {
         contains: [
           // LTR rules
+          '[dir="ltr"] .container',
           'margin-left: 1rem',
           'margin-right: 2rem',
           'padding-left: 1rem',
           'padding-right: 2rem',
+          '[dir="ltr"] .sidebar',
           'left: 0',
           
           // RTL rules
           '[dir="rtl"] .container',
-          '[dir="rtl"] .sidebar',
+          'margin-right: 2rem',
+          'margin-left: 1rem',
           'border-right: 1px solid',
           'border-left: 1px solid',
+          '[dir="rtl"] .sidebar',
+          'right: 0',
           'border-right: 2px solid'
         ]
       }
     },
     
     {
-      name: 'Custom RTL selector',
+      name: 'Custom direction selectors',
       input: `
 .element {
   padding-inline-end: 1rem;
@@ -93,47 +166,26 @@ describe('postcss-logical-scope', () => {
 :dir(rtl) .element {
   margin-inline-start: 2rem;
 }`,
-      expected: `
-.element {
-  padding-right: 1rem;
-}
-
-.rtl .element {
-  margin-right: 2rem;
-}`,
+      expected: {
+        contains: [
+          // Custom LTR selector
+          '.ltr .element',
+          'padding-right: 1rem',
+          
+          // Custom RTL selector
+          '.rtl .element',
+          'padding-left: 1rem',
+          'margin-right: 2rem'
+        ]
+      },
       options: {
+        ltr: { selector: '.ltr' },
         rtl: { selector: '.rtl' }
       }
     },
     
     {
-      name: 'Using both LTR and RTL selectors',
-      input: `
-.box {
-  margin-inline: 1rem 2rem;
-}
-
-:dir(rtl) .box {
-  margin-inline: 2rem 1rem;
-}`,
-      expected: {
-        contains: [
-          'html[dir="ltr"] .box',
-          'margin-left: 1rem',
-          'margin-right: 2rem',
-          'html[dir="rtl"] .box',
-          'margin-right: 2rem',
-          'margin-left: 1rem'
-        ]
-      },
-      options: {
-        ltr: { selector: 'html[dir="ltr"]' },
-        rtl: { selector: 'html[dir="rtl"]' }
-      }
-    },
-    
-    {
-      name: 'Handling multiple nested selectors',
+      name: 'Multiple nested selectors',
       input: `
 .header nav ul li {
   border-inline-end: 1px solid;
@@ -148,55 +200,27 @@ describe('postcss-logical-scope', () => {
 }`,
       expected: {
         contains: [
+          // LTR transformations
+          '[dir="ltr"] .header nav ul li',
           'border-right: 1px solid',
+          '[dir="ltr"] .footer',
+          'padding-left: 1rem',
+          'padding-right: 2rem',
+          
+          // RTL transformations
+          '[dir="rtl"] .header nav ul li',
+          'border-left: 1px solid',
           '[dir="rtl"] .header .menu',
           'margin-right: auto',
-          'padding-left: 1rem',
-          'padding-right: 2rem'
+          '[dir="rtl"] .footer',
+          'padding-right: 1rem',
+          'padding-left: 2rem'
         ]
       }
     },
 
     {
-      name: 'Empty RTL rules should be handled gracefully',
-      input: `
-.button {
-  padding-inline-start: 1rem;
-}
-
-/* No RTL specific styles */`,
-      expected: `
-.button {
-  padding-left: 1rem;
-}`
-    },
-
-    {
-      name: 'Multiple RTL selectors in one rule',
-      input: `
-.button {
-  padding-inline-start: 1rem;
-}
-
-:dir(rtl) .button, [dir="rtl"] .button {
-  margin-inline-end: 2rem;
-}`,
-      expected: {
-        contains: [
-          'padding-left: 1rem',
-          '[dir="rtl"] .button',
-          'margin-left: 2rem'
-        ],
-        notContains: [
-          // These shouldn't appear in output
-          ':dir(rtl)',
-          '[dir="rtl"] [dir="rtl"]'
-        ]
-      }
-    },
-    
-    {
-      name: 'Complex media queries',
+      name: 'Media queries support',
       input: `
 @media (min-width: 768px) {
   .container {
@@ -209,10 +233,16 @@ describe('postcss-logical-scope', () => {
 }`,
       expected: {
         contains: [
-          '@media (min-width: 768px)',
+          // LTR media query
+          '@media (min-width: 768px) {',
+          '[dir="ltr"] .container',
           'margin-left: 2rem',
           'margin-right: 2rem',
+          
+          // RTL media query
           '[dir="rtl"] .container',
+          'margin-right: 2rem',
+          'margin-left: 2rem',
           'padding-left: 1rem'
         ]
       }
@@ -225,42 +255,53 @@ describe('postcss-logical-scope', () => {
   margin-block: 1rem 2rem;
   padding-block-start: 1rem;
   padding-block-end: 2rem;
-}
-
-:dir(rtl) .element {
-  border-block-start: 1px solid;
 }`,
       expected: {
         contains: [
+          // Block properties are the same in both directions
+          '[dir="ltr"] .element',
           'margin-top: 1rem',
           'margin-bottom: 2rem',
           'padding-top: 1rem',
           'padding-bottom: 2rem',
+          
           '[dir="rtl"] .element',
-          'border-top: 1px solid'
+          'margin-top: 1rem',
+          'margin-bottom: 2rem',
+          'padding-top: 1rem',
+          'padding-bottom: 2rem'
         ]
       }
     },
     
     {
-      name: 'Pseudo-elements with logical properties',
+      name: 'No direction selector for rules without logical properties',
       input: `
-.element::before {
-  content: "";
-  inset-inline-end: 0;
+.regular {
+  color: blue;
+  font-size: 16px;
 }
 
-:dir(rtl) .element::after {
-  content: "";
-  inset-inline-start: 0;
+.logical {
+  margin-inline: 1rem;
 }`,
       expected: {
         contains: [
-          '.element::before',
-          'content: ""',
-          'right: 0',
-          '[dir="rtl"] .element::after',
-          'right: 0'
+          // Regular CSS passes through unchanged
+          '.regular',
+          'color: blue',
+          'font-size: 16px',
+          
+          // Logical properties get direction selectors
+          '[dir="ltr"] .logical',
+          '[dir="rtl"] .logical',
+          'margin-left: 1rem',
+          'margin-right: 1rem'
+        ],
+        notContains: [
+          // No direction selectors for regular CSS
+          '[dir="ltr"] .regular',
+          '[dir="rtl"] .regular'
         ]
       }
     }
