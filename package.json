@@ -53,7 +53,7 @@
     "postcss": "^8.0.0"
   },
   "dependencies": {
-    "postcss-logical": "^8.0.0"
+    "postcss-logical": "^8.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
