@@ -274,8 +274,6 @@ async function processRule(
   rtlSelector: string,
   outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'
 ): Promise<Rule[]> {
-  const hasLogical = hasLogicalProperties(rule);
-  if (!hasLogical) return [rule];
 
   const hasLtr = rule.selectors.some(isLtrSelector);
   const hasRtl = rule.selectors.some(isRtlSelector);
@@ -333,17 +331,10 @@ async function processAllRules(container: Root | AtRule, ltrSelector: string, rt
   container.each(node => {
     if (node.type === 'rule') {
       const hasLogical = hasLogicalProperties(node);
-      const hasLtr = node.selectors.some(isLtrSelector);
-      const hasRtl = node.selectors.some(isRtlSelector);
-      
-      if (hasLogical || hasLtr || hasRtl) {
-        rulesToProcess.push(node);
-      }
+      if (hasLogical) rulesToProcess.push(node);
     } else if (node.type === 'atrule') {
-      if (SKIP_AT_RULES.includes((node as AtRule).name)) {
-        // Don't process these at-rules, keep them as is
-        return;
-      }
+      // Don't process these at-rules, keep them as is
+      if (SKIP_AT_RULES.includes((node as AtRule).name)) return;
       
       // Recursively process regular at-rules like media queries
       // Store the promise for later awaiting
