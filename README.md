@@ -3,9 +3,9 @@
 [![NPM Version][npm-img]][npm-url]
 [![Build Status][build-img]][build-url]
 [![Coverage Status][coverage-img]][coverage-url]
+[![NPM Downloads][downloads-img]][downloads-url]
 [![Types][types-img]][types-url]
 [![Package Size][size-img]][size-url]
-[![License][license-img]][license-url]
 
 A PostCSS plugin that provides physical property polyfills for CSS logical properties, enabling backward compatibility for older browsers and environments that don't support logical properties natively.
 
@@ -453,9 +453,9 @@ This plugin wraps and extends [postcss-logical](https://github.com/csstools/post
 [build-img]: https://github.com/oe/postcss-logical-polyfill/actions/workflows/ci.yml/badge.svg
 [coverage-url]: https://codecov.io/gh/oe/postcss-logical-polyfill
 [coverage-img]: https://codecov.io/gh/oe/postcss-logical-polyfill/branch/main/graph/badge.svg
+[downloads-url]: https://www.npmjs.com/package/postcss-logical-polyfill
+[downloads-img]: https://img.shields.io/npm/dm/postcss-logical-polyfill
 [size-url]: https://packagephobia.com/result?p=postcss-logical-polyfill
 [size-img]: https://packagephobia.com/badge?p=postcss-logical-polyfill
 [types-url]: https://www.npmjs.com/package/postcss-logical-polyfill
 [types-img]: https://img.shields.io/npm/types/postcss-logical-polyfill
-[license-url]: LICENSE
-[license-img]: https://img.shields.io/npm/l/postcss-logical-polyfill
