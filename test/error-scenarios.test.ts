@@ -235,7 +235,7 @@ describe('Error Scenarios and Edge Cases', () => {
       }).not.toThrow();
     });
 
-    test.skip('Should handle deeply nested at-rules', async () => {
+    test('Should handle deeply nested at-rules', async () => {
       const deeplyNestedInput = `
         @media (min-width: 768px) {
           @supports (margin-inline: 1rem) {

@@ -1,6 +1,9 @@
 import postcss, { PluginCreator, Root, Rule, AtRule } from 'postcss';
 import logical from 'postcss-logical';
 
+// Skip processing of @keyframes and other special at-rules that shouldn't be transformed
+const SKIP_AT_RULES = ['keyframes', 'font-face', 'counter-style', 'page'];
+
 const ltrProcessor = logical({ inlineDirection: 'left-to-right' as any });
 const rtlProcessor = logical({ inlineDirection: 'right-to-left' as any });
 
@@ -292,6 +295,8 @@ async function processAllRules(container: Root | AtRule, ltrSelector: string, rt
   const rulesToProcess: Rule[] = [];
   
   // First pass: collect rules that need processing
+  const promises: Promise<void>[] = [];
+
   container.each(node => {
     if (node.type === 'rule') {
       const hasLogical = hasLogicalProperties(node);
@@ -302,10 +307,19 @@ async function processAllRules(container: Root | AtRule, ltrSelector: string, rt
         rulesToProcess.push(node);
       }
     } else if (node.type === 'atrule') {
-      // Recursively process at-rules like media queries
-      processAllRules(node, ltrSelector, rtlSelector, outputOrder);
+      if (SKIP_AT_RULES.includes((node as AtRule).name)) {
+        // Don't process these at-rules, keep them as is
+        return;
+      }
+      
+      // Recursively process regular at-rules like media queries
+      // Store the promise for later awaiting
+      promises.push(processAllRules(node, ltrSelector, rtlSelector, outputOrder));
     }
   });
+  
+  // Wait for all nested at-rules to be processed
+  await Promise.all(promises);
   
   // Second pass: process rules
   for (const rule of rulesToProcess) {
