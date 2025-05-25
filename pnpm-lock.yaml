@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       postcss-logical:
-        specifier: ^8.0.0
+        specifier: ^8.1.0
         version: 8.1.0(postcss@8.5.3)
     devDependencies:
       '@types/node':
