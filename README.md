@@ -162,7 +162,7 @@ Configuration for RTL processing.
 Type: `String`
 Default: `[dir="rtl"]`
 
-The selector to add for RTL rules.
+The selector to add for RTL rules. This selector determines how RTL-specific physical properties are scoped in the output CSS.
 
 ### `ltr`
 
@@ -176,7 +176,63 @@ Configuration for LTR processing.
 Type: `String`
 Default: `[dir="ltr"]`
 
-The selector to add for LTR rules.
+The selector to add for LTR rules. This selector determines how LTR-specific physical properties are scoped in the output CSS.
+
+## ⚠️ Important Usage Notes
+
+### 1. **Direction Attribute Required in HTML**
+
+When using the default selectors (`[dir="rtl"]` and `[dir="ltr"]`), you **MUST** set the `dir` attribute on your HTML elements, even for LTR layouts:
+
+```html
+<!-- ✅ CORRECT: Always specify dir attribute -->
+<html dir="ltr">  <!-- For left-to-right layouts -->
+<html dir="rtl">  <!-- For right-to-left layouts -->
+
+<!-- ❌ INCORRECT: Missing dir attribute will cause styles not to apply -->
+<html>
+```
+
+**Why this matters:**
+- The plugin generates CSS rules with attribute selectors like `[dir="ltr"]` and `[dir="rtl"]`
+- Without the `dir` attribute in your HTML, these selectors won't match and your styles won't apply
+- This applies to **both** LTR and RTL layouts - you can't omit `dir="ltr"` for LTR layouts
+
+**Benefits of setting the `dir` attribute:**
+- 🎯 **Explicit Direction Declaration**: Makes the text direction intention clear for both browsers and developers
+- 🌐 **Accessibility Enhancement**: Screen readers and assistive technologies use `dir` to properly announce content direction
+- 🔧 **CSS Selector Targeting**: Enables precise CSS targeting with `[dir="ltr"]` and `[dir="rtl"]` attribute selectors
+- 📱 **Framework Compatibility**: Many CSS frameworks and libraries expect and utilize the `dir` attribute
+- 🚀 **Future-Proof**: Prepares your HTML for native CSS logical property support when you eventually migrate
+- 🔄 **Dynamic Direction Switching**: Allows JavaScript to easily toggle between LTR and RTL by changing a single attribute
+- 🌍 **Internationalization Ready**: Essential foundation for proper RTL language support (Arabic, Hebrew, etc.)
+- 🐛 **Debugging Made Easy**: Visual indication in DevTools of which direction mode is active
+
+### 2. **Understanding Selector Configuration**
+
+The `selector` options control how the plugin scopes the generated physical properties:
+
+```js
+// Default configuration
+logicalPolyfill({
+  rtl: { selector: '[dir="rtl"]' },  // Targets elements with dir="rtl"
+  ltr: { selector: '[dir="ltr"]' }   // Targets elements with dir="ltr"
+})
+
+// Custom configuration example
+logicalPolyfill({
+  rtl: { selector: '.rtl-layout' },  // Targets elements with class="rtl-layout"
+  ltr: { selector: '.ltr-layout' }   // Targets elements with class="ltr-layout"
+})
+```
+
+When you customize selectors, make sure your HTML matches:
+
+```html
+<!-- For custom class-based selectors -->
+<html class="ltr-layout">  <!-- Matches .ltr-layout selector -->
+<html class="rtl-layout">  <!-- Matches .rtl-layout selector -->
+```
 
 ## Advanced Usage
 

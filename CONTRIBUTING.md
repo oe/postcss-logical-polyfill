@@ -6,7 +6,7 @@ Thank you for considering contributing to postcss-logical-polyfill! This documen
 
 ### Prerequisites
 
-- Node.js 14.0.0 or higher
+- Node.js 16.0.0 or higher
 - pnpm (preferred) or npm
 
 ### Setup
