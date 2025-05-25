@@ -12,9 +12,42 @@ const supportedLogicalProperties = Object.keys(
   ltrProcessor.Declaration
 ) as string[];
 
+/**
+ * Configuration options for the PostCSS Logical Scope plugin
+ */
 export interface LogicalPolyfillOptions {
-  rtl?: { selector?: string };
-  ltr?: { selector?: string };
+  /**
+   * RTL (Right-to-Left) direction configuration
+   */
+  rtl?: {
+    /**
+     * CSS selector used to target RTL content
+     * @default '[dir="rtl"]'
+     * @example ':dir(rtl)', '[dir="rtl"]', '.rtl'
+     */
+    selector?: string;
+  };
+  
+  /**
+   * LTR (Left-to-Right) direction configuration
+   */
+  ltr?: {
+    /**
+     * CSS selector used to target LTR content
+     * @default '[dir="ltr"]'
+     * @example ':dir(ltr)', '[dir="ltr"]', '.ltr'
+     */
+    selector?: string;
+  };
+  
+  /**
+   * Controls the order in which LTR and RTL rules are output in the generated CSS
+   * - 'ltr-first': LTR rules appear before RTL rules (default)
+   * - 'rtl-first': RTL rules appear before LTR rules
+   * 
+   * This can be useful for CSS specificity control or debugging purposes
+   * @default 'ltr-first'
+   */
   outputOrder?: 'ltr-first' | 'rtl-first';
 }
 
