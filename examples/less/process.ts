@@ -3,7 +3,7 @@ import * as path from 'path';
 // @ts-expect-error ignore missing types for less
 import less from 'less';
 import postcss from 'postcss';
-import postcssLogicalScope from '../..';
+import postcssLogicalPolyfill from '../..';
 
 // File paths
 const inputFile = path.join(__dirname, 'input.less');
@@ -21,7 +21,7 @@ async function processLess() {
     
     // Process with PostCSS and our plugin
     const postcssResult = await postcss([
-      postcssLogicalScope({
+      postcssLogicalPolyfill({
         // Configure RTL and LTR transformations
         rtl: {
           selector: '[dir="rtl"]'

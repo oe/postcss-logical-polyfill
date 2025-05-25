@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import postcss from 'postcss';
-import logicalScope from '../src';
+import logicalPolyfill from '../src';
 
 // Test case type definition
 export interface TestCase {
@@ -30,7 +30,7 @@ function normalizeCSS(css: string): string {
 export async function runTestCase(testCase: TestCase) {
   // Process CSS with the given options or default options
   const options = testCase.options || {};
-  const result = await postcss([logicalScope(options)]).process(testCase.input, { from: undefined });
+  const result = await postcss([logicalPolyfill(options)]).process(testCase.input, { from: undefined });
   
   // Print CSS output for debugging
   if (process.env.DEBUG) {

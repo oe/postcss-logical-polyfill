@@ -13,7 +13,7 @@ export default defineConfig({
     rollupOptions: {
       external: ['postcss', 'postcss-logical'],
       output: {
-        exports: 'default'
+        exports: 'auto'
       }
     },
     sourcemap: true,

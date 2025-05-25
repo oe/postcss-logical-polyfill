@@ -1,7 +1,7 @@
 import postcss, { PluginCreator, Root, Rule, AtRule } from 'postcss';
 import logical from 'postcss-logical';
 
-interface LogicalScopeOptions {
+export interface LogicalPolyfillOptions {
   rtl?: { selector?: string };
   ltr?: { selector?: string };
 }
@@ -136,7 +136,7 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string)
   return results;
 }
 
-const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
+const logicalPolyfill: PluginCreator<LogicalPolyfillOptions> = (opts = {}) => {
   const rtlSelector = opts.rtl?.selector || '[dir="rtl"]';
   const ltrSelector = opts.ltr?.selector || '[dir="ltr"]';
 
@@ -207,9 +207,6 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
   };
 };
 
-logicalScope.postcss = true;
+logicalPolyfill.postcss = true;
 
-// Support both CommonJS and ESM
-module.exports = logicalScope;
-module.exports.default = logicalScope;
-export default logicalScope;
+export default logicalPolyfill;

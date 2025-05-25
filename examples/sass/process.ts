@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as sassLib from 'sass';
 import postcss from 'postcss';
-import postcssLogicalScope from '../..';
+import postcssLogicalPolyfill from '../..';
 
 // File paths
 const inputFile = path.join(__dirname, 'input.scss');
@@ -15,7 +15,7 @@ async function processSass() {
     
     // Process with PostCSS and our plugin
     const postcssResult = await postcss([
-      postcssLogicalScope({
+      postcssLogicalPolyfill({
         // Configure RTL and LTR transformations
         rtl: {
           selector: '[dir="rtl"]'
