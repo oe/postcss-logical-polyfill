@@ -73,22 +73,21 @@ function rulesAreIdentical(rule1: Rule, rule2: Rule): boolean {
 // Unified rule processing function - processes a single rule and returns transformed rules
 async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string, outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'): Promise<Rule[]> {
   const hasLogical = hasLogicalProperties(rule);
+  if (!hasLogical) return [rule];
+
   const hasLtr = rule.selectors.some(isLtrSelector);
   const hasRtl = rule.selectors.some(isRtlSelector);
-  
-  // If rule has no logical properties and no direction selectors, return original rule unchanged
-  if (!hasLogical && !hasLtr && !hasRtl) {
-    return [rule.clone()];
-  }
+
+  const hasNoScope = !hasLtr && !hasRtl;
   
   const results: Rule[] = [];
   
   // For unscoped logical properties, try to optimize by separating common vs directional properties
-  if (hasLogical && !hasLtr && !hasRtl) {
+  if (hasNoScope) {
     // Generate both LTR and RTL versions to compare
     let ltrRule: Rule | null = null;
     let rtlRule: Rule | null = null;
-    
+
     try {
       // Generate LTR version
       const ltrTestRule = rule.clone();
@@ -98,32 +97,34 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string,
         ltrTempRoot,
         { from: undefined }
       );
-      ltrTransformed.root.walkRules(transformedRule => {
+      ltrTransformed.root.walkRules((transformedRule) => {
         ltrRule = transformedRule;
       });
-      
+
       // Generate RTL version
       const rtlTestRule = rule.clone();
       const rtlTempRoot = postcss.root();
       rtlTempRoot.append(rtlTestRule);
-      const rtlTransformed = await postcss([rtlProcessor])
-        .process(rtlTempRoot, { from: undefined });
-      rtlTransformed.root.walkRules(transformedRule => {
+      const rtlTransformed = await postcss([rtlProcessor]).process(
+        rtlTempRoot,
+        { from: undefined }
+      );
+      rtlTransformed.root.walkRules((transformedRule) => {
         rtlRule = transformedRule;
       });
-      
+
       // If results are completely identical, return single rule
       if (ltrRule && rtlRule && rulesAreIdentical(ltrRule, rtlRule)) {
         results.push(ltrRule);
         return results;
       }
-      
+
       // If results are different, try to optimize by separating common properties
       if (ltrRule && rtlRule) {
         const commonProps = new Map<string, string>();
         const ltrOnlyProps = new Map<string, string>();
         const rtlOnlyProps = new Map<string, string>();
-        
+
         // Collect LTR properties
         const ltrProps = new Map<string, string>();
         (ltrRule as Rule).each((node: any) => {
@@ -131,7 +132,7 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string,
             ltrProps.set(node.prop, node.value);
           }
         });
-        
+
         // Collect RTL properties
         const rtlProps = new Map<string, string>();
         (rtlRule as Rule).each((node: any) => {
@@ -139,7 +140,7 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string,
             rtlProps.set(node.prop, node.value);
           }
         });
-        
+
         // Find common properties
         for (const [prop, value] of ltrProps) {
           if (rtlProps.has(prop) && rtlProps.get(prop) === value) {
@@ -148,62 +149,66 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string,
             ltrOnlyProps.set(prop, value);
           }
         }
-        
+
         // Find RTL-only properties
         for (const [prop, value] of rtlProps) {
           if (!commonProps.has(prop)) {
             rtlOnlyProps.set(prop, value);
           }
         }
-        
+
         // Create rules based on what we found
         // 1. Common properties rule (no direction specificity)
         if (commonProps.size > 0) {
           const commonRule = rule.clone();
           commonRule.removeAll(); // Clear all declarations
-          
+
           for (const [prop, value] of commonProps) {
             commonRule.append({ prop, value });
           }
           results.push(commonRule);
         }
-        
+
         // 2. LTR-specific properties
         if (ltrOnlyProps.size > 0) {
           const ltrSpecificRule = rule.clone();
           ltrSpecificRule.removeAll();
-          ltrSpecificRule.selectors = ltrSpecificRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-          
+          ltrSpecificRule.selectors = ltrSpecificRule.selectors.map(
+            (sel) => `${ltrSelector} ${sel}`
+          );
+
           for (const [prop, value] of ltrOnlyProps) {
             ltrSpecificRule.append({ prop, value });
           }
           results.push(ltrSpecificRule);
         }
-        
+
         // 3. RTL-specific properties
         if (rtlOnlyProps.size > 0) {
           const rtlSpecificRule = rule.clone();
           rtlSpecificRule.removeAll();
-          rtlSpecificRule.selectors = rtlSpecificRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-          
+          rtlSpecificRule.selectors = rtlSpecificRule.selectors.map(
+            (sel) => `${rtlSelector} ${sel}`
+          );
+
           for (const [prop, value] of rtlOnlyProps) {
             rtlSpecificRule.append({ prop, value });
           }
           results.push(rtlSpecificRule);
         }
-        
+
         return results;
       }
     } catch (error) {
       console.warn('Failed to compare LTR/RTL logical properties:', error);
     }
-    
+
     // If comparison failed, fall back to normal processing
   }
   
   // Helper function to process LTR rules
   const processLtrRules = async () => {
-    if (hasLtr || (hasLogical && !hasLtr && !hasRtl)) {
+    if (hasLtr || (hasNoScope)) {
       let selectors = rule.selectors;
       
       if (hasLtr) {
@@ -245,7 +250,7 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string,
 
   // Helper function to process RTL rules
   const processRtlRules = async () => {
-    if (hasRtl || (hasLogical && !hasLtr && !hasRtl)) {
+    if (hasRtl || (hasNoScope)) {
       let selectors = rule.selectors;
       
       if (hasRtl) {
