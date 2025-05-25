@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import postcss from 'postcss';
-import logicalScope from '../src/index';
+import logicalScope from '../src';
 
 // Test case type definition
 interface TestCase {

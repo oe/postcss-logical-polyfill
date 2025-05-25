@@ -2,17 +2,11 @@ import postcss, { PluginCreator, Root, Rule, AtRule } from 'postcss';
 import logical from 'postcss-logical';
 
 interface LogicalScopeOptions {
-  rtl?: {
-    selector?: string;
-  };
-  ltr?: {
-    selector?: string;
-  };
+  rtl?: { selector?: string };
+  ltr?: { selector?: string };
 }
 
-/**
- * Check if a rule has logical properties
- */
+// 检查是否有逻辑属性
 function hasLogicalProperties(rule: Rule): boolean {
   return rule.some(decl => 
     decl.type === 'decl' && (
@@ -23,23 +17,17 @@ function hasLogicalProperties(rule: Rule): boolean {
   );
 }
 
-/**
- * Check if selector is RTL specific
- */
+// 检查是否是 RTL 选择器
 function isRtlSelector(selector: string): boolean {
   return selector.includes(':dir(rtl)') || selector.includes('[dir="rtl"]') || selector.includes("[dir='rtl']");
 }
 
-/**
- * Check if selector is LTR specific
- */
+// 检查是否是 LTR 选择器  
 function isLtrSelector(selector: string): boolean {
   return selector.includes(':dir(ltr)') || selector.includes('[dir="ltr"]') || selector.includes("[dir='ltr']");
 }
 
-/**
- * Clean direction selectors from a selector string
- */
+// 清理方向选择器
 function cleanDirectionSelectors(selector: string): string {
   return selector
     .replace(/:dir\(rtl\)/g, '')
@@ -50,6 +38,90 @@ function cleanDirectionSelectors(selector: string): string {
     .trim();
 }
 
+// 统一的规则处理函数 - 修复版本
+async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string): Promise<Rule[]> {
+  const hasLogical = hasLogicalProperties(rule);
+  const hasLtr = rule.selectors.some(isLtrSelector);
+  const hasRtl = rule.selectors.some(isRtlSelector);
+  
+  // 如果没有逻辑属性也没有方向选择器，直接返回原规则
+  if (!hasLogical && !hasLtr && !hasRtl) {
+    return [rule.clone()];
+  }
+  
+  const results: Rule[] = [];
+  
+  // 处理 LTR 的情况：
+  // 1. 有 LTR 选择器的规则
+  // 2. 有逻辑属性但没有任何方向选择器的规则
+  if (hasLtr || (hasLogical && !hasLtr && !hasRtl)) {
+    let selectors = rule.selectors;
+    
+    if (hasLtr) {
+      // 过滤 LTR 选择器并清理
+      selectors = rule.selectors.filter(isLtrSelector).map(cleanDirectionSelectors);
+    }
+    // else: 如果只有逻辑属性，使用原选择器
+    
+    if (selectors.length > 0) {
+      const ltrRule = rule.clone();
+      ltrRule.selectors = selectors;
+      
+      if (hasLogical) {
+        // 应用逻辑转换
+        const tempRoot = postcss.root();
+        tempRoot.append(ltrRule);
+        const transformed = await postcss([logical({ inlineDirection: 'left-to-right' as any })])
+          .process(tempRoot, { from: undefined });
+        
+        transformed.root.walkRules(transformedRule => {
+          transformedRule.selectors = transformedRule.selectors.map(sel => `${ltrSelector} ${sel}`);
+          results.push(transformedRule);
+        });
+      } else {
+        ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
+        results.push(ltrRule);
+      }
+    }
+  }
+  
+  // 处理 RTL 的情况：
+  // 1. 有 RTL 选择器的规则
+  // 2. 有逻辑属性但没有任何方向选择器的规则
+  if (hasRtl || (hasLogical && !hasLtr && !hasRtl)) {
+    let selectors = rule.selectors;
+    
+    if (hasRtl) {
+      // 过滤 RTL 选择器并清理
+      selectors = rule.selectors.filter(isRtlSelector).map(cleanDirectionSelectors);
+    }
+    // else: 如果只有逻辑属性，使用原选择器
+    
+    if (selectors.length > 0) {
+      const rtlRule = rule.clone();
+      rtlRule.selectors = selectors;
+      
+      if (hasLogical) {
+        // 应用逻辑转换
+        const tempRoot = postcss.root();
+        tempRoot.append(rtlRule);
+        const transformed = await postcss([logical({ inlineDirection: 'right-to-left' as any })])
+          .process(tempRoot, { from: undefined });
+        
+        transformed.root.walkRules(transformedRule => {
+          transformedRule.selectors = transformedRule.selectors.map(sel => `${rtlSelector} ${sel}`);
+          results.push(transformedRule);
+        });
+      } else {
+        rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
+        results.push(rtlRule);
+      }
+    }
+  }
+  
+  return results;
+}
+
 const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
   const rtlSelector = opts.rtl?.selector || '[dir="rtl"]';
   const ltrSelector = opts.ltr?.selector || '[dir="ltr"]';
@@ -58,208 +130,68 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
     postcssPlugin: 'postcss-logical-scope',
     
     async Once(root) {
-      // Store processed nodes in order
-      const processedNodes: postcss.Node[] = [];
-
-      // Process each node in order
-      for (const node of root.nodes || []) {
-        if (node.type === 'rule') {
-          const rule = node as Rule;
-          const hasLtr = rule.selectors.some(isLtrSelector);
-          const hasRtl = rule.selectors.some(isRtlSelector);
-          const hasLogical = hasLogicalProperties(rule);
-
-          if (hasLogical || hasLtr || hasRtl) {
-            // Process rule for both directions
-            const processedRules = await processRuleWithDirections(rule, hasLtr, hasRtl, hasLogical, ltrSelector, rtlSelector);
-            processedNodes.push(...processedRules);
-          } else {
-            // Keep rule as-is
-            processedNodes.push(node.clone());
-          }
-        } else if (node.type === 'atrule') {
-          const atRule = node as AtRule;
-          
-          // Check if any rule inside needs processing
-          let needsProcessing = false;
-          atRule.walkRules(rule => {
-            if (rule.selectors.some(isLtrSelector) || 
-                rule.selectors.some(isRtlSelector) || 
-                hasLogicalProperties(rule)) {
-              needsProcessing = true;
-              return false; // Stop walking
-            }
-          });
-
-          if (needsProcessing) {
-            const processedAtRule = await processAtRuleWithDirections(atRule, ltrSelector, rtlSelector);
-            if (processedAtRule) {
-              processedNodes.push(processedAtRule);
-            }
-          } else {
-            processedNodes.push(node.clone());
-          }
-        } else {
-          processedNodes.push(node.clone());
+      // 收集所有需要处理的规则（包括嵌套在 at-rule 中的）
+      const rulesToProcess: { rule: Rule; parent: Root | AtRule }[] = [];
+      
+      // 使用 walkRules 遍历所有规则，无论嵌套层级
+      root.walkRules(rule => {
+        const hasLogical = hasLogicalProperties(rule);
+        const hasLtr = rule.selectors.some(isLtrSelector);
+        const hasRtl = rule.selectors.some(isRtlSelector);
+        
+        if (hasLogical || hasLtr || hasRtl) {
+          rulesToProcess.push({ rule, parent: rule.parent as Root | AtRule });
         }
-      }
-
-      // Rebuild root
-      root.removeAll();
-      processedNodes.forEach(node => root.append(node));
-
-      // Merge rules with same selectors
-      mergeRules(root);
-    }
-  };
-};
-
-/**
- * Process a rule for both LTR and RTL directions
- */
-async function processRuleWithDirections(
-  rule: Rule, 
-  hasLtr: boolean, 
-  hasRtl: boolean, 
-  hasLogical: boolean,
-  ltrSelector: string,
-  rtlSelector: string
-): Promise<Rule[]> {
-  const results: Rule[] = [];
-
-  // Process LTR
-  if (hasLtr || (hasLogical && !hasRtl)) {
-    const ltrRule = rule.clone();
-    
-    if (hasLtr) {
-      ltrRule.selectors = rule.selectors
-        .filter(sel => isLtrSelector(sel))
-        .map(sel => cleanDirectionSelectors(sel));
-    }
-    
-    if (ltrRule.selectors.length > 0) {
-      // Apply logical transformation
-      const ltrRoot = postcss.root();
-      ltrRoot.append(ltrRule);
-      
-      const ltrTransformed = await postcss([
-        logical({ inlineDirection: 'left-to-right' as any })
-      ]).process(ltrRoot, { from: undefined });
-      
-      ltrTransformed.root.walkRules(transformedRule => {
-        transformedRule.selectors = transformedRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-        results.push(transformedRule);
       });
-    }
-  }
-
-  // Process RTL
-  if (hasRtl || (hasLogical && !hasLtr)) {
-    const rtlRule = rule.clone();
-    
-    if (hasRtl) {
-      rtlRule.selectors = rule.selectors
-        .filter(sel => isRtlSelector(sel))
-        .map(sel => cleanDirectionSelectors(sel));
-    }
-    
-    if (rtlRule.selectors.length > 0) {
-      // Apply logical transformation
-      const rtlRoot = postcss.root();
-      rtlRoot.append(rtlRule);
       
-      const rtlTransformed = await postcss([
-        logical({ inlineDirection: 'right-to-left' as any })
-      ]).process(rtlRoot, { from: undefined });
-      
-      rtlTransformed.root.walkRules(transformedRule => {
-        transformedRule.selectors = transformedRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-        results.push(transformedRule);
-      });
-    }
-  }
-
-  return results;
-}
-
-/**
- * Process an at-rule for both LTR and RTL directions, merging them into a single at-rule
- */
-async function processAtRuleWithDirections(
-  atRule: AtRule, 
-  ltrSelector: string, 
-  rtlSelector: string
-): Promise<AtRule | null> {
-  const resultAtRule = atRule.clone();
-  resultAtRule.removeAll();
-
-  // Process each rule inside the at-rule
-  for (const childNode of atRule.nodes || []) {
-    if (childNode.type === 'rule') {
-      const rule = childNode as Rule;
-      const hasLtr = rule.selectors.some(isLtrSelector);
-      const hasRtl = rule.selectors.some(isRtlSelector);
-      const hasLogical = hasLogicalProperties(rule);
-
-      if (!hasLogical && !hasLtr && !hasRtl) {
-        resultAtRule.append(rule.clone());
-      } else {
-        const processedRules = await processRuleWithDirections(rule, hasLtr, hasRtl, hasLogical, ltrSelector, rtlSelector);
-        processedRules.forEach(processedRule => {
-          resultAtRule.append(processedRule);
+      // 处理所有规则
+      for (const { rule, parent } of rulesToProcess) {
+        const processedRules = await processRule(rule, ltrSelector, rtlSelector);
+        
+        // 替换原规则
+        rule.remove();
+        
+        // 插入新规则
+        processedRules.forEach(newRule => {
+          parent.append(newRule);
         });
       }
-    } else {
-      resultAtRule.append(childNode.clone());
-    }
-  }
-
-  return resultAtRule.nodes && resultAtRule.nodes.length > 0 ? resultAtRule : null;
-}
-
-/**
- * Merge rules with the same selector
- */
-function mergeRules(root: Root) {
-  function mergeRulesInContainer(container: Root | AtRule) {
-    const ruleMap = new Map<string, Rule>();
-    
-    container.each(node => {
-      if (node.type === 'rule') {
-        const rule = node as Rule;
-        const existingRule = ruleMap.get(rule.selector);
+      
+      // 改进的规则合并 - 正确处理属性覆盖
+      const ruleMap = new Map<string, Rule>();
+      root.walkRules(rule => {
+        const key = rule.selector;
+        const existing = ruleMap.get(key);
         
-        if (existingRule) {
-          // Merge declarations while preserving order
+        if (existing) {
+          // 合并声明，后面的属性覆盖前面的
           rule.each(decl => {
             if (decl.type === 'decl') {
-              // Check if property already exists
+              // 检查是否已存在相同属性
               let found = false;
-              existingRule.each(existingDecl => {
+              existing.each(existingDecl => {
                 if (existingDecl.type === 'decl' && existingDecl.prop === decl.prop) {
-                  // Update existing declaration value
+                  // 覆盖现有值
                   existingDecl.value = decl.value;
                   found = true;
+                  return false; // 停止遍历
                 }
               });
-              // Add new declaration if not found
+              
+              // 如果没有找到相同属性，添加新的
               if (!found) {
-                existingRule.append(decl.clone());
+                existing.append(decl.clone());
               }
             }
           });
           rule.remove();
         } else {
-          ruleMap.set(rule.selector, rule);
+          ruleMap.set(key, rule);
         }
-      }
-    });
-  }
-  
-  mergeRulesInContainer(root);
-  root.walkAtRules(atRule => mergeRulesInContainer(atRule));
-}
+      });
+    }
+  };
+};
 
 logicalScope.postcss = true;
-
 export default logicalScope;
