@@ -19,8 +19,7 @@
     "lint": "tsc --noEmit",
     "prepublish": "pnpm run lint && pnpm run test:ci && pnpm run build",
     "preexamples": "pnpm run build",
-    "examples": "tsx scripts/run-examples.ts",
-    "prepublishOnly": "pnpm run build"
+    "examples": "tsx scripts/run-examples.ts"
   },
   "keywords": [
     "postcss",
