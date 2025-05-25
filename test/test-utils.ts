@@ -27,7 +27,7 @@ function normalizeCSS(css: string): string {
 /**
  * Test helper function that handles common test logic
  */
-export async function runTestCase(testCase: TestCase) {
+export async function runTestCase(testCase: TestCase): Promise<void> {
   // Process CSS with the given options or default options
   const options = testCase.options || {};
   const result = await postcss([logicalPolyfill(options)]).process(testCase.input, { from: undefined });
@@ -43,6 +43,4 @@ export async function runTestCase(testCase: TestCase) {
   
   // Simple string comparison
   expect(normalizedActual).toBe(normalizedExpected);
-  
-  return result;
 }
