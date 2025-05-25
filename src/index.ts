@@ -70,235 +70,205 @@ function rulesAreIdentical(rule1: Rule, rule2: Rule): boolean {
   return true;
 }
 
+// Apply logical property transformation to a rule
+async function applyLogicalTransformation(rule: Rule, processor: any): Promise<Rule | null> {
+  const tempRoot = postcss.root();
+  tempRoot.append(rule.clone());
+  
+  try {
+    const transformed = await postcss([processor]).process(tempRoot, { from: undefined });
+    let transformedRule: Rule | null = null;
+    transformed.root.walkRules(r => {
+      transformedRule = r;
+    });
+    return transformedRule;
+  } catch (error) {
+    console.warn('Failed to process logical properties:', error);
+    return null;
+  }
+}
+
+// Extract declarations from a rule into a Map
+function extractDeclarations(rule: Rule): Map<string, string> {
+  const declarations = new Map<string, string>();
+  rule.each(node => {
+    if (node.type === 'decl') {
+      declarations.set(node.prop, node.value);
+    }
+  });
+  return declarations;
+}
+
+// Analyze property differences between LTR and RTL rules
+function analyzePropertyDifferences(ltrRule: Rule, rtlRule: Rule) {
+  const ltrProps = extractDeclarations(ltrRule);
+  const rtlProps = extractDeclarations(rtlRule);
+  
+  const commonProps = new Map<string, string>();
+  const ltrOnlyProps = new Map<string, string>();
+  const rtlOnlyProps = new Map<string, string>();
+
+  // Find common and LTR-only properties
+  for (const [prop, value] of ltrProps) {
+    if (rtlProps.has(prop) && rtlProps.get(prop) === value) {
+      commonProps.set(prop, value);
+    } else {
+      ltrOnlyProps.set(prop, value);
+    }
+  }
+
+  // Find RTL-only properties
+  for (const [prop, value] of rtlProps) {
+    if (!commonProps.has(prop)) {
+      rtlOnlyProps.set(prop, value);
+    }
+  }
+
+  return { commonProps, ltrOnlyProps, rtlOnlyProps };
+}
+
+// Create a rule with specific properties
+function createRuleWithProperties(baseRule: Rule, properties: Map<string, string>, selectorTransform?: (sel: string) => string): Rule {
+  const newRule = baseRule.clone();
+  newRule.removeAll();
+  
+  if (selectorTransform) {
+    newRule.selectors = newRule.selectors.map(selectorTransform);
+  }
+  
+  for (const [prop, value] of properties) {
+    newRule.append({ prop, value });
+  }
+  
+  return newRule;
+}
+
+// Process directional rule (LTR or RTL)
+async function processDirectionalRule(
+  rule: Rule,
+  directionSelector: string,
+  processor: any,
+  filterFn: (selector: string) => boolean,
+  hasDirection: boolean,
+  hasNoScope: boolean
+): Promise<Rule[]> {
+  if (!hasDirection && !hasNoScope) {
+    return [];
+  }
+
+  let selectors = rule.selectors;
+  
+  if (hasDirection) {
+    // Filter and clean direction-specific selectors
+    selectors = rule.selectors.filter(filterFn).map(cleanDirectionSelectors);
+  }
+  
+  if (selectors.length === 0) {
+    return [];
+  }
+
+  const ruleToProcess = rule.clone();
+  ruleToProcess.selectors = selectors;
+  
+  // Apply logical property transformation
+  const transformedRule = await applyLogicalTransformation(ruleToProcess, processor);
+  if (transformedRule) {
+    transformedRule.selectors = transformedRule.selectors.map(sel => `${directionSelector} ${sel}`);
+    return [transformedRule];
+  } else {
+    // Fallback: just add direction selector without transformation
+    ruleToProcess.selectors = ruleToProcess.selectors.map(sel => `${directionSelector} ${sel}`);
+    return [ruleToProcess];
+  }
+}
+
+// Try to optimize unscoped logical properties by separating common vs directional properties
+async function tryOptimizeUnscopedLogicalProperties(
+  rule: Rule,
+  ltrSelector: string,
+  rtlSelector: string,
+  outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'
+): Promise<Rule[] | null> {
+  try {
+    // Generate both LTR and RTL versions
+    const ltrTransformed = await applyLogicalTransformation(rule, ltrProcessor);
+    const rtlTransformed = await applyLogicalTransformation(rule, rtlProcessor);
+
+    if (!ltrTransformed || !rtlTransformed) {
+      return null;
+    }
+
+    // If results are identical, return single rule
+    if (rulesAreIdentical(ltrTransformed, rtlTransformed)) {
+      return [ltrTransformed];
+    }
+
+    // Analyze differences and create optimized rules
+    const { commonProps, ltrOnlyProps, rtlOnlyProps } = analyzePropertyDifferences(ltrTransformed, rtlTransformed);
+    const results: Rule[] = [];
+
+    // Add common properties rule (no direction specificity)
+    if (commonProps.size > 0) {
+      results.push(createRuleWithProperties(rule, commonProps));
+    }
+
+    // Add directional properties according to outputOrder
+    const ltrDirectionalRule = ltrOnlyProps.size > 0 ? createRuleWithProperties(rule, ltrOnlyProps, sel => `${ltrSelector} ${sel}`) : null;
+    const rtlDirectionalRule = rtlOnlyProps.size > 0 ? createRuleWithProperties(rule, rtlOnlyProps, sel => `${rtlSelector} ${sel}`) : null;
+
+    if (outputOrder === 'ltr-first') {
+      if (ltrDirectionalRule) results.push(ltrDirectionalRule);
+      if (rtlDirectionalRule) results.push(rtlDirectionalRule);
+    } else {
+      if (rtlDirectionalRule) results.push(rtlDirectionalRule);
+      if (ltrDirectionalRule) results.push(ltrDirectionalRule);
+    }
+
+    return results;
+  } catch (error) {
+    console.warn('Failed to optimize unscoped logical properties:', error);
+    return null;
+  }
+}
+
 // Unified rule processing function - processes a single rule and returns transformed rules
-async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string, outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'): Promise<Rule[]> {
+async function processRule(
+  rule: Rule,
+  ltrSelector: string,
+  rtlSelector: string,
+  outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'
+): Promise<Rule[]> {
   const hasLogical = hasLogicalProperties(rule);
   if (!hasLogical) return [rule];
 
   const hasLtr = rule.selectors.some(isLtrSelector);
   const hasRtl = rule.selectors.some(isRtlSelector);
-
   const hasNoScope = !hasLtr && !hasRtl;
-  
+
+  // For unscoped logical properties, try to optimize
+  if (hasNoScope) {
+    const optimizedRules = await tryOptimizeUnscopedLogicalProperties(rule, ltrSelector, rtlSelector, outputOrder);
+    if (optimizedRules) {
+      return optimizedRules;
+    }
+    // If optimization failed, fall back to normal processing
+  }
+
+  // Process scoped rules or fallback for unscoped
   const results: Rule[] = [];
   
-  // For unscoped logical properties, try to optimize by separating common vs directional properties
-  if (hasNoScope) {
-    // Generate both LTR and RTL versions to compare
-    let ltrRule: Rule | null = null;
-    let rtlRule: Rule | null = null;
-
-    try {
-      // Generate LTR version
-      const ltrTestRule = rule.clone();
-      const ltrTempRoot = postcss.root();
-      ltrTempRoot.append(ltrTestRule);
-      const ltrTransformed = await postcss([ltrProcessor]).process(
-        ltrTempRoot,
-        { from: undefined }
-      );
-      ltrTransformed.root.walkRules((transformedRule) => {
-        ltrRule = transformedRule;
-      });
-
-      // Generate RTL version
-      const rtlTestRule = rule.clone();
-      const rtlTempRoot = postcss.root();
-      rtlTempRoot.append(rtlTestRule);
-      const rtlTransformed = await postcss([rtlProcessor]).process(
-        rtlTempRoot,
-        { from: undefined }
-      );
-      rtlTransformed.root.walkRules((transformedRule) => {
-        rtlRule = transformedRule;
-      });
-
-      // If results are completely identical, return single rule
-      if (ltrRule && rtlRule && rulesAreIdentical(ltrRule, rtlRule)) {
-        results.push(ltrRule);
-        return results;
-      }
-
-      // If results are different, try to optimize by separating common properties
-      if (ltrRule && rtlRule) {
-        const commonProps = new Map<string, string>();
-        const ltrOnlyProps = new Map<string, string>();
-        const rtlOnlyProps = new Map<string, string>();
-
-        // Collect LTR properties
-        const ltrProps = new Map<string, string>();
-        (ltrRule as Rule).each((node: any) => {
-          if (node.type === 'decl') {
-            ltrProps.set(node.prop, node.value);
-          }
-        });
-
-        // Collect RTL properties
-        const rtlProps = new Map<string, string>();
-        (rtlRule as Rule).each((node: any) => {
-          if (node.type === 'decl') {
-            rtlProps.set(node.prop, node.value);
-          }
-        });
-
-        // Find common properties
-        for (const [prop, value] of ltrProps) {
-          if (rtlProps.has(prop) && rtlProps.get(prop) === value) {
-            commonProps.set(prop, value);
-          } else {
-            ltrOnlyProps.set(prop, value);
-          }
-        }
-
-        // Find RTL-only properties
-        for (const [prop, value] of rtlProps) {
-          if (!commonProps.has(prop)) {
-            rtlOnlyProps.set(prop, value);
-          }
-        }
-
-        // Create rules based on what we found
-        // 1. Common properties rule (no direction specificity)
-        if (commonProps.size > 0) {
-          const commonRule = rule.clone();
-          commonRule.removeAll(); // Clear all declarations
-
-          for (const [prop, value] of commonProps) {
-            commonRule.append({ prop, value });
-          }
-          results.push(commonRule);
-        }
-
-        // 2. LTR-specific properties
-        if (ltrOnlyProps.size > 0) {
-          const ltrSpecificRule = rule.clone();
-          ltrSpecificRule.removeAll();
-          ltrSpecificRule.selectors = ltrSpecificRule.selectors.map(
-            (sel) => `${ltrSelector} ${sel}`
-          );
-
-          for (const [prop, value] of ltrOnlyProps) {
-            ltrSpecificRule.append({ prop, value });
-          }
-          results.push(ltrSpecificRule);
-        }
-
-        // 3. RTL-specific properties
-        if (rtlOnlyProps.size > 0) {
-          const rtlSpecificRule = rule.clone();
-          rtlSpecificRule.removeAll();
-          rtlSpecificRule.selectors = rtlSpecificRule.selectors.map(
-            (sel) => `${rtlSelector} ${sel}`
-          );
-
-          for (const [prop, value] of rtlOnlyProps) {
-            rtlSpecificRule.append({ prop, value });
-          }
-          results.push(rtlSpecificRule);
-        }
-
-        return results;
-      }
-    } catch (error) {
-      console.warn('Failed to compare LTR/RTL logical properties:', error);
-    }
-
-    // If comparison failed, fall back to normal processing
-  }
-  
-  // Helper function to process LTR rules
-  const processLtrRules = async () => {
-    if (hasLtr || (hasNoScope)) {
-      let selectors = rule.selectors;
-      
-      if (hasLtr) {
-        // Filter LTR selectors and clean them
-        selectors = rule.selectors.filter(isLtrSelector).map(cleanDirectionSelectors);
-      }
-      // else: if only logical properties, use original selectors
-      
-      if (selectors.length > 0) {
-        const ltrRule = rule.clone();
-        ltrRule.selectors = selectors;
-        
-        if (hasLogical) {
-          // Apply logical property transformation
-          const tempRoot = postcss.root();
-          tempRoot.append(ltrRule);
-          try {
-            const transformed = await postcss([ltrProcessor]).process(
-              tempRoot,
-              { from: undefined }
-            );
-            
-            transformed.root.walkRules(transformedRule => {
-              transformedRule.selectors = transformedRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-              results.push(transformedRule);
-            });
-          } catch (error) {
-            console.warn('Failed to process LTR logical properties:', error);
-            ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-            results.push(ltrRule);
-          }
-        } else {
-          ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-          results.push(ltrRule);
-        }
-      }
+  const processInOrder = async () => {
+    const ltrRules = await processDirectionalRule(rule, ltrSelector, ltrProcessor, isLtrSelector, hasLtr, hasNoScope);
+    const rtlRules = await processDirectionalRule(rule, rtlSelector, rtlProcessor, isRtlSelector, hasRtl, hasNoScope);
+    
+    if (outputOrder === 'ltr-first') {
+      results.push(...ltrRules, ...rtlRules);
+    } else {
+      results.push(...rtlRules, ...ltrRules);
     }
   };
 
-  // Helper function to process RTL rules
-  const processRtlRules = async () => {
-    if (hasRtl || (hasNoScope)) {
-      let selectors = rule.selectors;
-      
-      if (hasRtl) {
-        // Filter RTL selectors and clean them
-        selectors = rule.selectors.filter(isRtlSelector).map(cleanDirectionSelectors);
-      }
-      // else: if only logical properties, use original selectors
-      
-      if (selectors.length > 0) {
-        const rtlRule = rule.clone();
-        rtlRule.selectors = selectors;
-        
-        if (hasLogical) {
-          // Apply logical property transformation
-          const tempRoot = postcss.root();
-          tempRoot.append(rtlRule);
-          try {
-            const transformed = await postcss([rtlProcessor]).process(
-              tempRoot,
-              { from: undefined }
-            );
-            
-            transformed.root.walkRules(transformedRule => {
-              transformedRule.selectors = transformedRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-              results.push(transformedRule);
-            });
-          } catch (error) {
-            console.warn('Failed to process RTL logical properties:', error);
-            rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-            results.push(rtlRule);
-          }
-        } else {
-          rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-          results.push(rtlRule);
-        }
-      }
-    }
-  };
-
-  // Process rules in the specified order
-  if (outputOrder === 'ltr-first') {
-    await processLtrRules();
-    await processRtlRules();
-  } else {
-    await processRtlRules();
-    await processLtrRules();
-  }
-  
+  await processInOrder();
   return results;
 }
 
