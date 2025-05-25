@@ -6,7 +6,7 @@
 [![Package Size][size-img]][size-url]
 [![License][license-img]][license-url]
 
-A PostCSS plugin that transforms CSS logical properties to physical properties for both LTR and RTL contexts.
+A PostCSS plugin that transforms CSS logical properties to physical properties for both LTR and RTL contexts with intelligent direction-specific selector handling.
 
 ## Why?
 
@@ -16,10 +16,13 @@ This plugin helps by transforming logical properties to their physical counterpa
 
 ## Features
 
-- Transforms logical properties to physical properties for both LTR and RTL contexts
-- Automatically adds `[dir="ltr"]` and `[dir="rtl"]` selectors to styles containing logical properties
-- Respects existing direction-specific selectors (`:dir(rtl)`, `[dir="rtl"]`, etc.)
-- Customizable selectors for RTL and LTR transformations
+- **🔄 Bidirectional Transformation**: Converts logical properties to physical properties for both LTR and RTL contexts
+- **🎯 Smart Selector Handling**: Automatically adds `[dir="ltr"]` and `[dir="rtl"]` selectors to styles containing logical properties
+- **📐 Direction-Aware Processing**: Respects and processes existing direction-specific selectors (`:dir(rtl)`, `[dir="rtl"]`, `:dir(ltr)`, `[dir="ltr"]`)
+- **⚙️ Customizable Selectors**: Configure custom RTL and LTR selectors to match your project needs
+- **🏗️ Nested Rule Support**: Works seamlessly with media queries, at-rules, and nested selectors
+- **🔧 Rule Optimization**: Intelligently merges duplicate rules and handles property overrides
+- **⚡ Error Resilient**: Graceful fallbacks when transformations encounter issues
 
 ## Installation
 
@@ -110,13 +113,28 @@ postcss([
 
 ## How It Works
 
-This plugin:
+This plugin intelligently processes your CSS through several steps:
 
-1. Finds logical properties in your CSS
-2. Creates two versions of each rule - one for LTR and one for RTL
-3. Converts logical properties to their physical equivalents based on direction
-4. Adds the appropriate direction selectors (`[dir="ltr"]` or `[dir="rtl"]`)
-5. Preserves existing direction-specific rules and converts them correctly
+1. **🔍 Detection Phase**: Scans all CSS rules (including nested ones) to identify:
+   - Rules containing logical properties (`margin-inline`, `padding-block`, `inset-*`, etc.)
+   - Rules with existing direction selectors (`:dir(rtl)`, `[dir="rtl"]`, etc.)
+
+2. **🔄 Transformation Phase**: For each qualifying rule:
+   - **Logical Properties**: Creates separate LTR and RTL versions using the postcss-logical transformation engine
+   - **Direction-Specific Rules**: Processes existing direction selectors and converts their logical properties appropriately
+   - **Mixed Rules**: Handles rules that have both logical properties and direction selectors
+
+3. **🎯 Selector Application**: Adds appropriate direction selectors:
+   - `[dir="ltr"]` for left-to-right transformations
+   - `[dir="rtl"]` for right-to-left transformations  
+   - Cleans existing direction selectors to avoid duplication
+
+4. **🔧 Optimization Phase**: 
+   - Merges duplicate rules with identical selectors
+   - Handles property overrides correctly (later properties override earlier ones)
+   - Removes redundant CSS declarations
+
+5. **✨ Output Generation**: Produces clean, optimized CSS with proper direction support
 
 ## More Examples
 
@@ -151,6 +169,47 @@ Type: `String`
 Default: `[dir="ltr"]`
 
 The selector to add for LTR rules.
+
+## Advanced Usage
+
+### Working with Existing Direction Selectors
+
+The plugin intelligently handles existing direction-specific selectors:
+
+```css
+/* Input: Mixed logical properties with direction selectors */
+.component {
+  margin-inline: 1rem; /* Will generate both LTR and RTL versions */
+}
+
+:dir(rtl) .component {
+  padding-inline-start: 2rem; /* Will only generate RTL version */
+}
+
+[dir="ltr"] .component {
+  border-inline-end: 1px solid; /* Will only generate LTR version */
+}
+```
+
+### Custom Direction Selectors
+
+Configure custom selectors for specific frameworks or design systems:
+
+```js
+postcss([
+  logicalScope({
+    ltr: { selector: '.ltr' },      // For frameworks like Tailwind
+    rtl: { selector: '.rtl' }       // Custom RTL class
+  })
+])
+```
+
+### Best Practices
+
+1. **🎯 Use Logical Properties Consistently**: Prefer logical properties over physical ones for better internationalization
+2. **⚡ Minimize Direction-Specific Rules**: Let the plugin handle most transformations automatically
+3. **🔧 Test Both Directions**: Always test your layouts in both LTR and RTL modes
+4. **📱 Consider Mobile**: Logical properties work especially well for responsive designs
 
 ## Examples
 

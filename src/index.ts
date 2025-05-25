@@ -6,7 +6,7 @@ interface LogicalScopeOptions {
   ltr?: { selector?: string };
 }
 
-// 检查是否有逻辑属性
+// Check if rule contains logical properties
 function hasLogicalProperties(rule: Rule): boolean {
   return rule.some(decl => 
     decl.type === 'decl' && (
@@ -17,17 +17,17 @@ function hasLogicalProperties(rule: Rule): boolean {
   );
 }
 
-// 检查是否是 RTL 选择器
+// Check if selector has RTL direction specificity
 function isRtlSelector(selector: string): boolean {
   return selector.includes(':dir(rtl)') || selector.includes('[dir="rtl"]') || selector.includes("[dir='rtl']");
 }
 
-// 检查是否是 LTR 选择器  
+// Check if selector has LTR direction specificity  
 function isLtrSelector(selector: string): boolean {
   return selector.includes(':dir(ltr)') || selector.includes('[dir="ltr"]') || selector.includes("[dir='ltr']");
 }
 
-// 清理方向选择器
+// Remove direction selectors from a selector string
 function cleanDirectionSelectors(selector: string): string {
   return selector
     .replace(/:dir\(rtl\)/g, '')
@@ -38,46 +38,53 @@ function cleanDirectionSelectors(selector: string): string {
     .trim();
 }
 
-// 统一的规则处理函数 - 修复版本
+// Unified rule processing function - processes a single rule and returns transformed rules
 async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string): Promise<Rule[]> {
   const hasLogical = hasLogicalProperties(rule);
   const hasLtr = rule.selectors.some(isLtrSelector);
   const hasRtl = rule.selectors.some(isRtlSelector);
   
-  // 如果没有逻辑属性也没有方向选择器，直接返回原规则
+  // If rule has no logical properties and no direction selectors, return original rule unchanged
   if (!hasLogical && !hasLtr && !hasRtl) {
     return [rule.clone()];
   }
   
   const results: Rule[] = [];
   
-  // 处理 LTR 的情况：
-  // 1. 有 LTR 选择器的规则
-  // 2. 有逻辑属性但没有任何方向选择器的规则
+  // Process LTR case:
+  // 1. Rules with LTR selectors
+  // 2. Rules with logical properties but no direction selectors
   if (hasLtr || (hasLogical && !hasLtr && !hasRtl)) {
     let selectors = rule.selectors;
     
     if (hasLtr) {
-      // 过滤 LTR 选择器并清理
+      // Filter LTR selectors and clean them
       selectors = rule.selectors.filter(isLtrSelector).map(cleanDirectionSelectors);
     }
-    // else: 如果只有逻辑属性，使用原选择器
+    // else: if only logical properties, use original selectors
     
     if (selectors.length > 0) {
       const ltrRule = rule.clone();
       ltrRule.selectors = selectors;
       
       if (hasLogical) {
-        // 应用逻辑转换
+        // Apply logical property transformation
         const tempRoot = postcss.root();
         tempRoot.append(ltrRule);
-        const transformed = await postcss([logical({ inlineDirection: 'left-to-right' as any })])
-          .process(tempRoot, { from: undefined });
-        
-        transformed.root.walkRules(transformedRule => {
-          transformedRule.selectors = transformedRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-          results.push(transformedRule);
-        });
+        try {
+          const transformed = await postcss([logical({ inlineDirection: 'left-to-right' as any })])
+            .process(tempRoot, { from: undefined });
+          
+          transformed.root.walkRules(transformedRule => {
+            transformedRule.selectors = transformedRule.selectors.map(sel => `${ltrSelector} ${sel}`);
+            results.push(transformedRule);
+          });
+        } catch (error) {
+          console.warn('Failed to process LTR logical properties:', error);
+          // Fallback: add the rule without transformation
+          ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
+          results.push(ltrRule);
+        }
       } else {
         ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
         results.push(ltrRule);
@@ -85,33 +92,40 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string)
     }
   }
   
-  // 处理 RTL 的情况：
-  // 1. 有 RTL 选择器的规则
-  // 2. 有逻辑属性但没有任何方向选择器的规则
+  // Process RTL case:
+  // 1. Rules with RTL selectors
+  // 2. Rules with logical properties but no direction selectors
   if (hasRtl || (hasLogical && !hasLtr && !hasRtl)) {
     let selectors = rule.selectors;
     
     if (hasRtl) {
-      // 过滤 RTL 选择器并清理
+      // Filter RTL selectors and clean them
       selectors = rule.selectors.filter(isRtlSelector).map(cleanDirectionSelectors);
     }
-    // else: 如果只有逻辑属性，使用原选择器
+    // else: if only logical properties, use original selectors
     
     if (selectors.length > 0) {
       const rtlRule = rule.clone();
       rtlRule.selectors = selectors;
       
       if (hasLogical) {
-        // 应用逻辑转换
+        // Apply logical property transformation
         const tempRoot = postcss.root();
         tempRoot.append(rtlRule);
-        const transformed = await postcss([logical({ inlineDirection: 'right-to-left' as any })])
-          .process(tempRoot, { from: undefined });
-        
-        transformed.root.walkRules(transformedRule => {
-          transformedRule.selectors = transformedRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-          results.push(transformedRule);
-        });
+        try {
+          const transformed = await postcss([logical({ inlineDirection: 'right-to-left' as any })])
+            .process(tempRoot, { from: undefined });
+          
+          transformed.root.walkRules(transformedRule => {
+            transformedRule.selectors = transformedRule.selectors.map(sel => `${rtlSelector} ${sel}`);
+            results.push(transformedRule);
+          });
+        } catch (error) {
+          console.warn('Failed to process RTL logical properties:', error);
+          // Fallback: add the rule without transformation
+          rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
+          results.push(rtlRule);
+        }
       } else {
         rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
         results.push(rtlRule);
@@ -130,10 +144,10 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
     postcssPlugin: 'postcss-logical-scope',
     
     async Once(root) {
-      // 收集所有需要处理的规则（包括嵌套在 at-rule 中的）
+      // Collect all rules that need processing (including those nested in at-rules)
       const rulesToProcess: { rule: Rule; parent: Root | AtRule }[] = [];
       
-      // 使用 walkRules 遍历所有规则，无论嵌套层级
+      // Use walkRules to traverse all rules regardless of nesting level
       root.walkRules(rule => {
         const hasLogical = hasLogicalProperties(rule);
         const hasLtr = rule.selectors.some(isLtrSelector);
@@ -144,41 +158,41 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
         }
       });
       
-      // 处理所有规则
+      // Process all rules
       for (const { rule, parent } of rulesToProcess) {
         const processedRules = await processRule(rule, ltrSelector, rtlSelector);
         
-        // 替换原规则
+        // Remove original rule
         rule.remove();
         
-        // 插入新规则
+        // Insert new rules
         processedRules.forEach(newRule => {
           parent.append(newRule);
         });
       }
       
-      // 改进的规则合并 - 正确处理属性覆盖
+      // Improved rule merging - correctly handle property overrides
       const ruleMap = new Map<string, Rule>();
       root.walkRules(rule => {
         const key = rule.selector;
         const existing = ruleMap.get(key);
         
         if (existing) {
-          // 合并声明，后面的属性覆盖前面的
+          // Merge declarations, later properties override earlier ones
           rule.each(decl => {
             if (decl.type === 'decl') {
-              // 检查是否已存在相同属性
+              // Check if property already exists
               let found = false;
               existing.each(existingDecl => {
                 if (existingDecl.type === 'decl' && existingDecl.prop === decl.prop) {
-                  // 覆盖现有值
+                  // Override existing value
                   existingDecl.value = decl.value;
                   found = true;
-                  return false; // 停止遍历
+                  return false; // Stop iteration
                 }
               });
               
-              // 如果没有找到相同属性，添加新的
+              // If property not found, add new one
               if (!found) {
                 existing.append(decl.clone());
               }

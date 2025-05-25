@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
@@ -21,5 +21,23 @@ export default defineConfig({
   },
   plugins: [
     dts({ include: ['src'] })
-  ]
+  ],
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'coverage/**',
+        'dist/**',
+        'examples/**',
+        'scripts/**',
+        '**/*.d.ts',
+        '**/*.config.*',
+        'test/**',
+        '**/node_modules/**'
+      ],
+      include: ['src/**/*.ts'],
+      all: true
+    }
+  }
 });
