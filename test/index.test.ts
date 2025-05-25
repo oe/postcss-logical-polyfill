@@ -238,13 +238,7 @@ describe('postcss-logical-polyfill', () => {
         }
       `,
       expected: `
-        [dir="ltr"] .element {
-          margin-top: 1rem;
-          margin-bottom: 2rem;
-          padding-top: 1rem;
-          padding-bottom: 2rem;
-        }
-        [dir="rtl"] .element {
+        .element {
           margin-top: 1rem;
           margin-bottom: 2rem;
           padding-top: 1rem;

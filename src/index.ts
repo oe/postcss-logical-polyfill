@@ -7,14 +7,59 @@ export interface LogicalPolyfillOptions {
   outputOrder?: 'ltr-first' | 'rtl-first';
 }
 
+// Check if a property is a block-direction logical property (not affected by LTR/RTL)
+function isBlockDirectionProperty(prop: string): boolean {
+  // Block-direction properties use 'block' keyword and don't vary by text direction
+  // These properties affect the vertical axis regardless of LTR/RTL
+  if (prop.includes('block')) {
+    return true;
+  }
+  
+  // Specific inset properties that are block-direction only
+  if (prop === 'inset-block' || prop === 'inset-block-start' || prop === 'inset-block-end') {
+    return true;
+  }
+  
+  // The plain 'inset' property affects all four directions, so it's not block-only
+  // inset-inline* properties are inline-direction
+  
+  return false;
+}
+
 // Check if rule contains logical properties
 function hasLogicalProperties(rule: Rule): boolean {
   return rule.some(decl => 
     decl.type === 'decl' && (
       decl.prop.includes('inline') || 
       decl.prop.includes('block') ||
-      decl.prop.includes('inset')
+      decl.prop.includes('inset') ||
+      // Border radius logical properties
+      decl.prop.includes('border-start-') ||
+      decl.prop.includes('border-end-')
     )
+  );
+}
+
+// Check if rule contains only block-direction logical properties
+function hasOnlyBlockDirectionProperties(rule: Rule): boolean {
+  const logicalDecls: any[] = [];
+  rule.each(node => {
+    if (node.type === 'decl' && (
+      node.prop.includes('inline') || 
+      node.prop.includes('block') ||
+      node.prop.includes('inset') ||
+      // Border radius logical properties
+      node.prop.includes('border-start-') ||
+      node.prop.includes('border-end-')
+    )) {
+      logicalDecls.push(node);
+    }
+  });
+  
+  if (logicalDecls.length === 0) return false;
+  
+  return logicalDecls.every(decl => 
+    decl.type === 'decl' && isBlockDirectionProperty(decl.prop)
   );
 }
 
@@ -44,6 +89,7 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string,
   const hasLogical = hasLogicalProperties(rule);
   const hasLtr = rule.selectors.some(isLtrSelector);
   const hasRtl = rule.selectors.some(isRtlSelector);
+  const hasOnlyBlockProps = hasOnlyBlockDirectionProperties(rule);
   
   // If rule has no logical properties and no direction selectors, return original rule unchanged
   if (!hasLogical && !hasLtr && !hasRtl) {
@@ -51,6 +97,30 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string,
   }
   
   const results: Rule[] = [];
+  
+  // If rule has only block-direction properties and no existing direction selectors,
+  // generate a single rule without direction specificity
+  if (hasOnlyBlockProps && !hasLtr && !hasRtl) {
+    const blockRule = rule.clone();
+    
+    // Apply logical property transformation (using LTR as it doesn't matter for block properties)
+    const tempRoot = postcss.root();
+    tempRoot.append(blockRule);
+    try {
+      const transformed = await postcss([logical({ inlineDirection: 'left-to-right' as any })])
+        .process(tempRoot, { from: undefined });
+      
+      transformed.root.walkRules(transformedRule => {
+        results.push(transformedRule);
+      });
+    } catch (error) {
+      console.warn('Failed to process block logical properties:', error);
+      // Fallback: return the rule without transformation
+      results.push(blockRule);
+    }
+    
+    return results;
+  }
   
   // Helper function to process LTR rules
   const processLtrRules = async () => {

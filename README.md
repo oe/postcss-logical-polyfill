@@ -26,7 +26,11 @@ The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/d
 - **🎯 Intelligent Direction Handling**: 
   - Unscoped logical properties → Generate both `[dir="ltr"]` and `[dir="rtl"]` versions
   - Scoped logical properties → Convert according to existing direction selectors
-- **🔄 Output Order Control**: NEW! Configure the generation order of LTR and RTL rules
+- **⚡ Block-Direction Optimization**: **NEW!** Smart property classification for optimal output
+  - Block-only properties → Generate single rule without direction selectors
+  - Inline properties → Generate separate LTR/RTL rules as needed
+  - Significantly reduces CSS output size and eliminates duplicate rules
+- **🔄 Output Order Control**: Configure the generation order of LTR and RTL rules
   - `outputOrder: 'ltr-first'` (default) for standard layouts
   - `outputOrder: 'rtl-first'` for RTL-primary sites and specificity control
   - Crucial for CSS cascade behavior and framework integration
@@ -34,7 +38,7 @@ The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/d
 - **⚙️ Customizable Selectors**: Configure custom RTL and LTR selectors to match your project needs
 - **🏗️ Nested Rule Support**: Works seamlessly with media queries, at-rules, and nested selectors
 - **🔧 Rule Optimization**: Intelligently merges duplicate rules and handles property overrides
-- **⚡ Error Resilient**: Graceful fallbacks when transformations encounter issues
+- **⚡ Error Resilient**: Graceful fallbacks when transformations encounter issues with enhanced test coverage
 - **🔄 Reverse Transformation**: Unlike other tools that upgrade to logical properties, this downgrades for compatibility
 
 ## Installation
@@ -48,6 +52,67 @@ pnpm add -D postcss-logical-polyfill
 
 # Using yarn
 yarn add -D postcss-logical-polyfill
+```
+
+## Processing Scope
+
+This plugin processes **CSS Logical Properties** and transforms them into physical properties with appropriate direction selectors. Here's exactly what it handles:
+
+### ✅ Supported Logical Properties
+
+The plugin processes all standard [CSS Logical Properties](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Logical_Properties) and intelligently categorizes them:
+
+**Block-Direction Properties** (generate single rule without direction selectors):
+- Properties containing `block` (e.g., `margin-block`, `padding-block-start`, `border-block-width`)
+- Block sizing properties (`block-size`, `min-block-size`, `max-block-size`)
+- Block scroll properties (`scroll-margin-block`, `scroll-padding-block`)
+
+**Inline-Direction Properties** (generate separate LTR and RTL rules):
+- Properties containing `inline` (e.g., `margin-inline`, `padding-inline-start`, `border-inline-color`)
+- Inline sizing properties (`inline-size`, `min-inline-size`, `max-inline-size`)
+- Inline scroll properties (`scroll-margin-inline`, `scroll-padding-inline`)
+- Border radius logical properties (`border-start-start-radius`, `border-end-start-radius`, etc.)
+
+**Mixed-Direction Properties** (affect both dimensions, generate LTR/RTL rules):
+- `inset` (shorthand affecting all four directions)
+
+### ⚠️ What This Plugin Does NOT Handle
+
+- **Physical Properties**: Regular CSS properties like `margin-left`, `padding-top`, `border-right` are left unchanged
+- **Writing Mode Properties**: `writing-mode`, `direction`, `text-orientation` are not processed
+- **Text Direction Properties**: `unicode-bidi`, `text-align` are not modified
+- **Grid/Flexbox Logical Properties**: Grid and flexbox logical properties may be handled by postcss-logical but are not the primary focus
+- **Custom Properties**: CSS custom properties (variables) are preserved as-is
+- **Non-CSS Content**: JavaScript, HTML, or other file types
+
+### 🎯 Processing Behavior
+
+**Unscoped Logical Properties** → Generate both LTR and RTL versions:
+```css
+/* Input */
+.element { margin-inline: 1rem; }
+
+/* Output */
+[dir="ltr"] .element { margin-left: 1rem; margin-right: 1rem; }
+[dir="rtl"] .element { margin-right: 1rem; margin-left: 1rem; }
+```
+
+**Block-Only Properties** → Generate single rule (⭐ NEW optimization):
+```css
+/* Input */
+.element { margin-block: 1rem; }
+
+/* Output */
+.element { margin-top: 1rem; margin-bottom: 1rem; }
+```
+
+**Scoped Logical Properties** → Convert according to existing scope:
+```css
+/* Input */
+[dir="rtl"] .element { margin-inline-start: 1rem; }
+
+/* Output */
+[dir="rtl"] .element { margin-right: 1rem; }
 ```
 
 ## Usage
@@ -86,6 +151,12 @@ postcss([
   padding-inline-start: 1rem;
 }
 
+/* Block-direction properties - NEW! Generate single optimized rule */
+.content {
+  margin-block: 2rem;
+  padding-block-start: 1rem;
+}
+
 /* Scoped logical properties - will convert according to existing scope */
 :dir(rtl) .header {
   margin-inline-end: 2rem;
@@ -113,6 +184,13 @@ postcss([
   padding-right: 1rem;
 }
 
+/* Block-direction properties - NEW! Single optimized rule without direction selectors */
+.content {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+}
+
 /* Scoped styles converted to physical properties */
 [dir="rtl"] .header {
   margin-left: 2rem;
@@ -126,28 +204,41 @@ postcss([
 
 ## How It Works
 
-This polyfill plugin intelligently processes your CSS through several steps:
+This polyfill plugin intelligently processes your CSS through several optimized steps:
 
 1. **🔍 Detection Phase**: Scans all CSS rules (including nested ones) to identify:
    - Rules containing logical properties (`margin-inline`, `padding-block`, `inset-*`, etc.)
    - Rules with existing direction selectors (`:dir(rtl)`, `[dir="rtl"]`, etc.)
+   - **NEW**: Distinguishes between block-direction and inline-direction properties
 
-2. **🔄 Polyfill Transformation Phase**: For each qualifying rule:
-   - **Unscoped Logical Properties**: Creates separate LTR and RTL physical property versions
-   - **Scoped Direction Rules**: Converts logical properties according to the existing direction scope
-   - **Mixed Rules**: Handles complex scenarios with both logical properties and direction selectors
+2. **🎯 Smart Property Classification** (⭐ NEW optimization):
+   - **Block-Direction Properties**: `margin-block`, `padding-block-start`, `inset-block`, etc.
+     - Generate single rules without direction selectors (same in LTR and RTL)
+     - Reduces CSS output size and eliminates duplicate rules
+   - **Inline-Direction Properties**: `margin-inline`, `padding-inline-start`, `inset-inline`, etc.
+     - Generate separate LTR and RTL rules (different values per direction)
+   - **Mixed Properties**: `inset` (affects all four directions)
+     - Generate LTR and RTL rules like inline properties
 
-3. **🎯 Selector Application**: Adds appropriate direction selectors:
+3. **🔄 Polyfill Transformation Phase**: For each qualifying rule:
+   - **Block-Only Rules**: Convert directly to physical properties without direction selectors
+   - **Inline/Mixed Rules**: Create separate LTR and RTL physical property versions
+   - **Scoped Direction Rules**: Convert logical properties according to the existing direction scope
+   - **Complex Rules**: Handle scenarios with both block and inline properties intelligently
+
+4. **🎯 Selector Application**: Adds appropriate direction selectors when needed:
+   - No selectors for block-only properties (optimization)
    - `[dir="ltr"]` for left-to-right physical properties
    - `[dir="rtl"]` for right-to-left physical properties  
    - Cleans existing direction selectors to avoid duplication
 
-4. **🔧 Optimization Phase**: 
+5. **🔧 Optimization Phase**: 
    - Merges duplicate rules with identical selectors
    - Handles property overrides correctly (later properties override earlier ones)
    - Removes redundant CSS declarations
+   - **NEW**: Eliminates unnecessary direction-specific rules for block properties
 
-5. **✨ Output Generation**: Produces clean, optimized CSS with physical properties for maximum browser compatibility
+6. **✨ Output Generation**: Produces clean, optimized CSS with physical properties for maximum browser compatibility
 
 ## More Examples
 
