@@ -3,7 +3,7 @@ import postcss from 'postcss';
 import logicalScope from '../src';
 
 // Test case type definition
-interface TestCase {
+export interface TestCase {
   name: string;
   input: string;
   expected: string;

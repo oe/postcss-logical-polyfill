@@ -1,9 +1,9 @@
 import { describe, test } from 'vitest';
-import { runTestCase } from './test-utils';
+import { runTestCase, TestCase } from './test-utils';
 
 describe('postcss-logical-scope', () => {
   // Array of test cases
-  const testCases = [
+  const testCases: TestCase[] = [
     {
       name: 'Basic logical properties transformation',
       input: `
