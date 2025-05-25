@@ -208,4 +208,8 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
 };
 
 logicalScope.postcss = true;
+
+// Support both CommonJS and ESM
+module.exports = logicalScope;
+module.exports.default = logicalScope;
 export default logicalScope;

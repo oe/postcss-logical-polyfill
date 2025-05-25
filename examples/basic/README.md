@@ -13,13 +13,13 @@ This example demonstrates how to use `postcss-logical-polyfill` with plain CSS f
 From this directory, run:
 
 ```bash
-npx postcss input.css -o output.css
+npx tsx process.ts
 ```
 
 Or from the project root:
 
 ```bash
-npm run examples
+pnpm run examples
 ```
 
 ## What to Look For

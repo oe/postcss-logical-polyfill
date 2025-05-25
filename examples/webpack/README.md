@@ -23,7 +23,7 @@ npx tsx process.ts
 Or from the project root:
 
 ```bash
-npm run examples
+pnpm run examples
 ```
 
 ## What to Look For

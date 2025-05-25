@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as sassLib from 'sass';
 import postcss from 'postcss';
-import postcssLogicalScope from '../../dist';
+import postcssLogicalScope from '../..';
 
 // File paths
 const inputFile = path.join(__dirname, 'input.scss');

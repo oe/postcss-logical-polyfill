@@ -1,4 +1,4 @@
-# This example demonstrates how to use `postcss-logical-polyfill` with SASS preprocessor.
+# SASS Example
 
 ## Files
 
@@ -25,7 +25,7 @@ npx tsx process.ts
 Or from the project root:
 
 ```bash
-npm run examples
+pnpm run examples
 ```
 
 ## What to Look For

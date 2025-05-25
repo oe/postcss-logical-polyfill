@@ -3,7 +3,7 @@ import * as path from 'path';
 // @ts-expect-error ignore missing types for less
 import less from 'less';
 import postcss from 'postcss';
-import postcssLogicalScope from '../../dist';
+import postcssLogicalScope from '../..';
 
 // File paths
 const inputFile = path.join(__dirname, 'input.less');

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import postcss from 'postcss';
-import postcssLogicalScope from '../../dist';
+import postcssLogicalScope from '../..';
 
 // File paths
 const inputFile = path.join(__dirname, 'input.css');

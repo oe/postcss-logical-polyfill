@@ -1,0 +1,13 @@
+{
+  "name": "postcss-logical-polyfill-postcss-cli-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example using postcss-logical-polyfill with PostCSS CLI",
+  "scripts": {
+    "build": "postcss input.css -o output.css",
+    "clean": "rm -f output.css"
+  },
+  "devDependencies": {
+    "postcss-cli": "^11.0.0"
+  }
+}

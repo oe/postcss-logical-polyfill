@@ -231,7 +231,7 @@ A simple example with plain CSS and PostCSS.
 ```bash
 # Run the basic example
 cd examples/basic
-npx postcss input.css -o output.css
+npx tsx process.ts
 ```
 
 ### LESS Integration
@@ -270,7 +270,7 @@ You can run all examples at once using:
 
 ```bash
 # Run all examples
-npm run examples
+pnpm run examples
 ```
 
 ## Requirements
