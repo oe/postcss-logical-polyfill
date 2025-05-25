@@ -1,4 +1,4 @@
-// Example postcss.config.js
+// Example postcss.config.js for postcss-logical-polyfill
 module.exports = {
   plugins: [
     require('../../')({

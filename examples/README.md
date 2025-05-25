@@ -1,6 +1,6 @@
-# postcss-logical-scope Examples
+# postcss-logical-polyfill Examples
 
-This directory contains examples demonstrating how to use the `postcss-logical-scope` plugin in various scenarios.
+This directory contains examples demonstrating how to use the `postcss-logical-polyfill` plugin in various scenarios.
 
 ## Available Examples
 

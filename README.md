@@ -1,4 +1,4 @@
-# postcss-logical-scope
+# postcss-logical-polyfill
 
 [![NPM Version][npm-img]][npm-url]
 [![Build Status][build-img]][build-url]
@@ -6,35 +6,43 @@
 [![Package Size][size-img]][size-url]
 [![License][license-img]][license-url]
 
-A PostCSS plugin that transforms CSS logical properties to physical properties for both LTR and RTL contexts with intelligent direction-specific selector handling.
+A PostCSS plugin that provides physical property polyfills for CSS logical properties, enabling backward compatibility for older browsers and environments that don't support logical properties natively.
 
 ## Why?
 
-The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Logical_Properties) provides direction-independent layout controls. While these properties are increasingly supported in modern browsers, you might need to provide fallbacks for older browsers or generate separate stylesheets for different reading directions.
+While most modern tools help you **upgrade** from physical properties to logical properties, this plugin does the **opposite** - it transforms logical properties back to physical properties for maximum browser compatibility.
 
-This plugin helps by transforming logical properties to their physical counterparts with appropriate direction selectors, making it easier to support both LTR and RTL layouts.
+The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Logical_Properties) provides elegant direction-independent layout controls, but older browsers don't support them. This plugin acts as a polyfill, converting your modern logical properties to physical properties with appropriate direction selectors.
+
+**Key Differences from Other Tools:**
+- 🔄 **Reverse Direction**: Converts logical properties → physical properties (not the other way around)
+- 🎯 **Smart Scoping**: Automatically generates LTR and RTL versions for unscoped logical properties
+- 📐 **Direction-Aware**: Respects existing direction selectors and converts accordingly
 
 ## Features
 
-- **🔄 Bidirectional Transformation**: Converts logical properties to physical properties for both LTR and RTL contexts
-- **🎯 Smart Selector Handling**: Automatically adds `[dir="ltr"]` and `[dir="rtl"]` selectors to styles containing logical properties
-- **📐 Direction-Aware Processing**: Respects and processes existing direction-specific selectors (`:dir(rtl)`, `[dir="rtl"]`, `:dir(ltr)`, `[dir="ltr"]`)
+- **📱 Logical Property Polyfill**: Converts modern CSS logical properties to physical properties for browser compatibility
+- **🎯 Intelligent Direction Handling**: 
+  - Unscoped logical properties → Generate both `[dir="ltr"]` and `[dir="rtl"]` versions
+  - Scoped logical properties → Convert according to existing direction selectors
+- **📐 Direction-Aware Processing**: Respects existing direction selectors (`:dir(rtl)`, `[dir="rtl"]`, `:dir(ltr)`, `[dir="ltr"]`)
 - **⚙️ Customizable Selectors**: Configure custom RTL and LTR selectors to match your project needs
 - **🏗️ Nested Rule Support**: Works seamlessly with media queries, at-rules, and nested selectors
 - **🔧 Rule Optimization**: Intelligently merges duplicate rules and handles property overrides
 - **⚡ Error Resilient**: Graceful fallbacks when transformations encounter issues
+- **🔄 Reverse Transformation**: Unlike other tools that upgrade to logical properties, this downgrades for compatibility
 
 ## Installation
 
 ```bash
 # Using npm
-npm install postcss-logical-scope --save-dev
+npm install postcss-logical-polyfill --save-dev
 
 # Using pnpm
-pnpm add -D postcss-logical-scope
+pnpm add -D postcss-logical-polyfill
 
 # Using yarn
-yarn add -D postcss-logical-scope
+yarn add -D postcss-logical-polyfill
 ```
 
 ## Usage
@@ -43,17 +51,17 @@ yarn add -D postcss-logical-scope
 // postcss.config.js
 module.exports = {
   plugins: [
-    require('postcss-logical-scope')()
+    require('postcss-logical-polyfill')()
   ]
 }
 ```
 
 ```js
 // With options
-const logicalScope = require('postcss-logical-scope');
+const logicalPolyfill = require('postcss-logical-polyfill');
 
 postcss([
-  logicalScope({
+  logicalPolyfill({
     rtl: {
       selector: '[dir="rtl"]'  // Default
     },
@@ -67,13 +75,13 @@ postcss([
 ### Input
 
 ```css
-/* Regular styles with logical properties */
+/* Unscoped logical properties - will generate both LTR and RTL versions */
 .container {
   margin-inline: 1rem;
   padding-inline-start: 1rem;
 }
 
-/* Direction-specific styles */
+/* Scoped logical properties - will convert according to existing scope */
 :dir(rtl) .header {
   margin-inline-end: 2rem;
 }
@@ -86,21 +94,21 @@ postcss([
 ### Output
 
 ```css
-/* LTR physical properties */
+/* Generated LTR physical properties */
 [dir="ltr"] .container {
   margin-left: 1rem;
   margin-right: 1rem;
   padding-left: 1rem;
 }
 
-/* RTL physical properties */
+/* Generated RTL physical properties */
 [dir="rtl"] .container {
   margin-right: 1rem;
   margin-left: 1rem;
   padding-right: 1rem;
 }
 
-/* Direction-specific styles converted */
+/* Scoped styles converted to physical properties */
 [dir="rtl"] .header {
   margin-left: 2rem;
 }
@@ -113,20 +121,20 @@ postcss([
 
 ## How It Works
 
-This plugin intelligently processes your CSS through several steps:
+This polyfill plugin intelligently processes your CSS through several steps:
 
 1. **🔍 Detection Phase**: Scans all CSS rules (including nested ones) to identify:
    - Rules containing logical properties (`margin-inline`, `padding-block`, `inset-*`, etc.)
    - Rules with existing direction selectors (`:dir(rtl)`, `[dir="rtl"]`, etc.)
 
-2. **🔄 Transformation Phase**: For each qualifying rule:
-   - **Logical Properties**: Creates separate LTR and RTL versions using the postcss-logical transformation engine
-   - **Direction-Specific Rules**: Processes existing direction selectors and converts their logical properties appropriately
-   - **Mixed Rules**: Handles rules that have both logical properties and direction selectors
+2. **🔄 Polyfill Transformation Phase**: For each qualifying rule:
+   - **Unscoped Logical Properties**: Creates separate LTR and RTL physical property versions
+   - **Scoped Direction Rules**: Converts logical properties according to the existing direction scope
+   - **Mixed Rules**: Handles complex scenarios with both logical properties and direction selectors
 
 3. **🎯 Selector Application**: Adds appropriate direction selectors:
-   - `[dir="ltr"]` for left-to-right transformations
-   - `[dir="rtl"]` for right-to-left transformations  
+   - `[dir="ltr"]` for left-to-right physical properties
+   - `[dir="rtl"]` for right-to-left physical properties  
    - Cleans existing direction selectors to avoid duplication
 
 4. **🔧 Optimization Phase**: 
@@ -134,7 +142,7 @@ This plugin intelligently processes your CSS through several steps:
    - Handles property overrides correctly (later properties override earlier ones)
    - Removes redundant CSS declarations
 
-5. **✨ Output Generation**: Produces clean, optimized CSS with proper direction support
+5. **✨ Output Generation**: Produces clean, optimized CSS with physical properties for maximum browser compatibility
 
 ## More Examples
 
@@ -197,7 +205,7 @@ Configure custom selectors for specific frameworks or design systems:
 
 ```js
 postcss([
-  logicalScope({
+  logicalPolyfill({
     ltr: { selector: '.ltr' },      // For frameworks like Tailwind
     rtl: { selector: '.rtl' }       // Custom RTL class
   })
@@ -206,10 +214,11 @@ postcss([
 
 ### Best Practices
 
-1. **🎯 Use Logical Properties Consistently**: Prefer logical properties over physical ones for better internationalization
-2. **⚡ Minimize Direction-Specific Rules**: Let the plugin handle most transformations automatically
+1. **🎯 Start with Logical Properties**: Write your CSS using logical properties, let the plugin handle the polyfill
+2. **⚡ Minimize Pre-scoped Rules**: Let the plugin automatically generate direction variants for better maintainability
 3. **🔧 Test Both Directions**: Always test your layouts in both LTR and RTL modes
-4. **📱 Consider Mobile**: Logical properties work especially well for responsive designs
+4. **📱 Consider Progressive Enhancement**: Use this plugin to ensure compatibility while keeping logical properties in your source code
+5. **🔄 Gradual Migration**: Perfect for teams transitioning from physical to logical properties
 
 ## Examples
 
@@ -275,19 +284,19 @@ Contributions are welcome! Please see our [contributing guidelines](./CONTRIBUTI
 
 ## Credits
 
-This plugin wraps and extends [postcss-logical](https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-logical).
+This plugin wraps and extends [postcss-logical](https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-logical) to provide polyfill functionality.
 
 ## License
 
 [MIT](./LICENSE)
 
-[npm-url]: https://www.npmjs.com/package/postcss-logical-scope
-[npm-img]: https://img.shields.io/npm/v/postcss-logical-scope
-[build-url]: https://github.com/oe/postcss-logical-scope/actions/workflows/ci.yml
-[build-img]: https://github.com/oe/postcss-logical-scope/actions/workflows/ci.yml/badge.svg
-[size-url]: https://packagephobia.com/result?p=postcss-logical-scope
-[size-img]: https://packagephobia.com/badge?p=postcss-logical-scope
-[types-url]: https://www.npmjs.com/package/postcss-logical-scope
-[types-img]: https://img.shields.io/npm/types/postcss-logical-scope
+[npm-url]: https://www.npmjs.com/package/postcss-logical-polyfill
+[npm-img]: https://img.shields.io/npm/v/postcss-logical-polyfill
+[build-url]: https://github.com/oe/postcss-logical-polyfill/actions/workflows/ci.yml
+[build-img]: https://github.com/oe/postcss-logical-polyfill/actions/workflows/ci.yml/badge.svg
+[size-url]: https://packagephobia.com/result?p=postcss-logical-polyfill
+[size-img]: https://packagephobia.com/badge?p=postcss-logical-polyfill
+[types-url]: https://www.npmjs.com/package/postcss-logical-polyfill
+[types-img]: https://img.shields.io/npm/types/postcss-logical-polyfill
 [license-url]: LICENSE
-[license-img]: https://img.shields.io/npm/l/postcss-logical-scope
+[license-img]: https://img.shields.io/npm/l/postcss-logical-polyfill

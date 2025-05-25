@@ -1,4 +1,4 @@
-/* Example of using postcss-logical-scope with webpack */
+/* Example of using postcss-logical-polyfill with webpack */
 html {
   font-family: system-ui, sans-serif;
 }

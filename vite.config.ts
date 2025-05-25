@@ -6,7 +6,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'postcss-logical-scope',
+      name: 'postcss-logical-polyfill',
       fileName: 'index',
       formats: ['es', 'cjs']
     },

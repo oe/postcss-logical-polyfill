@@ -22,8 +22,8 @@ module.exports = {
             options: {
               postcssOptions: {
                 plugins: [
-                  require('../../')({
-                    // Configure RTL and LTR transformations
+                  require('../../dist/index.js').default({
+                    // Configure RTL and LTR transformations for postcss-logical-polyfill
                     rtl: {
                       selector: '[dir="rtl"]'
                     },

@@ -1,3 +1,4 @@
+// Example postcss.config.js for postcss-logical-polyfill with SASS
 module.exports = {
   plugins: [
     require('postcss-scss')({ parse: true }),

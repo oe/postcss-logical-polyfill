@@ -1,11 +1,16 @@
-# SASS Example
+# This example demonstrates how to use `postcss-logical-polyfill` with SASS preprocessor.
 
-This example demonstrates how to use `postcss-logical-scope` with SASS preprocessor.
+## Files
+
+- `input.scss` - The source SASS file with logical properties and direction-specific selectors
+- `process.ts` - Script to compile SASS and process with postcss-logical-polyfillxample
+
+This example demonstrates how to use `postcss-logical-polyfill` with SASS preprocessor.
 
 ## Files
 
 - `input.scss` - The source SCSS file with logical properties and direction-specific selectors
-- `process.ts` - Script to compile SASS and process with postcss-logical-scope
+- `process.ts` - Script to compile SASS and process with postcss-logical-polyfill
 - `tsconfig.json` - TypeScript configuration for the process script
 - `output.css` - The processed CSS file (generated when you run the example)
 

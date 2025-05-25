@@ -1,7 +1,7 @@
 import { describe, test } from 'vitest';
 import { runTestCase, TestCase } from './test-utils';
 
-describe('postcss-logical-scope coverage tests', () => {
+describe('postcss-logical-polyfill coverage tests', () => {
   // Test cases to improve code coverage
   const coverageTestCases: TestCase[] = [
     {

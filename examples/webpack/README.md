@@ -1,6 +1,6 @@
 # Webpack Example
 
-This example demonstrates how to use `postcss-logical-scope` with Webpack.
+This example demonstrates how to use `postcss-logical-polyfill` with Webpack.
 
 ## Files
 

@@ -1,11 +1,11 @@
 # LESS Example
 
-This example demonstrates how to use `postcss-logical-scope` with LESS preprocessor.
+This example demonstrates how to use `postcss-logical-polyfill` with LESS preprocessor.
 
 ## Files
 
 - `input.less` - The source LESS file with logical properties and direction-specific selectors
-- `process.ts` - Script to compile LESS and process with postcss-logical-scope
+- `process.ts` - Script to compile LESS and process with postcss-logical-polyfill
 - `tsconfig.json` - TypeScript configuration for the process script
 - `output.css` - The processed CSS file (generated when you run the example)
 

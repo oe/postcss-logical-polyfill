@@ -1,3 +1,4 @@
+// Example postcss.config.js for postcss-logical-polyfill with LESS
 module.exports = {
   plugins: [
     require('postcss-less')({ parse: true }),

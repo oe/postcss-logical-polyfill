@@ -141,7 +141,7 @@ const logicalScope: PluginCreator<LogicalScopeOptions> = (opts = {}) => {
   const ltrSelector = opts.ltr?.selector || '[dir="ltr"]';
 
   return {
-    postcssPlugin: 'postcss-logical-scope',
+    postcssPlugin: 'postcss-logical-polyfill',
     
     async Once(root) {
       // Collect all rules that need processing (including those nested in at-rules)

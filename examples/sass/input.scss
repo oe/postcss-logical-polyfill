@@ -1,5 +1,5 @@
 @use "sass:color";
-/* Example of using postcss-logical-scope with SASS */
+/* Example of using postcss-logical-polyfill with SASS */
 $primary-color: #3498db;
 
 @mixin rtl-padding {

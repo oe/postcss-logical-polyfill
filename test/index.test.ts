@@ -1,7 +1,7 @@
 import { describe, test } from 'vitest';
 import { runTestCase, TestCase } from './test-utils';
 
-describe('postcss-logical-scope', () => {
+describe('postcss-logical-polyfill', () => {
   // Array of test cases
   const testCases: TestCase[] = [
     {

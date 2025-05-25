@@ -1,6 +1,6 @@
-# Contributing to postcss-logical-scope
+# Contributing to postcss-logical-polyfill
 
-Thank you for considering contributing to postcss-logical-scope! This document outlines the process for contributing to the project.
+Thank you for considering contributing to postcss-logical-polyfill! This document outlines the process for contributing to the project.
 
 ## Development
 
@@ -62,4 +62,4 @@ Please adhere to the project's code of conduct in all your interactions with the
 
 ## License
 
-By contributing to postcss-logical-scope, you agree that your contributions will be licensed under the project's MIT license.
+By contributing to postcss-logical-polyfill, you agree that your contributions will be licensed under the project's MIT license.

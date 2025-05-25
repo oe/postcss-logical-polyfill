@@ -1,7 +1,7 @@
 {
-  "name": "postcss-logical-scope",
+  "name": "postcss-logical-polyfill",
   "version": "0.1.0",
-  "description": "A PostCSS plugin that extends postcss-logical with direction-aware selectors for RTL support",
+  "description": "A PostCSS plugin that provides physical property polyfills for CSS logical properties with intelligent direction-aware selector handling",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -25,22 +25,27 @@
     "postcss",
     "postcss-plugin",
     "css",
-    "rtl",
+    "polyfill",
     "logical-properties",
+    "physical-properties",
+    "rtl",
+    "ltr",
     "dir",
     "direction",
+    "fallback",
+    "compatibility",
     "typescript"
   ],
   "author": "Saiya",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oe/postcss-logical-scope.git"
+    "url": "https://github.com/oe/postcss-logical-polyfill.git"
   },
   "bugs": {
-    "url": "https://github.com/oe/postcss-logical-scope/issues"
+    "url": "https://github.com/oe/postcss-logical-polyfill/issues"
   },
-  "homepage": "https://github.com/oe/postcss-logical-scope#readme",
+  "homepage": "https://github.com/oe/postcss-logical-polyfill#readme",
   "engines": {
     "node": ">=14.0.0"
   },

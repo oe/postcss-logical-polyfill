@@ -1,6 +1,6 @@
 # Basic Example
 
-This example demonstrates how to use `postcss-logical-scope` with plain CSS files.
+This example demonstrates how to use `postcss-logical-polyfill` with plain CSS files.
 
 ## Files
 
