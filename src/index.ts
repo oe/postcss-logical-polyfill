@@ -4,6 +4,7 @@ import logical from 'postcss-logical';
 export interface LogicalPolyfillOptions {
   rtl?: { selector?: string };
   ltr?: { selector?: string };
+  outputOrder?: 'ltr-first' | 'rtl-first';
 }
 
 // Check if rule contains logical properties
@@ -39,7 +40,7 @@ function cleanDirectionSelectors(selector: string): string {
 }
 
 // Unified rule processing function - processes a single rule and returns transformed rules
-async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string): Promise<Rule[]> {
+async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string, outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'): Promise<Rule[]> {
   const hasLogical = hasLogicalProperties(rule);
   const hasLtr = rule.selectors.some(isLtrSelector);
   const hasRtl = rule.selectors.some(isRtlSelector);
@@ -51,86 +52,95 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string)
   
   const results: Rule[] = [];
   
-  // Process LTR case:
-  // 1. Rules with LTR selectors
-  // 2. Rules with logical properties but no direction selectors
-  if (hasLtr || (hasLogical && !hasLtr && !hasRtl)) {
-    let selectors = rule.selectors;
-    
-    if (hasLtr) {
-      // Filter LTR selectors and clean them
-      selectors = rule.selectors.filter(isLtrSelector).map(cleanDirectionSelectors);
-    }
-    // else: if only logical properties, use original selectors
-    
-    if (selectors.length > 0) {
-      const ltrRule = rule.clone();
-      ltrRule.selectors = selectors;
+  // Helper function to process LTR rules
+  const processLtrRules = async () => {
+    if (hasLtr || (hasLogical && !hasLtr && !hasRtl)) {
+      let selectors = rule.selectors;
       
-      if (hasLogical) {
-        // Apply logical property transformation
-        const tempRoot = postcss.root();
-        tempRoot.append(ltrRule);
-        try {
-          const transformed = await postcss([logical({ inlineDirection: 'left-to-right' as any })])
-            .process(tempRoot, { from: undefined });
-          
-          transformed.root.walkRules(transformedRule => {
-            transformedRule.selectors = transformedRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-            results.push(transformedRule);
-          });
-        } catch (error) {
-          console.warn('Failed to process LTR logical properties:', error);
-          // Fallback: add the rule without transformation
+      if (hasLtr) {
+        // Filter LTR selectors and clean them
+        selectors = rule.selectors.filter(isLtrSelector).map(cleanDirectionSelectors);
+      }
+      // else: if only logical properties, use original selectors
+      
+      if (selectors.length > 0) {
+        const ltrRule = rule.clone();
+        ltrRule.selectors = selectors;
+        
+        if (hasLogical) {
+          // Apply logical property transformation
+          const tempRoot = postcss.root();
+          tempRoot.append(ltrRule);
+          try {
+            const transformed = await postcss([logical({ inlineDirection: 'left-to-right' as any })])
+              .process(tempRoot, { from: undefined });
+            
+            transformed.root.walkRules(transformedRule => {
+              transformedRule.selectors = transformedRule.selectors.map(sel => `${ltrSelector} ${sel}`);
+              results.push(transformedRule);
+            });
+          } catch (error) {
+            console.warn('Failed to process LTR logical properties:', error);
+            // Fallback: add the rule without transformation
+            ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
+            results.push(ltrRule);
+          }
+        } else {
           ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
           results.push(ltrRule);
         }
-      } else {
-        ltrRule.selectors = ltrRule.selectors.map(sel => `${ltrSelector} ${sel}`);
-        results.push(ltrRule);
       }
     }
-  }
-  
-  // Process RTL case:
-  // 1. Rules with RTL selectors
-  // 2. Rules with logical properties but no direction selectors
-  if (hasRtl || (hasLogical && !hasLtr && !hasRtl)) {
-    let selectors = rule.selectors;
-    
-    if (hasRtl) {
-      // Filter RTL selectors and clean them
-      selectors = rule.selectors.filter(isRtlSelector).map(cleanDirectionSelectors);
-    }
-    // else: if only logical properties, use original selectors
-    
-    if (selectors.length > 0) {
-      const rtlRule = rule.clone();
-      rtlRule.selectors = selectors;
+  };
+
+  // Helper function to process RTL rules
+  const processRtlRules = async () => {
+    if (hasRtl || (hasLogical && !hasLtr && !hasRtl)) {
+      let selectors = rule.selectors;
       
-      if (hasLogical) {
-        // Apply logical property transformation
-        const tempRoot = postcss.root();
-        tempRoot.append(rtlRule);
-        try {
-          const transformed = await postcss([logical({ inlineDirection: 'right-to-left' as any })])
-            .process(tempRoot, { from: undefined });
-          
-          transformed.root.walkRules(transformedRule => {
-            transformedRule.selectors = transformedRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-            results.push(transformedRule);
-          });
-        } catch (error) {
-          console.warn('Failed to process RTL logical properties:', error);
-          // Fallback: add the rule without transformation
+      if (hasRtl) {
+        // Filter RTL selectors and clean them
+        selectors = rule.selectors.filter(isRtlSelector).map(cleanDirectionSelectors);
+      }
+      // else: if only logical properties, use original selectors
+      
+      if (selectors.length > 0) {
+        const rtlRule = rule.clone();
+        rtlRule.selectors = selectors;
+        
+        if (hasLogical) {
+          // Apply logical property transformation
+          const tempRoot = postcss.root();
+          tempRoot.append(rtlRule);
+          try {
+            const transformed = await postcss([logical({ inlineDirection: 'right-to-left' as any })])
+              .process(tempRoot, { from: undefined });
+            
+            transformed.root.walkRules(transformedRule => {
+              transformedRule.selectors = transformedRule.selectors.map(sel => `${rtlSelector} ${sel}`);
+              results.push(transformedRule);
+            });
+          } catch (error) {
+            console.warn('Failed to process RTL logical properties:', error);
+            // Fallback: add the rule without transformation
+            rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
+            results.push(rtlRule);
+          }
+        } else {
           rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
           results.push(rtlRule);
         }
-      } else {
-        rtlRule.selectors = rtlRule.selectors.map(sel => `${rtlSelector} ${sel}`);
-        results.push(rtlRule);
       }
     }
+  };
+
+  // Process rules in the specified order
+  if (outputOrder === 'ltr-first') {
+    await processLtrRules();
+    await processRtlRules();
+  } else {
+    await processRtlRules();
+    await processLtrRules();
   }
   
   return results;
@@ -139,6 +149,7 @@ async function processRule(rule: Rule, ltrSelector: string, rtlSelector: string)
 const logicalPolyfill: PluginCreator<LogicalPolyfillOptions> = (opts = {}) => {
   const rtlSelector = opts.rtl?.selector || '[dir="rtl"]';
   const ltrSelector = opts.ltr?.selector || '[dir="ltr"]';
+  const outputOrder = opts.outputOrder || 'ltr-first';
 
   return {
     postcssPlugin: 'postcss-logical-polyfill',
@@ -160,7 +171,7 @@ const logicalPolyfill: PluginCreator<LogicalPolyfillOptions> = (opts = {}) => {
       
       // Process all rules
       for (const { rule, parent } of rulesToProcess) {
-        const processedRules = await processRule(rule, ltrSelector, rtlSelector);
+        const processedRules = await processRule(rule, ltrSelector, rtlSelector, outputOrder);
         
         // Remove original rule
         rule.remove();

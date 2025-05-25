@@ -1,0 +1,36 @@
+/* Example CSS to demonstrate outputOrder configuration */
+
+/* Unscoped logical properties - affected by outputOrder */
+
+/* Scoped properties - NOT affected by outputOrder */
+
+[dir="rtl"] .container {
+  margin-right: 1rem;
+  margin-left: 1rem;
+  padding-right: 2rem;
+}
+
+[dir="ltr"] .container {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  padding-left: 2rem;
+}
+
+[dir="rtl"] .button {
+  margin-right: 0.5rem;
+  margin-left: 1rem;
+}
+
+[dir="ltr"] .button {
+  margin-left: 0.5rem;
+  margin-right: 1rem;
+}
+
+[dir="rtl"] .header {
+  padding-left: 1rem;
+}
+
+[dir="ltr"] .sidebar {
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+}

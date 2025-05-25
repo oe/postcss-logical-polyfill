@@ -288,4 +288,123 @@ describe('postcss-logical-polyfill', () => {
       await runTestCase(testCase);
     });
   });
+
+  // Output Order Configuration test cases
+  const outputOrderTestCases: TestCase[] = [
+    {
+      name: 'Default ltr-first order',
+      input: `
+        .container {
+          margin-inline: 1rem;
+        }
+      `,
+      expected: `
+        [dir="ltr"] .container {
+          margin-left: 1rem;
+          margin-right: 1rem;
+        }
+        [dir="rtl"] .container {
+          margin-right: 1rem;
+          margin-left: 1rem;
+        }
+      `
+    },
+
+    {
+      name: 'RTL-first order configuration',
+      input: `
+        .container {
+          margin-inline: 1rem;
+        }
+      `,
+      expected: `
+        [dir="rtl"] .container {
+          margin-right: 1rem;
+          margin-left: 1rem;
+        }
+        [dir="ltr"] .container {
+          margin-left: 1rem;
+          margin-right: 1rem;
+        }
+      `,
+      options: {
+        outputOrder: 'rtl-first'
+      }
+    },
+
+    {
+      name: 'RTL-first with complex logical properties',
+      input: `
+        .container {
+          margin-inline-start: 1rem;
+          margin-inline-end: 2rem;
+          padding-inline: 0.5rem;
+        }
+      `,
+      expected: `
+        [dir="rtl"] .container {
+          margin-right: 1rem;
+          margin-left: 2rem;
+          padding-right: 0.5rem;
+          padding-left: 0.5rem;
+        }
+        [dir="ltr"] .container {
+          margin-left: 1rem;
+          margin-right: 2rem;
+          padding-left: 0.5rem;
+          padding-right: 0.5rem;
+        }
+      `,
+      options: {
+        outputOrder: 'rtl-first'
+      }
+    },
+
+    {
+      name: 'Output order only affects unscoped logical properties',
+      input: `
+        .container {
+          margin-inline: 1rem;
+        }
+        
+        [dir="ltr"] .specific {
+          padding-inline: 2rem;
+        }
+        
+        [dir="rtl"] .specific {
+          padding-inline: 3rem;
+        }
+      `,
+      expected: `
+        [dir="rtl"] .container {
+          margin-right: 1rem;
+          margin-left: 1rem;
+        }
+        [dir="ltr"] .container {
+          margin-left: 1rem;
+          margin-right: 1rem;
+        }
+        [dir="ltr"] .specific {
+          padding-left: 2rem;
+          padding-right: 2rem;
+        }
+        [dir="rtl"] .specific {
+          padding-right: 3rem;
+          padding-left: 3rem;
+        }
+      `,
+      options: {
+        outputOrder: 'rtl-first'
+      }
+    }
+  ];
+
+  // Generate tests for output order test cases
+  describe('Output Order Configuration', () => {
+    outputOrderTestCases.forEach(testCase => {
+      test(testCase.name, async () => {
+        await runTestCase(testCase);
+      });
+    });
+  });
 });

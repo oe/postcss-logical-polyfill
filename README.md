@@ -2,6 +2,7 @@
 
 [![NPM Version][npm-img]][npm-url]
 [![Build Status][build-img]][build-url]
+[![Coverage Status][coverage-img]][coverage-url]
 [![Types][types-img]][types-url]
 [![Package Size][size-img]][size-url]
 [![License][license-img]][license-url]
@@ -25,6 +26,10 @@ The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/d
 - **🎯 Intelligent Direction Handling**: 
   - Unscoped logical properties → Generate both `[dir="ltr"]` and `[dir="rtl"]` versions
   - Scoped logical properties → Convert according to existing direction selectors
+- **🔄 Output Order Control**: NEW! Configure the generation order of LTR and RTL rules
+  - `outputOrder: 'ltr-first'` (default) for standard layouts
+  - `outputOrder: 'rtl-first'` for RTL-primary sites and specificity control
+  - Crucial for CSS cascade behavior and framework integration
 - **📐 Direction-Aware Processing**: Respects existing direction selectors (`:dir(rtl)`, `[dir="rtl"]`, `:dir(ltr)`, `[dir="ltr"]`)
 - **⚙️ Customizable Selectors**: Configure custom RTL and LTR selectors to match your project needs
 - **🏗️ Nested Rule Support**: Works seamlessly with media queries, at-rules, and nested selectors
@@ -178,6 +183,68 @@ Default: `[dir="ltr"]`
 
 The selector to add for LTR rules. This selector determines how LTR-specific physical properties are scoped in the output CSS.
 
+### `outputOrder`
+
+Type: `'ltr-first' | 'rtl-first'`
+Default: `'ltr-first'`
+
+Controls the output order of generated rules for unscoped logical properties. This only affects rules that don't already have direction selectors (`:dir()` or `[dir=""]`).
+
+- **`'ltr-first'` (default)**: Outputs LTR rules first, then RTL rules
+- **`'rtl-first'`**: Outputs RTL rules first, then LTR rules
+
+**Usage example:**
+
+```js
+// Default behavior - LTR rules come first
+logicalPolyfill({
+  outputOrder: 'ltr-first'  // Default
+})
+
+// RTL-first output - useful for RTL-primary sites
+logicalPolyfill({
+  outputOrder: 'rtl-first'
+})
+```
+
+**Input:**
+```css
+.button {
+  margin-inline: 1rem;
+}
+```
+
+**Output with `outputOrder: 'ltr-first'` (default):**
+```css
+[dir="ltr"] .button {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+[dir="rtl"] .button {
+  margin-right: 1rem;
+  margin-left: 1rem;
+}
+```
+
+**Output with `outputOrder: 'rtl-first'`:**
+```css
+[dir="rtl"] .button {
+  margin-right: 1rem;
+  margin-left: 1rem;
+}
+[dir="ltr"] .button {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+```
+
+**When to use `rtl-first`:**
+- 🌍 **RTL-primary websites**: Sites primarily serving RTL languages (Arabic, Hebrew, etc.)
+- 🎯 **CSS specificity needs**: When you need RTL rules to have lower specificity for easier LTR overrides
+- 📱 **Framework integration**: When your CSS framework expects RTL rules to come first
+
+**Important note:** This option only affects unscoped logical properties. Rules that already have direction selectors (like `:dir(rtl) .element` or `[dir="ltr"] .element`) maintain their original order and are not affected by this setting.
+
 ## ⚠️ Important Usage Notes
 
 ### 1. **Direction Attribute Required in HTML**
@@ -310,6 +377,38 @@ cd examples/sass
 npx tsx process.ts
 ```
 
+### Output Order Configuration
+
+Example demonstrating the `outputOrder` configuration option for controlling LTR/RTL rule generation order.
+
+```bash
+# Run the output order example
+cd examples/output-order
+npx tsx process.ts
+```
+
+This example shows:
+- How `outputOrder: 'ltr-first'` (default) generates LTR rules before RTL rules
+- How `outputOrder: 'rtl-first'` generates RTL rules before LTR rules
+- That only unscoped logical properties are affected by this setting
+- Side-by-side comparison of both output styles
+
+### PostCSS CLI Integration
+
+Example showing how to use with PostCSS CLI tool.
+
+```bash
+# Run the PostCSS CLI example
+cd examples/postcss-cli
+npx tsx process.ts
+```
+
+This example demonstrates:
+- Setting up PostCSS configuration with the plugin
+- Using PostCSS CLI to process CSS files
+- Integration with package.json scripts
+- Command-line usage patterns
+
 ### Webpack Integration
 
 Example showing how to integrate with Webpack.
@@ -331,12 +430,14 @@ pnpm run examples
 
 ## Requirements
 
-- Node.js 14.0.0 or later
+- Node.js 16.0.0 or later
 - PostCSS 8.0.0 or later
 
 ## Contributing
 
 Contributions are welcome! Please see our [contributing guidelines](./CONTRIBUTING.md) for details.
+
+For information about the coverage badge setup, see [coverage badge documentation](./docs/coverage-badge-setup.md).
 
 ## Credits
 
@@ -350,6 +451,8 @@ This plugin wraps and extends [postcss-logical](https://github.com/csstools/post
 [npm-img]: https://img.shields.io/npm/v/postcss-logical-polyfill
 [build-url]: https://github.com/oe/postcss-logical-polyfill/actions/workflows/ci.yml
 [build-img]: https://github.com/oe/postcss-logical-polyfill/actions/workflows/ci.yml/badge.svg
+[coverage-url]: https://codecov.io/gh/oe/postcss-logical-polyfill
+[coverage-img]: https://codecov.io/gh/oe/postcss-logical-polyfill/branch/main/graph/badge.svg
 [size-url]: https://packagephobia.com/result?p=postcss-logical-polyfill
 [size-img]: https://packagephobia.com/badge?p=postcss-logical-polyfill
 [types-url]: https://www.npmjs.com/package/postcss-logical-polyfill
