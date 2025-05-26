@@ -33,51 +33,17 @@ function containsCustomSelector(selector: string, customSelector: string): boole
   if (trimmedCustom.match(/^[.#\[]/) || trimmedCustom.startsWith(':')) {
     const escapedCustom = escapeSelector(trimmedCustom);
     
-    // Handle different selector contexts:
-    // - At the beginning: ".ltr .something" or ".ltr:hover"
-    // - In the middle: ".parent .ltr .child" 
-    // - At the end: ".parent .ltr"
-    // - With pseudo-classes/elements: ".ltr:hover" or ".ltr::before"
-    // - Chained with other classes: ".theme.ltr" but NOT ".theme-ltr"
-    // 
-    // We need to ensure .ltr appears as a complete CSS class, not as part of another class name
-    // This means it should be preceded by start of string, whitespace, or a dot (for chaining)
-    // and followed by appropriate CSS selector boundaries
-    
+    // Create regex pattern based on selector type
+    let pattern: string;
     if (trimmedCustom.startsWith('.')) {
-      // For class selectors like '.ltr', we need to be more careful
-      // We want to match:
-      // - ".ltr" at start: ".ltr .button"
-      // - ".ltr" after space: ".parent .ltr .child"  
-      // - ".ltr" after dot: ".theme.ltr" (chained classes)
-      // But NOT:
-      // - ".ltr" as part of class name: ".theme-ltr"
-      
-      const className = trimmedCustom.substring(1); // Remove the leading dot
-      const escapedClassName = escapeSelector(className);
-      
-      // Match the class name when it appears as a complete token
-      // We want to match .ltr when it appears as:
-      // - At start: ".ltr .button"
-      // - After space: ".parent .ltr .child"  
-      // - After dot: ".theme.ltr" (chained classes)
-      // But NOT as part of a class name like ".theme-ltr"
-      const regex = new RegExp(
-        `${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`, 
-        'g'
-      );
-      
-      return regex.test(trimmedSelector);
+      // Class selectors: match complete class names (avoid partial matches like .theme-ltr)
+      pattern = `${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`;
     } else {
-      // For other selectors (attributes, pseudo-classes, etc.), use simpler matching
-      const escapedCustom = escapeSelector(trimmedCustom);
-      const regex = new RegExp(
-        `(?:^|\\s)${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`, 
-        'g'
-      );
-      
-      return regex.test(trimmedSelector);
+      // Other selectors: ensure word boundaries
+      pattern = `(?:^|\\s)${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`;
     }
+    
+    return new RegExp(pattern, 'g').test(trimmedSelector);
   }
   
   // For complex selectors, check if the custom selector is contained
@@ -92,24 +58,29 @@ function cleanDirectionSelectors(
   selector: string, 
   config: DirectionConfig = {}
 ): string {
-  let cleaned = selector
-    .replace(/:dir\(\s*rtl\s*\)/g, '')
-    .replace(/:dir\(\s*ltr\s*\)/g, '')
-    .replace(/\[\s*dir\s*=\s*["']?rtl["']?\s*\]/g, '')
-    .replace(/\[\s*dir\s*=\s*["']?ltr["']?\s*\]/g, '');
+  // Built-in direction patterns to remove
+  const builtinPatterns = [
+    /:dir\(\s*rtl\s*\)/g,
+    /:dir\(\s*ltr\s*\)/g,
+    /\[\s*dir\s*=\s*["']?rtl["']?\s*\]/g,
+    /\[\s*dir\s*=\s*["']?ltr["']?\s*\]/g
+  ];
+  
+  let cleaned = selector;
+  
+  // Remove built-in patterns
+  builtinPatterns.forEach(pattern => {
+    cleaned = cleaned.replace(pattern, '');
+  });
   
   // Remove custom direction selectors if provided
-  if (config.ltr) {
-    const escapedLtr = escapeSelector(config.ltr);
-    const ltrRegex = new RegExp(`(^|\\s)${escapedLtr}(?=\\s|$|[:.\\[#>+~,])`, 'g');
-    cleaned = cleaned.replace(ltrRegex, '$1');
-  }
-  
-  if (config.rtl) {
-    const escapedRtl = escapeSelector(config.rtl);
-    const rtlRegex = new RegExp(`(^|\\s)${escapedRtl}(?=\\s|$|[:.\\[#>+~,])`, 'g');
-    cleaned = cleaned.replace(rtlRegex, '$1');
-  }
+  [config.ltr, config.rtl].forEach(customSelector => {
+    if (customSelector) {
+      const escapedCustom = escapeSelector(customSelector);
+      const customRegex = new RegExp(`(^|\\s)${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`, 'g');
+      cleaned = cleaned.replace(customRegex, '$1');
+    }
+  });
   
   return cleaned
     .replace(/\s+/g, ' ')
@@ -134,54 +105,39 @@ export function detectDirection(
   config: DirectionConfig = {}
 ): 'ltr' | 'rtl' | 'none' {
   // Built-in direction patterns
-  const ltrPatterns = [
-    /:dir\(\s*ltr\s*\)/,
-    /\[\s*dir\s*=\s*["']?ltr["']?\s*\]/
+  const builtinPatterns = [
+    { patterns: [/:dir\(\s*ltr\s*\)/, /\[\s*dir\s*=\s*["']?ltr["']?\s*\]/], direction: 'ltr' as const },
+    { patterns: [/:dir\(\s*rtl\s*\)/, /\[\s*dir\s*=\s*["']?rtl["']?\s*\]/], direction: 'rtl' as const }
   ];
   
-  const rtlPatterns = [
-    /:dir\(\s*rtl\s*\)/,
-    /\[\s*dir\s*=\s*["']?rtl["']?\s*\]/
-  ];
-  
-  // Find all direction indicators in the selector and their positions
   const directionMatches: Array<{ direction: 'ltr' | 'rtl'; position: number }> = [];
   
-  // Find LTR matches (built-in)
-  ltrPatterns.forEach(pattern => {
-    const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
-    for (const match of matches) {
-      if (match.index !== undefined) {
-        directionMatches.push({ direction: 'ltr', position: match.index });
+  // Find built-in direction matches
+  builtinPatterns.forEach(({ patterns, direction }) => {
+    patterns.forEach(pattern => {
+      const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
+      for (const match of matches) {
+        if (match.index !== undefined) {
+          directionMatches.push({ direction, position: match.index });
+        }
+      }
+    });
+  });
+  
+  // Check for custom direction selectors
+  const customSelectors = [
+    { selector: config.ltr, direction: 'ltr' as const },
+    { selector: config.rtl, direction: 'rtl' as const }
+  ];
+  
+  customSelectors.forEach(({ selector: customSelector, direction }) => {
+    if (customSelector && containsCustomSelector(selector, customSelector)) {
+      const match = selector.indexOf(customSelector);
+      if (match !== -1) {
+        directionMatches.push({ direction, position: match });
       }
     }
   });
-  
-  // Find RTL matches (built-in)
-  rtlPatterns.forEach(pattern => {
-    const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
-    for (const match of matches) {
-      if (match.index !== undefined) {
-        directionMatches.push({ direction: 'rtl', position: match.index });
-      }
-    }
-  });
-  
-  // Check for custom LTR selector
-  if (config.ltr && containsCustomSelector(selector, config.ltr)) {
-    const match = selector.indexOf(config.ltr);
-    if (match !== -1) {
-      directionMatches.push({ direction: 'ltr', position: match });
-    }
-  }
-  
-  // Check for custom RTL selector
-  if (config.rtl && containsCustomSelector(selector, config.rtl)) {
-    const match = selector.indexOf(config.rtl);
-    if (match !== -1) {
-      directionMatches.push({ direction: 'rtl', position: match });
-    }
-  }
   
   // If no direction indicators found, return 'none'
   if (directionMatches.length === 0) {
