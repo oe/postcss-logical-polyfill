@@ -90,11 +90,12 @@ The plugin processes all standard [CSS Logical Properties](https://developer.moz
 **Unscoped Logical Properties** → Generate both LTR and RTL versions:
 ```css
 /* Input */
-.element { margin-inline: 1rem; }
+.element { margin-inline: 1rem; padding-inline: 1em 2em; }
 
 /* Output */
-[dir="ltr"] .element { margin-left: 1rem; margin-right: 1rem; }
-[dir="rtl"] .element { margin-right: 1rem; margin-left: 1rem; }
+.element { margin-left: 1rem; margin-right: 1rem; }
+[dir="ltr"] .element { padding-left: 1rem; padding-right: 2rem; }
+[dir="rtl"] .element { padding-right: 2rem; padding-left: 1rem; }
 ```
 
 **Block-Only Properties** → Generate single rule (⭐ NEW optimization):
@@ -170,17 +171,17 @@ postcss([
 ### Output
 
 ```css
-/* Generated LTR physical properties */
-[dir="ltr"] .container {
+.container {
   margin-left: 1rem;
   margin-right: 1rem;
+}
+/* Generated LTR physical properties */
+[dir="ltr"] .container {
   padding-left: 1rem;
 }
 
 /* Generated RTL physical properties */
 [dir="rtl"] .container {
-  margin-right: 1rem;
-  margin-left: 1rem;
   padding-right: 1rem;
 }
 
@@ -301,7 +302,7 @@ logicalPolyfill({
 **Input:**
 ```css
 .button {
-  margin-inline: 1rem;
+  margin-inline: 1rem 2em;
 }
 ```
 
@@ -309,11 +310,11 @@ logicalPolyfill({
 ```css
 [dir="ltr"] .button {
   margin-left: 1rem;
-  margin-right: 1rem;
+  margin-right: 2rem;
 }
 [dir="rtl"] .button {
   margin-right: 1rem;
-  margin-left: 1rem;
+  margin-left: 2rem;
 }
 ```
 
@@ -321,11 +322,11 @@ logicalPolyfill({
 ```css
 [dir="rtl"] .button {
   margin-right: 1rem;
-  margin-left: 1rem;
+  margin-left: 2rem;
 }
 [dir="ltr"] .button {
   margin-left: 1rem;
-  margin-right: 1rem;
+  margin-right: 2rem;
 }
 ```
 
