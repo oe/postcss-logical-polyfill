@@ -23,22 +23,17 @@ describe('Additional Edge Cases', () => {
           }
         `,
         expected: `
-          [dir="ltr"] html body .element {
+          html[dir="ltr"] body .element {
             margin-left: 1rem;
             margin-right: 1rem;
           }
           
-          [dir="rtl"] html body .element {
+          html[dir='rtl'] body .element {
             padding-right: 2rem;
             padding-left: 2rem;
           }
           
-          [dir="ltr"] .contradictory {
-            border-left: 1px solid red;
-            border-right: 1px solid red;
-          }
-          
-          [dir="rtl"] .contradictory {
+          [dir="ltr"] [dir="rtl"] .contradictory {
             border-right: 1px solid red;
             border-left: 1px solid red;
           }
@@ -56,12 +51,12 @@ describe('Additional Edge Cases', () => {
           }
         `,
         expected: `
-          [dir="ltr"] .element:hover:focus {
+          .element:dir(ltr):hover:focus {
             margin-left: 1rem;
             margin-right: 1rem;
           }
           
-          [dir="rtl"] .element.active::after {
+          .element:dir(rtl).active::after {
             padding-right: 2rem;
             padding-left: 2rem;
           }
@@ -399,5 +394,442 @@ describe('Additional Edge Cases', () => {
       expect(result.css).toContain('margin: var(--margin-inline)');
       expect(result.css).toContain('padding: var(--padding-inline)');
     });
+  });
+
+  describe('Direction Selector Nesting and Preservation', () => {
+    const directionSelectorTests: TestCase[] = [
+      {
+        name: 'Should preserve complex nested direction selectors',
+        input: `
+          .container[dir="ltr"] .inner[dir="rtl"] .element {
+            margin-inline-start: 1rem;
+            padding-inline-end: 2rem;
+          }
+        `,
+        expected: `
+          .container[dir="ltr"] .inner[dir="rtl"] .element {
+            margin-right: 1rem;
+            padding-left: 2rem;
+          }
+        `
+      },
+      {
+        name: 'Should preserve mixed :dir() and [dir] selectors',
+        input: `
+          :dir(ltr) .container [dir="rtl"] .element {
+            border-inline: 1px solid;
+            inset-inline: 0 auto;
+          }
+        `,
+        expected: `
+          :dir(ltr) .container [dir="rtl"] .element {
+            border-right: 1px solid;
+            border-left: 1px solid;
+            right: 0;
+            left: auto;
+          }
+        `
+      },
+      {
+        name: 'Should handle contradictory direction selectors correctly',
+        input: `
+          [dir="ltr"] [dir="rtl"] [dir="ltr"] .element {
+            margin-inline-start: 1rem;
+          }
+          
+          .parent:dir(rtl) .child:dir(ltr) .grandchild:dir(rtl) {
+            padding-inline-end: 2rem;
+          }
+        `,
+        expected: `
+          [dir="ltr"] [dir="rtl"] [dir="ltr"] .element {
+            margin-left: 1rem;
+          }
+          
+          .parent:dir(rtl) .child:dir(ltr) .grandchild:dir(rtl) {
+            padding-left: 2rem;
+          }
+        `
+      },
+      {
+        name: 'Should preserve direction selectors in pseudo-selectors',
+        input: `
+          .element:dir(ltr):hover .child:dir(rtl)::before {
+            border-inline-start: 2px solid red;
+          }
+          
+          .menu[dir="rtl"]:focus .item[dir="ltr"]:nth-child(2n) {
+            margin-inline: 1rem 2rem;
+          }
+        `,
+        expected: `
+          .element:dir(ltr):hover .child:dir(rtl)::before {
+            border-right: 2px solid red;
+          }
+          
+          .menu[dir="rtl"]:focus .item[dir="ltr"]:nth-child(2n) {
+            margin-left: 1rem;
+            margin-right: 2rem;
+          }
+        `
+      },
+      {
+        name: 'Should handle adjacent and child combinators with direction selectors',
+        input: `
+          [dir="ltr"] > .parent + [dir="rtl"] ~ .element {
+            padding-inline: 1rem;
+          }
+          
+          :dir(rtl) .parent > :dir(ltr) + .child {
+            inset-inline-start: 50px;
+          }
+        `,
+        expected: `
+          [dir="ltr"] > .parent + [dir="rtl"] ~ .element {
+            padding-right: 1rem;
+            padding-left: 1rem;
+          }
+          
+          :dir(rtl) .parent > :dir(ltr) + .child {
+            left: 50px;
+          }
+        `
+      }
+    ];
+
+    test.each(directionSelectorTests)('$name', runTestCase);
+  });
+
+  describe('Generated vs User-Specified Direction Selectors', () => {
+    const generatedVsUserTests: TestCase[] = [
+      {
+        name: 'Should not modify user-specified direction selectors when generating',
+        input: `
+          .unscoped {
+            margin-inline: 1rem;
+          }
+          
+          [dir="ltr"] .user-scoped {
+            margin-inline: 2rem;
+          }
+          
+          :dir(rtl) .pseudo-scoped {
+            margin-inline: 3rem;
+          }
+        `,
+        expected: `
+          .unscoped {
+            margin-left: 1rem;
+            margin-right: 1rem;
+          }
+          
+          [dir="ltr"] .user-scoped {
+            margin-left: 2rem;
+            margin-right: 2rem;
+          }
+          
+          :dir(rtl) .pseudo-scoped {
+            margin-right: 3rem;
+            margin-left: 3rem;
+          }
+        `
+      },
+      {
+        name: 'Should handle mixed scoped and unscoped selectors in same rule',
+        input: `
+          .unscoped, [dir="ltr"] .scoped {
+            margin-inline-start: 1rem;
+          }
+          
+          .another-unscoped, :dir(rtl) .pseudo-scoped {
+            padding-inline-end: 2rem;
+          }
+        `,
+        expected: `
+          [dir="ltr"] .unscoped {
+            margin-left: 1rem;
+          }
+          [dir="rtl"] .unscoped {
+            margin-right: 1rem;
+          }
+          
+          [dir="ltr"] .scoped {
+            margin-left: 1rem;
+          }
+          
+          [dir="ltr"] .another-unscoped {
+            padding-right: 2rem;
+          }
+          [dir="rtl"] .another-unscoped {
+            padding-left: 2rem;
+          }
+          
+          :dir(rtl) .pseudo-scoped {
+            padding-left: 2rem;
+          }
+        `
+      },
+      {
+        name: 'Should preserve user direction selectors with custom values',
+        input: `
+          [dir="rtl"][lang="ar"] .arabic {
+            margin-inline-start: 2rem;
+          }
+          
+          :dir(ltr):lang(en) .english {
+            padding-inline-end: 1rem;
+          }
+          
+          .document[dir="auto"] .auto-dir {
+            border-inline-width: 3px;
+          }
+        `,
+        expected: `
+          [dir="rtl"][lang="ar"] .arabic {
+            margin-right: 2rem;
+          }
+          
+          :dir(ltr):lang(en) .english {
+            padding-right: 1rem;
+          }
+          
+          .document[dir="auto"] .auto-dir {
+            border-left-width: 3px;
+            border-right-width: 3px;
+          }
+        `
+      },
+      {
+        name: 'Should handle multiple direction selectors in single selector chain',
+        input: `
+          [dir="ltr"] .container :dir(rtl) .item [dir="ltr"] .content {
+            margin-inline: auto 1rem;
+            padding-inline-start: 2rem;
+          }
+        `,
+        expected: `
+          [dir="ltr"] .container :dir(rtl) .item [dir="ltr"] .content {
+            margin-left: auto;
+            margin-right: 1rem;
+            padding-left: 2rem;
+          }
+        `
+      }
+    ];
+
+    test.each(generatedVsUserTests)('$name', runTestCase);
+  });
+
+  describe('Direction Selector Specificity Edge Cases', () => {
+    const specificityTests: TestCase[] = [
+      {
+        name: 'Should handle specificity with multiple direction indicators',
+        input: `
+          .container[dir="ltr"] .item:dir(rtl) {
+            margin-inline-start: 1rem;
+          }
+          
+          :dir(ltr) .parent [dir="rtl"] .child {
+            padding-inline-end: 2rem;
+          }
+          
+          [dir="rtl"]:dir(ltr) .impossible {
+            border-inline: 1px solid;
+          }
+        `,
+        expected: `
+          .container[dir="ltr"] .item:dir(rtl) {
+            margin-right: 1rem;
+          }
+          
+          :dir(ltr) .parent [dir="rtl"] .child {
+            padding-left: 2rem;
+          }
+          
+          [dir="rtl"]:dir(ltr) .impossible {
+            border-left: 1px solid;
+            border-right: 1px solid;
+          }
+        `
+      },
+      {
+        name: 'Should correctly identify effective direction from right to left',
+        input: `
+          [dir="ltr"] .outer [dir="rtl"] .middle [dir="ltr"] .inner {
+            inset-inline-start: 10px;
+          }
+          
+          :dir(rtl) .a :dir(ltr) .b :dir(rtl) .c {
+            margin-inline-end: 20px;
+          }
+        `,
+        expected: `
+          [dir="ltr"] .outer [dir="rtl"] .middle [dir="ltr"] .inner {
+            left: 10px;
+          }
+          
+          :dir(rtl) .a :dir(ltr) .b :dir(rtl) .c {
+            margin-left: 20px;
+          }
+        `
+      },
+      {
+        name: 'Should handle complex selector combinations with directions',
+        input: `
+          .page[dir="ltr"] .section:dir(rtl) > .article + .sidebar[dir="ltr"] ~ .footer {
+            border-inline-start: 1px solid;
+            padding-inline-end: 15px;
+          }
+        `,
+        expected: `
+          .page[dir="ltr"] .section:dir(rtl) > .article + .sidebar[dir="ltr"] ~ .footer {
+            border-left: 1px solid;
+            padding-right: 15px;
+          }
+        `
+      }
+    ];
+
+    test.each(specificityTests)('$name', runTestCase);
+  });
+
+  describe('Direction Selector Format Variations', () => {
+    const formatVariationTests: TestCase[] = [
+      {
+        name: 'Should handle different direction selector formats',
+        input: `
+          [dir="ltr"] .element {
+            margin-inline: 1rem;
+          }
+          
+          [dir='rtl'] .element {
+            margin-inline: 2rem;
+          }
+          
+          [dir=ltr] .element {
+            margin-inline: 3rem;
+          }
+          
+          :dir(ltr) .element {
+            margin-inline: 4rem;
+          }
+          
+          :dir(rtl) .element {
+            margin-inline: 5rem;
+          }
+        `,
+        expected: `
+          [dir="ltr"] .element {
+            margin-left: 1rem;
+            margin-right: 1rem;
+          }
+          
+          [dir='rtl'] .element {
+            margin-right: 2rem;
+            margin-left: 2rem;
+          }
+          
+          [dir=ltr] .element {
+            margin-left: 3rem;
+            margin-right: 3rem;
+          }
+          
+          :dir(ltr) .element {
+            margin-left: 4rem;
+            margin-right: 4rem;
+          }
+          
+          :dir(rtl) .element {
+            margin-right: 5rem;
+            margin-left: 5rem;
+          }
+        `
+      },
+      {
+        name: 'Should preserve whitespace and formatting in direction selectors',
+        input: `
+          [ dir = "ltr" ] .spaced {
+            padding-inline-start: 1rem;
+          }
+          
+          .element:dir( ltr ) {
+            margin-inline-end: 2rem;
+          }
+          
+          [  dir  =  'rtl'  ] .heavily-spaced {
+            border-inline-width: 3px;
+          }
+        `,
+        expected: `
+          [ dir = "ltr" ] .spaced {
+            padding-left: 1rem;
+          }
+          
+          .element:dir( ltr ) {
+            margin-right: 2rem;
+          }
+          
+          [  dir  =  'rtl'  ] .heavily-spaced {
+            border-right-width: 3px;
+            border-left-width: 3px;
+          }
+        `
+      }
+    ];
+
+    test.each(formatVariationTests)('$name', runTestCase);
+  });
+
+  describe('Selector Preservation with Logical Properties', () => {
+    const preservationTests: TestCase[] = [
+      {
+        name: 'Should preserve complex selectors with pseudo-elements and states',
+        input: `
+          .menu[dir="rtl"]:hover > .item:nth-child(even)::before {
+            margin-inline-start: 10px;
+            border-inline-end: 2px solid;
+          }
+          
+          :dir(ltr) .form .input:focus:invalid + .error-message::after {
+            padding-inline: 5px 10px;
+          }
+        `,
+        expected: `
+          .menu[dir="rtl"]:hover > .item:nth-child(even)::before {
+            margin-right: 10px;
+            border-left: 2px solid;
+          }
+          
+          :dir(ltr) .form .input:focus:invalid + .error-message::after {
+            padding-left: 5px;
+            padding-right: 10px;
+          }
+        `
+      },
+      {
+        name: 'Should handle attribute selectors with direction indicators',
+        input: `
+          .widget[data-direction="ltr"][dir="rtl"] .content {
+            inset-inline: 0 auto;
+          }
+          
+          :dir(ltr) .component[aria-label*="text"] {
+            margin-inline-start: calc(100% - 20px);
+          }
+        `,
+        expected: `
+          .widget[data-direction="ltr"][dir="rtl"] .content {
+            right: 0;
+            left: auto;
+          }
+          
+          :dir(ltr) .component[aria-label*="text"] {
+            margin-left: calc(100% - 20px);
+          }
+        `
+      }
+    ];
+
+    test.each(preservationTests)('$name', runTestCase);
   });
 });

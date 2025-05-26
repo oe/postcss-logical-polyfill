@@ -403,10 +403,10 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
           }
         `,
         expected: `
-          [dir="ltr"] .element {
+          :dir(ltr) .element {
             margin-left: 1rem;
           }
-          [dir="rtl"] .element {
+          :dir(rtl) .element {
             margin-right: 2rem;
           }
         `

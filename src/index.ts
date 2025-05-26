@@ -69,15 +69,69 @@ function isLtrSelector(selector: string): boolean {
   return selector.includes(':dir(ltr)') || selector.includes('[dir="ltr"]') || selector.includes("[dir='ltr']");
 }
 
+// Determine the effective direction of a selector based on CSS specificity
+function getEffectiveDirection(selector: string): 'ltr' | 'rtl' | 'none' {
+  // More flexible regex patterns to handle various formatting
+  const ltrPatterns = [
+    /:dir\(\s*ltr\s*\)/,
+    /\[\s*dir\s*=\s*["']?ltr["']?\s*\]/
+  ];
+  
+  const rtlPatterns = [
+    /:dir\(\s*rtl\s*\)/,
+    /\[\s*dir\s*=\s*["']?rtl["']?\s*\]/
+  ];
+  
+  // Find all direction indicators in the selector and their positions
+  const directionMatches: Array<{ direction: 'ltr' | 'rtl'; position: number }> = [];
+  
+  // Find LTR matches
+  ltrPatterns.forEach(pattern => {
+    const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
+    for (const match of matches) {
+      if (match.index !== undefined) {
+        directionMatches.push({ direction: 'ltr', position: match.index });
+      }
+    }
+  });
+  
+  // Find RTL matches
+  rtlPatterns.forEach(pattern => {
+    const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
+    for (const match of matches) {
+      if (match.index !== undefined) {
+        directionMatches.push({ direction: 'rtl', position: match.index });
+      }
+    }
+  });
+  
+  // If no direction indicators found, return 'none'
+  if (directionMatches.length === 0) {
+    return 'none';
+  }
+  
+  // Sort by position (rightmost/last is most specific)
+  directionMatches.sort((a, b) => b.position - a.position);
+  
+  // Return the rightmost (most specific) direction
+  return directionMatches[0].direction;
+}
+
 // Remove direction selectors from a selector string
 function cleanDirectionSelectors(selector: string): string {
   return selector
-    .replace(/:dir\(rtl\)/g, '')
-    .replace(/:dir\(ltr\)/g, '')
-    .replace(/\[dir=["']?rtl["']?\]/g, '')
-    .replace(/\[dir=["']?ltr["']?\]/g, '')
+    .replace(/:dir\(\s*rtl\s*\)/g, '')
+    .replace(/:dir\(\s*ltr\s*\)/g, '')
+    .replace(/\[\s*dir\s*=\s*["']?rtl["']?\s*\]/g, '')
+    .replace(/\[\s*dir\s*=\s*["']?ltr["']?\s*\]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+// Check if a selector already contains direction information
+function hasDirectionSelectors(selector: string): boolean {
+  return /:dir\(\s*(ltr|rtl)\s*\)/.test(selector) || 
+         /\[\s*dir\s*=\s*["']?(ltr|rtl)["']?\s*\]/.test(selector);
 }
 
 // Helper function to compare if two rules have identical declarations
@@ -179,94 +233,6 @@ function createRuleWithProperties(baseRule: Rule, properties: Map<string, string
   return newRule;
 }
 
-// Process directional rule (LTR or RTL)
-async function processDirectionalRule(
-  rule: Rule,
-  directionSelector: string,
-  processor: any,
-  filterFn: (selector: string) => boolean,
-  hasDirection: boolean,
-  hasNoScope: boolean
-): Promise<Rule[]> {
-  if (!hasDirection && !hasNoScope) {
-    return [];
-  }
-
-  let selectors = rule.selectors;
-  
-  if (hasDirection) {
-    // Filter and clean direction-specific selectors
-    selectors = rule.selectors.filter(filterFn).map(cleanDirectionSelectors);
-  }
-  
-  if (selectors.length === 0) {
-    return [];
-  }
-
-  const ruleToProcess = rule.clone();
-  ruleToProcess.selectors = selectors;
-  
-  // Apply logical property transformation
-  const transformedRule = await applyLogicalTransformation(ruleToProcess, processor);
-  if (transformedRule) {
-    transformedRule.selectors = transformedRule.selectors.map(sel => `${directionSelector} ${sel}`);
-    return [transformedRule];
-  } else {
-    // Fallback: just add direction selector without transformation
-    ruleToProcess.selectors = ruleToProcess.selectors.map(sel => `${directionSelector} ${sel}`);
-    return [ruleToProcess];
-  }
-}
-
-// Try to optimize unscoped logical properties by separating common vs directional properties
-async function tryOptimizeUnscopedLogicalProperties(
-  rule: Rule,
-  ltrSelector: string,
-  rtlSelector: string,
-  outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'
-): Promise<Rule[] | null> {
-  try {
-    // Generate both LTR and RTL versions
-    const ltrTransformed = await applyLogicalTransformation(rule, ltrProcessor);
-    const rtlTransformed = await applyLogicalTransformation(rule, rtlProcessor);
-
-    if (!ltrTransformed || !rtlTransformed) {
-      return null;
-    }
-
-    // If results are identical, return single rule
-    if (rulesAreIdentical(ltrTransformed, rtlTransformed)) {
-      return [ltrTransformed];
-    }
-
-    // Analyze differences and create optimized rules
-    const { commonProps, ltrOnlyProps, rtlOnlyProps } = analyzePropertyDifferences(ltrTransformed, rtlTransformed);
-    const results: Rule[] = [];
-
-    // Add common properties rule (no direction specificity)
-    if (commonProps.size > 0) {
-      results.push(createRuleWithProperties(rule, commonProps));
-    }
-
-    // Add directional properties according to outputOrder
-    const ltrDirectionalRule = ltrOnlyProps.size > 0 ? createRuleWithProperties(rule, ltrOnlyProps, sel => `${ltrSelector} ${sel}`) : null;
-    const rtlDirectionalRule = rtlOnlyProps.size > 0 ? createRuleWithProperties(rule, rtlOnlyProps, sel => `${rtlSelector} ${sel}`) : null;
-
-    if (outputOrder === 'ltr-first') {
-      if (ltrDirectionalRule) results.push(ltrDirectionalRule);
-      if (rtlDirectionalRule) results.push(rtlDirectionalRule);
-    } else {
-      if (rtlDirectionalRule) results.push(rtlDirectionalRule);
-      if (ltrDirectionalRule) results.push(ltrDirectionalRule);
-    }
-
-    return results;
-  } catch (error) {
-    console.warn('Failed to optimize unscoped logical properties:', error);
-    return null;
-  }
-}
-
 // Unified rule processing function - processes a single rule and returns transformed rules
 async function processRule(
   rule: Rule,
@@ -274,35 +240,100 @@ async function processRule(
   rtlSelector: string,
   outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'
 ): Promise<Rule[]> {
+  // Analyze each selector to determine its effective direction
+  const selectorDirections = rule.selectors.map(selector => ({
+    selector,
+    direction: getEffectiveDirection(selector)
+  }));
 
-  const hasLtr = rule.selectors.some(isLtrSelector);
-  const hasRtl = rule.selectors.some(isRtlSelector);
-  const hasNoScope = !hasLtr && !hasRtl;
+  const ltrSelectors = selectorDirections.filter(s => s.direction === 'ltr');
+  const rtlSelectors = selectorDirections.filter(s => s.direction === 'rtl');
+  const noscopeSelectors = selectorDirections.filter(s => s.direction === 'none');
 
-  // For unscoped logical properties, try to optimize
-  if (hasNoScope) {
-    const optimizedRules = await tryOptimizeUnscopedLogicalProperties(rule, ltrSelector, rtlSelector, outputOrder);
-    if (optimizedRules) {
-      return optimizedRules;
+  const results: Rule[] = [];
+
+  // Process unscoped selectors (need both LTR and RTL)
+  if (noscopeSelectors.length > 0) {
+    const unscopedRule = rule.clone();
+    unscopedRule.selectors = noscopeSelectors.map(s => s.selector);
+
+    const ltrTransformed = await applyLogicalTransformation(unscopedRule, ltrProcessor);
+    const rtlTransformed = await applyLogicalTransformation(unscopedRule, rtlProcessor);
+
+    if (!ltrTransformed || !rtlTransformed) {
+      // 转换失败的回退处理
+      return [];
     }
-    // If optimization failed, fall back to normal processing
+
+    // 优化：如果 LTR 和 RTL 转换结果相同（如 block-only 属性），返回单个规则
+    if (rulesAreIdentical(ltrTransformed, rtlTransformed)) {
+      results.push(ltrTransformed);
+    } else {
+      // 分析属性差异并创建优化的规则
+      const { commonProps, ltrOnlyProps, rtlOnlyProps } = analyzePropertyDifferences(ltrTransformed, rtlTransformed);
+
+      // 添加通用属性（无方向特异性）
+      if (commonProps.size > 0) {
+        results.push(createRuleWithProperties(unscopedRule, commonProps));
+      }
+
+      // 添加方向特定属性
+      const ltrRule = ltrOnlyProps.size > 0 ? createRuleWithProperties(unscopedRule, ltrOnlyProps, sel => `${ltrSelector} ${sel}`) : null;
+      const rtlRule = rtlOnlyProps.size > 0 ? createRuleWithProperties(unscopedRule, rtlOnlyProps, sel => `${rtlSelector} ${sel}`) : null;
+
+      // 按指定顺序添加方向规则
+      if (outputOrder === 'ltr-first') {
+        if (ltrRule) results.push(ltrRule);
+        if (rtlRule) results.push(rtlRule);
+      } else {
+        if (rtlRule) results.push(rtlRule);
+        if (ltrRule) results.push(ltrRule);
+      }
+    }
   }
 
-  // Process scoped rules or fallback for unscoped
-  const results: Rule[] = [];
-  
-  const processInOrder = async () => {
-    const ltrRules = await processDirectionalRule(rule, ltrSelector, ltrProcessor, isLtrSelector, hasLtr, hasNoScope);
-    const rtlRules = await processDirectionalRule(rule, rtlSelector, rtlProcessor, isRtlSelector, hasRtl, hasNoScope);
+  // Process LTR-scoped selectors
+  if (ltrSelectors.length > 0) {
+    const ltrRule = rule.clone();
+    ltrRule.selectors = ltrSelectors.map(s => s.selector);
     
-    if (outputOrder === 'ltr-first') {
-      results.push(...ltrRules, ...rtlRules);
-    } else {
-      results.push(...rtlRules, ...ltrRules);
+    const ltrTransformed = await applyLogicalTransformation(ltrRule, ltrProcessor);
+    if (ltrTransformed) {
+      // Only add direction selector prefix if the original doesn't already have direction info
+      ltrTransformed.selectors = ltrTransformed.selectors.map(sel => {
+        const originalSelector = ltrSelectors.find(s => 
+          cleanDirectionSelectors(s.selector) === cleanDirectionSelectors(sel)
+        )?.selector || sel;
+        
+        return hasDirectionSelectors(originalSelector) 
+          ? originalSelector 
+          : `${ltrSelector} ${cleanDirectionSelectors(originalSelector)}`;
+      });
+      results.push(ltrTransformed);
     }
-  };
+  }
 
-  await processInOrder();
+  // Process RTL-scoped selectors
+  if (rtlSelectors.length > 0) {
+    const rtlRule = rule.clone();
+    rtlRule.selectors = rtlSelectors.map(s => s.selector);
+    
+    const rtlTransformed = await applyLogicalTransformation(rtlRule, rtlProcessor);
+    if (rtlTransformed) {
+      // Only add direction selector prefix if the original doesn't already have direction info
+      rtlTransformed.selectors = rtlTransformed.selectors.map(sel => {
+        const originalSelector = rtlSelectors.find(s => 
+          cleanDirectionSelectors(s.selector) === cleanDirectionSelectors(sel)
+        )?.selector || sel;
+        
+        return hasDirectionSelectors(originalSelector) 
+          ? originalSelector 
+          : `${rtlSelector} ${cleanDirectionSelectors(originalSelector)}`;
+      });
+      results.push(rtlTransformed);
+    }
+  }
+
   return results;
 }
 
