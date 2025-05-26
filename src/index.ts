@@ -1,5 +1,18 @@
+/**
+ * PostCSS Logical Scope Plugin
+ * 
+ * This plugin transforms CSS logical properties to physical properties with appropriate
+ * direction-specific selectors for better browser compatibility.
+ * 
+ * Selector-related logic has been modularized into ./selector-utils for better maintainability.
+ */
 import postcss, { PluginCreator, Root, Rule, AtRule } from 'postcss';
 import logical from 'postcss-logical';
+import {
+  detectDirection,
+  generateSelector,
+  DirectionConfig,
+} from './selector-utils';
 
 // Skip processing of @keyframes and other special at-rules that shouldn't be transformed
 const SKIP_AT_RULES = ['keyframes', 'font-face', 'counter-style', 'page'];
@@ -57,151 +70,6 @@ function hasLogicalProperties(rule: Rule): boolean {
     (decl) =>
       decl.type === 'decl' && supportedLogicalProperties.includes(decl.prop)
   );
-}
-
-// Helper function to escape selector for regex use
-function escapeSelector(selector: string): string {
-  return selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// Helper function to check if selector contains a custom direction selector
-function containsCustomSelector(selector: string, customSelector: string): boolean {
-  // Handle different selector types:
-  // 1. Simple class/id selectors: .ltr, #rtl
-  // 2. Attribute selectors: [data-dir="ltr"]
-  // 3. Pseudo-class selectors: :dir(ltr)
-  // 4. Complex selectors: .theme > .ltr-container
-  
-  const trimmedCustom = customSelector.trim();
-  const trimmedSelector = selector.trim();
-  
-  // For simple selectors (class, id, attribute), check if they appear as separate tokens
-  if (trimmedCustom.match(/^[.#\[]/) || trimmedCustom.startsWith(':')) {
-    // Create a regex that matches the custom selector as a complete token
-    // This handles cases like .ltr appearing in .ltr or .container .ltr but not .ltr-theme
-    const escapedCustom = escapeSelector(trimmedCustom);
-    
-    // Handle different selector contexts:
-    // - At the beginning: ".ltr .something" or ".ltr:hover"
-    // - In the middle: ".parent .ltr .child" 
-    // - At the end: ".parent .ltr"
-    // - With pseudo-classes/elements: ".ltr:hover" or ".ltr::before"
-    // - Chained with other classes: ".theme-dark.ltr"
-    const regex = new RegExp(
-      `${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`, 
-      'g'
-    );
-    
-    return regex.test(trimmedSelector);
-  }
-  
-  // For complex selectors, check if the custom selector is contained
-  // This is a more permissive check for complex cases
-  return trimmedSelector.includes(trimmedCustom);
-}
-
-// Determine the effective direction of a selector based on CSS specificity
-function getEffectiveDirection(selector: string, ltrSelector?: string, rtlSelector?: string): 'ltr' | 'rtl' | 'none' {
-  // More flexible regex patterns to handle various formatting
-  const ltrPatterns = [
-    /:dir\(\s*ltr\s*\)/,
-    /\[\s*dir\s*=\s*["']?ltr["']?\s*\]/
-  ];
-  
-  const rtlPatterns = [
-    /:dir\(\s*rtl\s*\)/,
-    /\[\s*dir\s*=\s*["']?rtl["']?\s*\]/
-  ];
-  
-  // Find all direction indicators in the selector and their positions
-  const directionMatches: Array<{ direction: 'ltr' | 'rtl'; position: number }> = [];
-  
-  // Find LTR matches (built-in)
-  ltrPatterns.forEach(pattern => {
-    const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
-    for (const match of matches) {
-      if (match.index !== undefined) {
-        directionMatches.push({ direction: 'ltr', position: match.index });
-      }
-    }
-  });
-  
-  // Find RTL matches (built-in)
-  rtlPatterns.forEach(pattern => {
-    const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
-    for (const match of matches) {
-      if (match.index !== undefined) {
-        directionMatches.push({ direction: 'rtl', position: match.index });
-      }
-    }
-  });
-  
-  // Check for custom LTR selector
-  if (ltrSelector && containsCustomSelector(selector, ltrSelector)) {
-    const match = selector.indexOf(ltrSelector);
-    if (match !== -1) {
-      directionMatches.push({ direction: 'ltr', position: match });
-    }
-  }
-  
-  // Check for custom RTL selector
-  if (rtlSelector && containsCustomSelector(selector, rtlSelector)) {
-    const match = selector.indexOf(rtlSelector);
-    if (match !== -1) {
-      directionMatches.push({ direction: 'rtl', position: match });
-    }
-  }
-  
-  // If no direction indicators found, return 'none'
-  if (directionMatches.length === 0) {
-    return 'none';
-  }
-  
-  // Sort by position (rightmost/last is most specific)
-  directionMatches.sort((a, b) => b.position - a.position);
-  
-  // Return the rightmost (most specific) direction
-  return directionMatches[0].direction;
-}
-
-// Remove direction selectors from a selector string
-function cleanDirectionSelectors(selector: string, ltrSelector?: string, rtlSelector?: string): string {
-  let cleaned = selector
-    .replace(/:dir\(\s*rtl\s*\)/g, '')
-    .replace(/:dir\(\s*ltr\s*\)/g, '')
-    .replace(/\[\s*dir\s*=\s*["']?rtl["']?\s*\]/g, '')
-    .replace(/\[\s*dir\s*=\s*["']?ltr["']?\s*\]/g, '');
-  
-  // Remove custom direction selectors if provided
-  if (ltrSelector) {
-    const escapedLtr = escapeSelector(ltrSelector);
-    const ltrRegex = new RegExp(`(^|\\s)${escapedLtr}(?=\\s|$|[:.\\[#>+~,])`, 'g');
-    cleaned = cleaned.replace(ltrRegex, '$1');
-  }
-  
-  if (rtlSelector) {
-    const escapedRtl = escapeSelector(rtlSelector);
-    const rtlRegex = new RegExp(`(^|\\s)${escapedRtl}(?=\\s|$|[:.\\[#>+~,])`, 'g');
-    cleaned = cleaned.replace(rtlRegex, '$1');
-  }
-  
-  return cleaned
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Check if a selector already contains direction information
-function hasDirectionSelectors(selector: string, ltrSelector?: string, rtlSelector?: string): boolean {
-  const hasBuiltIn = /:dir\(\s*(ltr|rtl)\s*\)/.test(selector) || 
-                     /\[\s*dir\s*=\s*["']?(ltr|rtl)["']?\s*\]/.test(selector);
-  
-  if (hasBuiltIn) return true;
-  
-  // Check for custom direction selectors
-  if (ltrSelector && containsCustomSelector(selector, ltrSelector)) return true;
-  if (rtlSelector && containsCustomSelector(selector, rtlSelector)) return true;
-  
-  return false;
 }
 
 // Helper function to compare if two rules have identical declarations
@@ -310,22 +178,33 @@ async function processRule(
   rtlSelector: string,
   outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'
 ): Promise<Rule[]> {
-  // Analyze each selector to determine its effective direction
-  const selectorDirections = rule.selectors.map(selector => ({
-    selector,
-    direction: getEffectiveDirection(selector, ltrSelector, rtlSelector)
-  }));
-
-  const ltrSelectors = selectorDirections.filter(s => s.direction === 'ltr');
-  const rtlSelectors = selectorDirections.filter(s => s.direction === 'rtl');
-  const noscopeSelectors = selectorDirections.filter(s => s.direction === 'none');
-
+  const config: DirectionConfig = { ltr: ltrSelector, rtl: rtlSelector };
   const results: Rule[] = [];
+
+  // Categorize selectors by direction
+  const ltrSelectors: string[] = [];
+  const rtlSelectors: string[] = [];
+  const noscopeSelectors: string[] = [];
+
+  rule.selectors.forEach(selector => {
+    const direction = detectDirection(selector, config);
+    switch (direction) {
+      case 'ltr':
+        ltrSelectors.push(selector);
+        break;
+      case 'rtl':
+        rtlSelectors.push(selector);
+        break;
+      case 'none':
+        noscopeSelectors.push(selector);
+        break;
+    }
+  });
 
   // Process unscoped selectors (need both LTR and RTL)
   if (noscopeSelectors.length > 0) {
     const unscopedRule = rule.clone();
-    unscopedRule.selectors = noscopeSelectors.map(s => s.selector);
+    unscopedRule.selectors = noscopeSelectors;
 
     const ltrTransformed = await applyLogicalTransformation(unscopedRule, ltrProcessor);
     const rtlTransformed = await applyLogicalTransformation(unscopedRule, rtlProcessor);
@@ -347,9 +226,18 @@ async function processRule(
         results.push(createRuleWithProperties(unscopedRule, commonProps));
       }
 
-      // 添加方向特定属性
-      const ltrRule = ltrOnlyProps.size > 0 ? createRuleWithProperties(unscopedRule, ltrOnlyProps, sel => `${ltrSelector} ${sel}`) : null;
-      const rtlRule = rtlOnlyProps.size > 0 ? createRuleWithProperties(unscopedRule, rtlOnlyProps, sel => `${rtlSelector} ${sel}`) : null;
+      // 添加方向特定属性，使用新的 generateSelector API
+      const ltrRule = ltrOnlyProps.size > 0 ? createRuleWithProperties(
+        unscopedRule, 
+        ltrOnlyProps, 
+        sel => generateSelector(sel, 'ltr', config)
+      ) : null;
+      
+      const rtlRule = rtlOnlyProps.size > 0 ? createRuleWithProperties(
+        unscopedRule, 
+        rtlOnlyProps, 
+        sel => generateSelector(sel, 'rtl', config)
+      ) : null;
 
       // 按指定顺序添加方向规则
       if (outputOrder === 'ltr-first') {
@@ -365,20 +253,12 @@ async function processRule(
   // Process LTR-scoped selectors
   if (ltrSelectors.length > 0) {
     const ltrRule = rule.clone();
-    ltrRule.selectors = ltrSelectors.map(s => s.selector);
+    ltrRule.selectors = ltrSelectors;
     
     const ltrTransformed = await applyLogicalTransformation(ltrRule, ltrProcessor);
     if (ltrTransformed) {
-      // Only add direction selector prefix if the original doesn't already have direction info
-      ltrTransformed.selectors = ltrTransformed.selectors.map(sel => {
-        const originalSelector = ltrSelectors.find(s => 
-          cleanDirectionSelectors(s.selector, ltrSelector, rtlSelector) === cleanDirectionSelectors(sel, ltrSelector, rtlSelector)
-        )?.selector || sel;
-        
-        return hasDirectionSelectors(originalSelector, ltrSelector, rtlSelector) 
-          ? originalSelector 
-          : `${ltrSelector} ${cleanDirectionSelectors(originalSelector, ltrSelector, rtlSelector)}`;
-      });
+      // For selectors that already have direction context, keep them as-is
+      // The detectDirection function already confirmed these are LTR selectors
       results.push(ltrTransformed);
     }
   }
@@ -386,20 +266,12 @@ async function processRule(
   // Process RTL-scoped selectors
   if (rtlSelectors.length > 0) {
     const rtlRule = rule.clone();
-    rtlRule.selectors = rtlSelectors.map(s => s.selector);
+    rtlRule.selectors = rtlSelectors;
     
     const rtlTransformed = await applyLogicalTransformation(rtlRule, rtlProcessor);
     if (rtlTransformed) {
-      // Only add direction selector prefix if the original doesn't already have direction info
-      rtlTransformed.selectors = rtlTransformed.selectors.map(sel => {
-        const originalSelector = rtlSelectors.find(s => 
-          cleanDirectionSelectors(s.selector, ltrSelector, rtlSelector) === cleanDirectionSelectors(sel, ltrSelector, rtlSelector)
-        )?.selector || sel;
-        
-        return hasDirectionSelectors(originalSelector, ltrSelector, rtlSelector) 
-          ? originalSelector 
-          : `${rtlSelector} ${cleanDirectionSelectors(originalSelector, ltrSelector, rtlSelector)}`;
-      });
+      // For selectors that already have direction context, keep them as-is
+      // The detectDirection function already confirmed these are RTL selectors
       results.push(rtlTransformed);
     }
   }
