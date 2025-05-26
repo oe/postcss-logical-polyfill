@@ -4,33 +4,31 @@
  * This plugin transforms CSS logical properties to physical properties with appropriate
  * direction-specific selectors for better browser compatibility.
  * 
+ * Logical property processing has been modularized into ./logical-properties
  * Selector-related logic has been modularized into ./selector-utils for better maintainability.
  */
 import postcss, { PluginCreator, Root, Rule, AtRule } from 'postcss';
-import logical from 'postcss-logical';
 import {
   detectDirection,
   generateSelector,
   DirectionConfig,
 } from './selector-utils';
+import {
+  hasLogicalProperties,
+  applyLogicalTransformation,
+  rulesAreIdentical,
+  analyzePropertyDifferences,
+} from './logical-properties';
 
 // Skip processing of @keyframes and other special at-rules that shouldn't be transformed
 const SKIP_AT_RULES = ['keyframes', 'font-face', 'counter-style', 'page'];
 
-// Default direction selectors
-const DEFAULT_RTL_SELECTOR = '[dir="rtl"]';
-const DEFAULT_LTR_SELECTOR = '[dir="ltr"]';
-
-const ltrProcessor = logical({ inlineDirection: 'left-to-right' as any });
-const rtlProcessor = logical({ inlineDirection: 'right-to-left' as any });
-
-const supportedLogicalProperties = Object.keys(
-  // @ts-expect-error ignore missing types for postcss-logical
-  ltrProcessor.Declaration
-) as string[];
-
-// Convert to Set for O(1) lookup performance
-const supportedLogicalPropertiesSet = new Set(supportedLogicalProperties);
+// Default configuration
+const DEFAULT_CONFIG = {
+  rtlSelector: '[dir="rtl"]',
+  ltrSelector: '[dir="ltr"]',
+  outputOrder: 'ltr-first' as const
+} as const;
 
 /**
  * Configuration options for the PostCSS Logical Scope plugin
@@ -71,126 +69,87 @@ export interface LogicalPolyfillOptions {
   outputOrder?: 'ltr-first' | 'rtl-first';
 }
 
-// Check if rule contains logical properties
-function hasLogicalProperties(rule: Rule): boolean {
-  return rule.some(
-    (decl) =>
-      decl.type === 'decl' && supportedLogicalPropertiesSet.has(decl.prop)
-  );
-}
-
-// Extract declarations from a rule into a Map
-function extractDeclarations(rule: Rule): Map<string, string> {
-  const declarations = new Map<string, string>();
-  rule.each(node => {
-    if (node.type === 'decl') {
-      declarations.set(node.prop, node.value);
-    }
+// Categorize selectors by their direction context
+function categorizeSelectors(selectors: string[], config: DirectionConfig) {
+  const categories = { ltr: [], rtl: [], none: [] } as Record<string, string[]>;
+  
+  selectors.forEach(selector => {
+    const direction = detectDirection(selector, config);
+    categories[direction].push(selector);
   });
-  return declarations;
+
+  return {
+    ltrSelectors: categories.ltr,
+    rtlSelectors: categories.rtl,
+    noscopeSelectors: categories.none
+  };
 }
 
-// Helper function to compare if two rules have identical declarations
-function rulesAreIdentical(rule1: Rule, rule2: Rule): boolean {
-  const decls1 = extractDeclarations(rule1);
-  const decls2 = extractDeclarations(rule2);
-  
-  if (decls1.size !== decls2.size) return false;
-  
-  for (const [prop, value] of decls1) {
-    if (decls2.get(prop) !== value) return false;
-  }
-  
-  return true;
-}
-
-// Apply logical property transformation to a rule
-async function applyLogicalTransformation(rule: Rule, processor: any): Promise<Rule | null> {
-  const tempRoot = postcss.root();
-  tempRoot.append(rule.clone());
-  
-  try {
-    const transformed = await postcss([processor]).process(tempRoot, { from: undefined });
-    let transformedRule: Rule | null = null;
-    transformed.root.walkRules(r => {
-      transformedRule = r;
-    });
-    return transformedRule;
-  } catch (error) {
-    console.warn('Failed to process logical properties:', error);
-    return null;
-  }
-}
-
-// Analyze property differences between LTR and RTL rules
-function analyzePropertyDifferences(ltrRule: Rule, rtlRule: Rule) {
-  const ltrProps = extractDeclarations(ltrRule);
-  const rtlProps = extractDeclarations(rtlRule);
-  
-  const commonProps = new Map<string, string>();
-  const ltrOnlyProps = new Map<string, string>();
-  const rtlOnlyProps = new Map<string, string>();
-
-  // Find common and LTR-only properties
-  for (const [prop, value] of ltrProps) {
-    if (rtlProps.has(prop) && rtlProps.get(prop) === value) {
-      commonProps.set(prop, value);
-    } else {
-      ltrOnlyProps.set(prop, value);
-    }
-  }
-
-  // Find RTL-only properties
-  for (const [prop, value] of rtlProps) {
-    if (!commonProps.has(prop)) {
-      rtlOnlyProps.set(prop, value);
-    }
-  }
-
-  return { commonProps, ltrOnlyProps, rtlOnlyProps };
-}
-
-// Create a rule with specific properties
-function createRuleWithProperties(baseRule: Rule, properties: Map<string, string>, selectorTransform?: (sel: string) => string): Rule {
+// Helper function to create a rule with specific properties and selectors
+function createRuleWithPropertiesAndSelectors(
+  baseRule: Rule, 
+  selectors: string[], 
+  properties: Map<string, string>
+): Rule {
   const newRule = baseRule.clone();
+  newRule.selectors = selectors;
   newRule.removeAll();
-  
-  if (selectorTransform) {
-    newRule.selectors = newRule.selectors.map(selectorTransform);
-  }
-  
-  for (const [prop, value] of properties) {
-    newRule.append({ prop, value });
-  }
-  
+  properties.forEach((value, prop) => newRule.append({ prop, value }));
   return newRule;
 }
 
-// Categorize selectors by their direction context
-function categorizeSelectors(selectors: string[], config: DirectionConfig) {
-  const ltrSelectors: string[] = [];
-  const rtlSelectors: string[] = [];
-  const noscopeSelectors: string[] = [];
-
-  selectors.forEach(selector => {
-    const direction = detectDirection(selector, config);
-    switch (direction) {
-      case 'ltr':
-        ltrSelectors.push(selector);
-        break;
-      case 'rtl':
-        rtlSelectors.push(selector);
-        break;
-      case 'none':
-        noscopeSelectors.push(selector);
-        break;
-    }
-  });
-
-  return { ltrSelectors, rtlSelectors, noscopeSelectors };
+// Helper function to clone a rule with new selectors
+function cloneRuleWithSelectors(baseRule: Rule, selectors: string[]): Rule {
+  const newRule = baseRule.clone();
+  newRule.selectors = selectors;
+  return newRule;
 }
 
-// Unified rule processing function - processes a single rule and returns transformed rules
+// Helper function to add rules in the specified output order
+function addDirectionRules(
+  results: Rule[], 
+  rules: [Rule | null, Rule | null], 
+  outputOrder: 'ltr-first' | 'rtl-first'
+): void {
+  const [ltrRule, rtlRule] = outputOrder === 'ltr-first' ? rules : [rules[1], rules[0]];
+  if (ltrRule) results.push(ltrRule);
+  if (rtlRule) results.push(rtlRule);
+}
+
+// Helper function to create direction-specific rules if properties exist
+function createDirectionRule(
+  baseRule: Rule,
+  selectors: string[],
+  properties: Map<string, string>,
+  direction: 'ltr' | 'rtl',
+  config: DirectionConfig
+): Rule | null {
+  if (properties.size === 0) return null;
+  
+  const scopedSelectors = selectors.map(sel => generateSelector(sel, direction, config));
+  return createRuleWithPropertiesAndSelectors(baseRule, scopedSelectors, properties);
+}
+
+// Helper function to process direction-specific rules from property analysis
+function processDirectionSpecificRules(
+  rule: Rule,
+  selectors: string[],
+  ltrProps: Map<string, string>,
+  rtlProps: Map<string, string>,
+  config: DirectionConfig,
+  outputOrder: 'ltr-first' | 'rtl-first'
+): Rule[] {
+  const directionRules: [Rule | null, Rule | null] = [
+    createDirectionRule(rule, selectors, ltrProps, 'ltr', config),
+    createDirectionRule(rule, selectors, rtlProps, 'rtl', config)
+  ];
+
+  const results: Rule[] = [];
+  addDirectionRules(results, directionRules, outputOrder);
+  return results;
+}
+
+// Optimized rule processing function - processes properties once, then generates rules by selector type
 async function processRule(
   rule: Rule,
   ltrSelector: string,
@@ -203,84 +162,52 @@ async function processRule(
   // Categorize selectors by direction
   const { ltrSelectors, rtlSelectors, noscopeSelectors } = categorizeSelectors(rule.selectors, config);
 
-  // Process unscoped selectors (need both LTR and RTL)
+  // Transform properties once for the entire rule
+  const ltrTransformed = await applyLogicalTransformation(rule, 'ltr');
+  const rtlTransformed = await applyLogicalTransformation(rule, 'rtl');
+
+  if (!ltrTransformed || !rtlTransformed) {
+    return []; // Transformation failure
+  }
+
+  // Process unscoped selectors
   if (noscopeSelectors.length > 0) {
-    const unscopedRule = rule.clone();
-    unscopedRule.selectors = noscopeSelectors;
-
-    const ltrTransformed = await applyLogicalTransformation(unscopedRule, ltrProcessor);
-    const rtlTransformed = await applyLogicalTransformation(unscopedRule, rtlProcessor);
-
-    if (!ltrTransformed || !rtlTransformed) {
-      // Fallback for transformation failure - skip this rule
-      return [];
-    }
-
-    // Optimization: if LTR and RTL transformations are identical (e.g., block-only properties), return single rule
     if (rulesAreIdentical(ltrTransformed, rtlTransformed)) {
-      results.push(ltrTransformed);
+      // Identical transformations - single rule needed
+      results.push(cloneRuleWithSelectors(ltrTransformed, noscopeSelectors));
     } else {
-      // Analyze property differences and create optimized rules
+      // Different transformations - analyze and create optimized rules
       const { commonProps, ltrOnlyProps, rtlOnlyProps } = analyzePropertyDifferences(ltrTransformed, rtlTransformed);
 
-      // Add common properties (no direction specificity)
+      // Common properties rule
       if (commonProps.size > 0) {
-        results.push(createRuleWithProperties(unscopedRule, commonProps));
+        results.push(createRuleWithPropertiesAndSelectors(rule, noscopeSelectors, commonProps));
       }
 
-      // Add direction-specific properties using generateSelector API
-      const ltrRule = ltrOnlyProps.size > 0 ? createRuleWithProperties(
-        unscopedRule, 
-        ltrOnlyProps, 
-        sel => generateSelector(sel, 'ltr', config)
-      ) : null;
-      
-      const rtlRule = rtlOnlyProps.size > 0 ? createRuleWithProperties(
-        unscopedRule, 
-        rtlOnlyProps, 
-        sel => generateSelector(sel, 'rtl', config)
-      ) : null;
-
-      // Add direction rules in specified order
-      const rulesToAdd = outputOrder === 'ltr-first' 
-        ? [ltrRule, rtlRule] 
-        : [rtlRule, ltrRule];
-        
-      rulesToAdd.forEach(rule => {
-        if (rule) results.push(rule);
-      });
+      // Direction-specific rules
+      results.push(...processDirectionSpecificRules(rule, noscopeSelectors, ltrOnlyProps, rtlOnlyProps, config, outputOrder));
     }
   }
 
-  // Process direction-scoped selectors
-  await processDirectionScopedSelectors(rule, ltrSelectors, ltrProcessor, results);
-  await processDirectionScopedSelectors(rule, rtlSelectors, rtlProcessor, results);
+  // Process already-scoped selectors
+  const scopedRules = [
+    { selectors: ltrSelectors, transformedRule: ltrTransformed },
+    { selectors: rtlSelectors, transformedRule: rtlTransformed }
+  ];
+
+  scopedRules.forEach(({ selectors, transformedRule }) => {
+    if (selectors.length > 0) {
+      results.push(cloneRuleWithSelectors(transformedRule, selectors));
+    }
+  });
 
   return results;
 }
 
-// Helper function to process selectors that already have direction context
-async function processDirectionScopedSelectors(
-  baseRule: Rule, 
-  selectors: string[], 
-  processor: any, 
-  results: Rule[]
-): Promise<void> {
-  if (selectors.length > 0) {
-    const scopedRule = baseRule.clone();
-    scopedRule.selectors = selectors;
-    
-    const transformed = await applyLogicalTransformation(scopedRule, processor);
-    if (transformed) {
-      results.push(transformed);
-    }
-  }
-}
-
 const logicalPolyfill: PluginCreator<LogicalPolyfillOptions> = (opts = {}) => {
-  const rtlSelector = opts.rtl?.selector || DEFAULT_RTL_SELECTOR;
-  const ltrSelector = opts.ltr?.selector || DEFAULT_LTR_SELECTOR;
-  const outputOrder = opts.outputOrder || 'ltr-first';
+  const rtlSelector = opts.rtl?.selector || DEFAULT_CONFIG.rtlSelector;
+  const ltrSelector = opts.ltr?.selector || DEFAULT_CONFIG.ltrSelector;
+  const outputOrder = opts.outputOrder || DEFAULT_CONFIG.outputOrder;
 
   return {
     postcssPlugin: 'postcss-logical-polyfill',
