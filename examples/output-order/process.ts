@@ -1,5 +1,5 @@
 import postcss from 'postcss';
-import logicalPolyfill from '../../dist/index.js';
+import logicalPolyfill from '../../src/index';
 import { readFileSync, writeFileSync } from 'fs';
 
 const inputCSS = readFileSync('./input.css', 'utf8');

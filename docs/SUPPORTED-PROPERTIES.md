@@ -10,6 +10,7 @@ This document provides a comprehensive reference of all CSS logical properties s
 - [Mixed-Direction Properties](#mixed-direction-properties)
 - [Logical Values Support](#logical-values-support)
 - [Extended Properties (Shim System)](#extended-properties-shim-system)
+- [Experimental Features](#experimental-features)
 - [Unsupported Properties](#unsupported-properties)
 
 ## Property Categories
@@ -218,6 +219,53 @@ Support for logical values in existing CSS properties:
 - `clear: inline-start/end` → direction-aware `left`/`right`
 - `resize: block/inline` → `vertical`/`horizontal`
 
+## Experimental Features
+
+The plugin includes experimental support for draft-stage CSS logical properties and features that are not yet widely supported by browsers but are part of the CSS specifications.
+
+### Linear Gradient Logical Directions
+
+Experimental support for logical directions in background(or background-image)  `linear-gradient()` functions:
+
+```css
+/* Input */
+.element {
+  background: linear-gradient(to inline-start, red, blue);
+}
+
+/* LTR Output */
+[dir="ltr"] .element {
+  background: linear-gradient(to left, red, blue);
+}
+
+/* RTL Output */
+[dir="rtl"] .element {
+  background: linear-gradient(to right, red, blue);
+}
+```
+
+**Supported logical directions:**
+- `to inline-start` → direction-aware `to left`/`to right`
+- `to inline-end` → direction-aware `to right`/`to left`
+- `to block-start` → `to top` (direction-independent)
+- `to block-end` → `to bottom` (direction-independent)
+
+```css
+/* More examples */
+.gradient-examples {
+  /* Block directions (direction-independent) */
+  background: linear-gradient(to block-start, #fff, #000);
+  /* → linear-gradient(to top, #fff, #000) */
+  
+  /* Inline directions (direction-aware) */
+  background: linear-gradient(to inline-end, #fff, #000);
+  /* LTR: → linear-gradient(to right, #fff, #000) */
+  /* RTL: → linear-gradient(to left, #fff, #000) */
+}
+```
+
+**Note:** This is an experimental feature. The CSS specification for logical directions in gradients is still in draft stage. Use with caution in production environments.
+
 ## Unsupported Properties
 
 The following properties are **NOT** handled by this plugin:
@@ -310,4 +358,5 @@ JavaScript, HTML, or other file types are not processed.
 
 - [Advanced Usage Guide](./ADVANCED-USAGE.md) - Configuration and advanced patterns
 - [How It Works](./HOW-IT-WORKS.md) - Technical details about the transformation process
+- [Experimental Features](./EXPERIMENTAL-FEATURES.md) - Draft CSS features and future roadmap
 - [Examples](../examples/README.md) - Real-world usage examples

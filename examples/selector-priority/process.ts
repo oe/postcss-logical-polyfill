@@ -1,7 +1,7 @@
-const postcss = require('postcss');
-const logicalPolyfill = require('../../dist/index.js');
-const fs = require('fs');
-const path = require('path');
+import postcss from 'postcss';
+import logicalPolyfill from '../../src/index';
+import fs from 'fs';
+import path from 'path';
 
 async function processCSS() {
   console.log('🎯 Smart Selector Priority Optimization Example\n');

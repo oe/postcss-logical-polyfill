@@ -10,6 +10,7 @@
 import postcss, { Rule } from 'postcss';
 import logical from 'postcss-logical';
 import { extendProcessors } from './logical-shim';
+import { extendProcessorsWithExperimental } from './logical-exp';
 
 // Logical processors for LTR and RTL transformations
 const PROCESSORS = {
@@ -19,6 +20,9 @@ const PROCESSORS = {
 
 // Extend processors with our shim declarations
 extendProcessors(PROCESSORS);
+
+// Extend processors with experimental features
+extendProcessorsWithExperimental(PROCESSORS);
 
 // Get supported logical properties from the processor (including shim properties)
 const supportedLogicalPropertiesSet = new Set(
@@ -30,8 +34,12 @@ const supportedLogicalPropertiesSet = new Set(
  */
 export function hasLogicalProperties(rule: Rule): boolean {
   return rule.some(
-    (decl) =>
-      decl.type === 'decl' && supportedLogicalPropertiesSet.has(decl.prop)
+    (decl) => {
+      if (decl.type !== 'decl') return false;
+      
+      // Check for logical properties (including experimental ones via extended processors)
+      return supportedLogicalPropertiesSet.has(decl.prop);
+    }
   );
 }
 

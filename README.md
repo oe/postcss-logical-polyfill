@@ -14,7 +14,12 @@ A PostCSS plugin that transforms CSS logical properties into physical properties
 ### Installation
 
 ```bash
+# Using npm
 npm install postcss-logical-polyfill --save-dev
+# Using pnpm
+pnpm add -D postcss-logical-polyfill
+# Using yarn
+yarn add -D postcss-logical-polyfill
 ```
 
 ### Basic Usage
@@ -61,6 +66,7 @@ module.exports = {
 - **🎯 Smart Generation**: Creates both LTR and RTL versions automatically
 - **⚡ Optimized Output**: Block-direction properties generate single rules (no duplication)
 - **🔗 Extended Support**: Includes scroll properties and logical values via integrated shim
+- **🧪 Experimental Features**: Linear gradient logical directions and draft CSS specs
 - **🎛️ Configurable**: Custom selectors and output order control
 - **🏗️ Framework Ready**: Works with any build tool or CSS framework
 
@@ -94,6 +100,7 @@ This plugin transforms **CSS Logical Properties** into physical properties with 
 - **All standard logical properties** (margin, padding, border, inset, sizing, etc.)
 - **Logical values** (float: inline-start, clear: inline-end, resize: block)
 - **Scroll properties** (scroll-margin, scroll-padding)
+- **Experimental features** (linear-gradient logical directions)
 - **Both scoped and unscoped** logical properties
 
 **➡️ [Complete supported properties list](./docs/SUPPORTED-PROPERTIES.md)**
@@ -140,6 +147,11 @@ postcss([
   scroll-margin-inline: 10px;
   float: inline-start;
 }
+
+/* Experimental: Linear gradient logical directions */
+.gradient-element {
+  background: linear-gradient(to inline-end, red, blue);
+}
 ```
 
 **Output CSS:**
@@ -172,6 +184,14 @@ postcss([
 }
 [dir="rtl"] .scroll-area {
   float: right;
+}
+
+/* Experimental features automatically enabled */
+[dir="ltr"] .gradient-element {
+  background: linear-gradient(to right, red, blue);
+}
+[dir="rtl"] .gradient-element {
+  background: linear-gradient(to left, red, blue);
 }
 ```
 
