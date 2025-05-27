@@ -1,12 +1,12 @@
 # Known Limitations
 
-## Scroll Properties Not Supported
+## ~~Scroll Properties Not Supported~~ ✅ Now Supported via Shim System
 
-The `postcss-logical-scope` plugin relies on the [`postcss-logical`](https://github.com/csstools/postcss-logical) plugin for transforming logical properties to physical properties. Currently, `postcss-logical` does not support scroll-related logical properties.
+⭐ **As of v0.4.0**, the `postcss-logical-scope` plugin now includes a built-in shim system that provides full support for scroll-related logical properties. While the underlying [`postcss-logical`](https://github.com/csstools/postcss-logical) plugin doesn't support these properties yet, our shim seamlessly handles them.
 
-### Unsupported Properties
+### ✅ Supported Properties
 
-The following logical properties are **not** transformed and will remain unchanged in the output:
+The following logical properties are **now fully supported** and will be transformed:
 
 - `scroll-margin-inline`
 - `scroll-margin-inline-start` 
@@ -33,99 +33,77 @@ The following logical properties are **not** transformed and will remain unchang
 
 **Output:**
 ```css
-/* These properties remain unchanged */
-.element {
-  scroll-margin-inline: 10px;
-  scroll-padding-block: 5px;
+[dir="ltr"] .element {
+  scroll-margin-left: 10px;
+  scroll-margin-right: 10px;
+  scroll-padding-top: 5px;
+  scroll-padding-bottom: 5px;
+}
+[dir="rtl"] .element {
+  scroll-margin-right: 10px;
+  scroll-margin-left: 10px;
+  scroll-padding-top: 5px;
+  scroll-padding-bottom: 5px;
 }
 ```
 
-### Workaround
+### How It Works
 
-If you need scroll property support, you can:
+The shim system automatically detects logical properties that aren't supported by `postcss-logical` and transforms them using the same direction-aware approach. This ensures consistent behavior across all logical properties.
 
-1. Use physical properties directly:
-   ```css
-   .element {
-     scroll-margin-left: 10px;
-     scroll-margin-right: 10px;
-   }
-   ```
+## ~~Logical Values Not Fully Supported~~ ✅ Enhanced Support via Shim System
 
-2. Wait for `postcss-logical` to add support for these properties
-3. Contribute scroll property support to the `postcss-logical` project
+⭐ **As of v0.4.0**, the `postcss-logical-scope` plugin includes an enhanced shim system that extends logical value support beyond what's available in the base [`postcss-logical`](https://github.com/csstools/postcss-logical) plugin.
 
-## Logical Values Not Fully Supported
+### ✅ Supported Logical Values
 
-The `postcss-logical` plugin has partial support for logical values. Some logical values are supported while others are not yet implemented.
+The following logical values are **fully supported** and will be transformed:
 
-### Supported Logical Values
-
-The following logical values are **supported** and will be transformed:
-
+**Text Alignment (Base Support):**
 - `text-align: start` → `text-align: left` (LTR) / `text-align: right` (RTL)
 - `text-align: end` → `text-align: right` (LTR) / `text-align: left` (RTL)
 
-### Unsupported Logical Values
+**Float & Clear (⭐ NEW - Shim Enhanced):**
+- `float: inline-start` → `float: left` (LTR) / `float: right` (RTL)
+- `float: inline-end` → `float: right` (LTR) / `float: left` (RTL)
+- `clear: inline-start` → `clear: left` (LTR) / `clear: right` (RTL)
+- `clear: inline-end` → `clear: right` (LTR) / `clear: left` (RTL)
 
-The following logical values are **not** supported and will remain unchanged in the output:
-
-- `float: inline-start` (should become `float: left` in LTR, `float: right` in RTL)
-- `float: inline-end` (should become `float: right` in LTR, `float: left` in RTL)
-- `clear: inline-start` (should become `clear: left` in LTR, `clear: right` in RTL)
-- `clear: inline-end` (should become `clear: right` in LTR, `clear: left` in RTL)
-- `resize: block` (should become `resize: vertical`)
-- `resize: inline` (should become `resize: horizontal`)
+**Resize (⭐ NEW - Shim Enhanced):**
+- `resize: block` → `resize: vertical`
+- `resize: inline` → `resize: horizontal`
 
 ### Example
 
 **Input:**
 ```css
 .element {
-  text-align: start;  /* This works */
-  float: inline-start;  /* This doesn't work */
-  clear: inline-end;   /* This doesn't work */
-  resize: block;       /* This doesn't work */
+  text-align: start;
+  float: inline-start;
+  clear: inline-end;
+  resize: block;
 }
 ```
 
 **Output:**
 ```css
-/* Supported: text-align is transformed */
 [dir="ltr"] .element {
   text-align: left;
-  float: inline-start;  /* Unchanged - not supported */
-  clear: inline-end;    /* Unchanged - not supported */
-  resize: block;        /* Unchanged - not supported */
+  float: left;
+  clear: right;
+  resize: vertical;
 }
 [dir="rtl"] .element {
   text-align: right;
-  float: inline-start;  /* Unchanged - not supported */
-  clear: inline-end;    /* Unchanged - not supported */
-  resize: block;        /* Unchanged - not supported */
+  float: right;
+  clear: left;
+  resize: vertical;
 }
 ```
 
-### Workaround
+### How It Works
 
-For unsupported logical values, you can:
-
-1. Use physical values directly with direction-specific rules:
-   ```css
-   [dir="ltr"] .element {
-     float: left;
-     clear: right;
-     resize: vertical;
-   }
-   [dir="rtl"] .element {
-     float: right;
-     clear: left;
-     resize: vertical;
-   }
-   ```
-
-2. Wait for `postcss-logical` to add support for these logical values
-3. Contribute logical value support to the `postcss-logical` project
+The shim system automatically detects logical values that aren't supported by the base `postcss-logical` plugin and transforms them using the same direction-aware approach. This ensures comprehensive logical property support across all CSS features.
 
 ## CSS Rule Ordering
 

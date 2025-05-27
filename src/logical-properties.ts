@@ -7,9 +7,9 @@
  * 
  * Enhanced with shim support for additional logical properties and values.
  */
-import postcss, { Rule, Declaration } from 'postcss';
+import postcss, { Rule } from 'postcss';
 import logical from 'postcss-logical';
-import { extendProcessors, SHIM_DECLARATIONS } from './logical-shim';
+import { extendProcessors } from './logical-shim';
 
 // Logical processors for LTR and RTL transformations
 const PROCESSORS = {
@@ -21,10 +21,9 @@ const PROCESSORS = {
 extendProcessors(PROCESSORS);
 
 // Get supported logical properties from the processor (including shim properties)
-const supportedLogicalPropertiesSet = new Set([
-  ...Object.keys((PROCESSORS.ltr as any).Declaration || {}),
-  ...Object.keys(SHIM_DECLARATIONS)
-]);
+const supportedLogicalPropertiesSet = new Set(
+  Object.keys((PROCESSORS.ltr as any).Declaration || {})
+);
 
 /**
  * Check if a rule contains logical properties

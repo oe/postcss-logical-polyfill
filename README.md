@@ -26,16 +26,26 @@ The [CSS Logical Properties specification](https://developer.mozilla.org/en-US/d
 - **🎯 Intelligent Direction Handling**: 
   - Unscoped logical properties → Generate both `[dir="ltr"]` and `[dir="rtl"]` versions
   - Scoped logical properties → Convert according to existing direction selectors
-- **⚡ Block-Direction Optimization**: **NEW!** Smart property classification for optimal output
+- **⚡ Block-Direction Optimization**: Smart property classification for optimal output
   - Block-only properties → Generate single rule without direction selectors
   - Inline properties → Generate separate LTR/RTL rules as needed
   - Significantly reduces CSS output size and eliminates duplicate rules
+- **🔗 Extended Logical Property Support**: ⭐ **NEW!** Integrated shim system for comprehensive logical property coverage
+  - **Scroll properties**: `scroll-margin-*`, `scroll-padding-*` (all variants)
+  - **Logical values**: `float: inline-start/end`, `clear: inline-start/end`, `resize: block/inline`
+  - **Seamless integration**: Works alongside core logical properties with zero configuration
+  - **Future-proof**: Extensible architecture for adding more logical property support
 - **🔄 Output Order Control**: Configure the generation order of LTR and RTL rules
   - `outputOrder: 'ltr-first'` (default) for standard layouts
   - `outputOrder: 'rtl-first'` for RTL-primary sites and specificity control
   - Crucial for CSS cascade behavior and framework integration
 - **📐 Direction-Aware Processing**: Respects existing direction selectors (`:dir(rtl)`, `[dir="rtl"]`, `:dir(ltr)`, `[dir="ltr"]`)
 - **⚙️ Customizable Selectors**: Configure custom RTL and LTR selectors to match your project needs
+- **🎯 Smart Selector Priority**: **NEW!** Advanced rightmost priority optimization for predictable CSS behavior
+  - When multiple direction selectors exist in a selector chain, the rightmost (most specific) takes precedence
+  - Prevents unexpected behavior from contradictory direction contexts
+  - Follows CSS cascade principles for intuitive and predictable results
+  - Works seamlessly with both built-in and custom direction selectors
 - **🏗️ Nested Rule Support**: Works seamlessly with media queries, at-rules, and nested selectors
 - **🔧 Rule Optimization**: Intelligently merges duplicate rules and handles property overrides
 - **⚡ Error Resilient**: Graceful fallbacks when transformations encounter issues with enhanced test coverage
@@ -60,30 +70,40 @@ This plugin processes **CSS Logical Properties** and transforms them into physic
 
 ### ✅ Supported Logical Properties
 
-The plugin processes all standard [CSS Logical Properties](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Logical_Properties) and intelligently categorizes them:
+The plugin processes all standard [CSS Logical Properties](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Logical_Properties) and intelligently categorizes them. **⭐ NEW**: Extended support via integrated shim system for previously unsupported features.
 
 **Block-Direction Properties** (generate single rule without direction selectors):
 - Properties containing `block` (e.g., `margin-block`, `padding-block-start`, `border-block-width`)
 - Block sizing properties (`block-size`, `min-block-size`, `max-block-size`)
-- Block scroll properties (`scroll-margin-block`, `scroll-padding-block`)
+- Block scroll properties (`scroll-margin-block`, `scroll-padding-block`) ⭐ **NEW via shim**
 
 **Inline-Direction Properties** (generate separate LTR and RTL rules):
 - Properties containing `inline` (e.g., `margin-inline`, `padding-inline-start`, `border-inline-color`)
 - Inline sizing properties (`inline-size`, `min-inline-size`, `max-inline-size`)
-- Inline scroll properties (`scroll-margin-inline`, `scroll-padding-inline`)
+- Inline scroll properties (`scroll-margin-inline`, `scroll-padding-inline`) ⭐ **NEW via shim**
 - Border radius logical properties (`border-start-start-radius`, `border-end-start-radius`, etc.)
 
 **Mixed-Direction Properties** (affect both dimensions, generate LTR/RTL rules):
 - `inset` (shorthand affecting all four directions)
 
+**Logical Values Support** ⭐ **NEW via shim**:
+- `float: inline-start/end` → direction-aware `left`/`right`
+- `clear: inline-start/end` → direction-aware `left`/`right`
+- `resize: block/inline` → `vertical`/`horizontal`
+
 ### ⚠️ What This Plugin Does NOT Handle
 
 - **Physical Properties**: Regular CSS properties like `margin-left`, `padding-top`, `border-right` are left unchanged
 - **Writing Mode Properties**: `writing-mode`, `direction`, `text-orientation` are not processed
-- **Text Direction Properties**: `unicode-bidi`, `text-align` are not modified
+- **Some Text Direction Properties**: `unicode-bidi` are not modified (though `text-align: start/end` logical values are supported)
 - **Grid/Flexbox Logical Properties**: Grid and flexbox logical properties may be handled by postcss-logical but are not the primary focus
 - **Custom Properties**: CSS custom properties (variables) are preserved as-is
 - **Non-CSS Content**: JavaScript, HTML, or other file types
+
+**⭐ Previously Unsupported but Now Supported via Shim**:
+- ~~Scroll logical properties~~ → **Now fully supported** (`scroll-margin-*`, `scroll-padding-*`)
+- ~~Float/clear logical values~~ → **Now fully supported** (`float: inline-start/end`, `clear: inline-start/end`)
+- ~~Resize logical values~~ → **Now fully supported** (`resize: block/inline`)
 
 ### 🎯 Processing Behavior
 
@@ -152,10 +172,22 @@ postcss([
   padding-inline-start: 1rem;
 }
 
-/* Block-direction properties - NEW! Generate single optimized rule */
+/* Block-direction properties - Generate single optimized rule */
 .content {
   margin-block: 2rem;
   padding-block-start: 1rem;
+}
+
+/* ⭐ NEW: Extended logical properties via shim system */
+.scroll-area {
+  scroll-margin-inline: 10px;
+  scroll-padding-block: 5px;
+}
+
+.floating-element {
+  float: inline-start;
+  clear: inline-end;
+  resize: block;
 }
 
 /* Scoped logical properties - will convert according to existing scope */
@@ -185,11 +217,31 @@ postcss([
   padding-right: 1rem;
 }
 
-/* Block-direction properties - NEW! Single optimized rule without direction selectors */
+/* Block-direction properties - Single optimized rule without direction selectors */
 .content {
   margin-top: 2rem;
   margin-bottom: 2rem;
   padding-top: 1rem;
+}
+
+/* ⭐ NEW: Extended logical properties transformed via shim system */
+.scroll-area {
+  scroll-margin-left: 10px;
+  scroll-margin-right: 10px;
+  scroll-padding-top: 5px;
+  scroll-padding-bottom: 5px;
+}
+
+.floating-element {
+  resize: vertical;
+}
+[dir="ltr"] .floating-element {
+  float: left;
+  clear: right;
+}
+[dir="rtl"] .floating-element {
+  float: right;
+  clear: left;
 }
 
 /* Scoped styles converted to physical properties */
@@ -239,7 +291,13 @@ This polyfill plugin intelligently processes your CSS through several optimized 
    - Removes redundant CSS declarations
    - **NEW**: Eliminates unnecessary direction-specific rules for block properties
 
-6. **✨ Output Generation**: Produces clean, optimized CSS with physical properties for maximum browser compatibility
+6. **🎯 Smart Selector Priority**: **NEW!** Advanced rightmost priority optimization for predictable CSS behavior
+   - When multiple direction selectors exist in a selector chain, the rightmost (most specific) takes precedence
+   - Prevents unexpected behavior from contradictory direction contexts
+   - Follows CSS cascade principles for intuitive and predictable results
+   - Works seamlessly with both built-in and custom direction selectors
+
+7. **✨ Output Generation**: Produces clean, optimized CSS with physical properties for maximum browser compatibility
 
 ## More Examples
 
@@ -393,6 +451,88 @@ When you customize selectors, make sure your HTML matches:
 <html class="rtl-layout">  <!-- Matches .rtl-layout selector -->
 ```
 
+### Custom Direction Selectors
+
+Configure custom selectors for specific frameworks or design systems:
+
+```js
+postcss([
+  logicalPolyfill({
+    ltr: { selector: '.ltr' },      // For frameworks like Tailwind
+    rtl: { selector: '.rtl' }       // Custom RTL class
+  })
+])
+```
+
+### Smart Selector Priority Optimization
+
+The plugin implements **rightmost priority logic** to ensure predictable CSS behavior when multiple direction selectors exist in a single selector chain. This optimization makes the plugin behavior more intuitive and follows CSS cascade principles.
+
+#### How It Works
+
+When the plugin encounters selectors with multiple direction indicators, it prioritizes the **rightmost** (most specific) direction selector:
+
+```css
+/* Input: Complex selector with multiple direction contexts */
+.app[dir="ltr"] .section:dir(rtl) .content {
+  margin-inline-start: 1rem;
+  padding-inline-end: 2rem;
+}
+
+/* Output: Rightmost :dir(rtl) takes precedence */
+.app[dir="ltr"] .section:dir(rtl) .content {
+  margin-right: 1rem;    /* RTL direction applied */
+  padding-left: 2rem;    /* RTL direction applied */
+}
+```
+
+#### Examples with Custom Selectors
+
+The optimization works seamlessly with custom direction selectors:
+
+```js
+// Configuration
+logicalPolyfill({
+  ltr: { selector: '.theme-ltr' },
+  rtl: { selector: '.theme-rtl' }
+})
+```
+
+```css
+/* Input: Mixed built-in and custom selectors */
+:dir(rtl) .container .theme-ltr .component {
+  border-inline-start: 2px solid;
+}
+
+/* Output: Rightmost .theme-ltr takes precedence */
+:dir(rtl) .container .theme-ltr .component {
+  border-left: 2px solid;    /* LTR direction applied */
+}
+```
+
+#### Benefits
+
+1. **🎯 Predictable Behavior**: No surprises from contradictory direction contexts
+2. **🔧 CSS Cascade Compliance**: Follows standard CSS specificity and cascade rules
+3. **⚡ Framework Agnostic**: Works with any custom selector pattern
+4. **🏗️ Nested Context Safe**: Handles complex nested layouts reliably
+
+#### Edge Case Handling
+
+The plugin gracefully handles edge cases while maintaining predictable behavior:
+
+```css
+/* Multiple same-direction selectors */
+.theme[dir="ltr"] .section[dir="ltr"] .item {
+  margin-inline: 1rem;  /* LTR applied consistently */
+}
+
+/* Contradictory selectors - rightmost wins */
+[dir="ltr"] .parent [dir="rtl"] .child [dir="ltr"] .final {
+  padding-inline-start: 2rem;  /* Final [dir="ltr"] determines direction */
+}
+```
+
 ## Advanced Usage
 
 ### Working with Existing Direction Selectors
@@ -484,6 +624,23 @@ This example shows:
 - How `outputOrder: 'rtl-first'` generates RTL rules before LTR rules
 - That only unscoped logical properties are affected by this setting
 - Side-by-side comparison of both output styles
+
+### Smart Selector Priority Optimization
+
+Example demonstrating the **rightmost priority logic** that makes CSS behavior more predictable with complex direction selectors.
+
+```bash
+# Run the selector priority example
+cd examples/selector-priority
+npx tsx process.ts
+```
+
+This example shows:
+- How rightmost direction selectors take precedence in selector chains
+- Mixed built-in (`:dir()`, `[dir]`) and custom selector handling
+- Complex nested scenarios with predictable results
+- Edge case management for contradictory direction contexts
+- Framework-agnostic custom selector pattern support
 
 ### PostCSS CLI Integration
 

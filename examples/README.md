@@ -8,6 +8,7 @@ This directory contains examples demonstrating how to use the `postcss-logical-p
 - [LESS](./less) - Integration with LESS preprocessor
 - [SASS](./sass) - Integration with SASS preprocessor
 - [Output Order](./output-order) - Demonstrates `outputOrder` configuration for controlling LTR/RTL rule generation order
+- [Selector Priority](./selector-priority) - **NEW!** Demonstrates smart rightmost priority optimization for predictable CSS behavior
 - [PostCSS CLI](./postcss-cli) - Integration with PostCSS CLI tool and configuration
 - [Webpack](./webpack) - Integration with Webpack build system
 
@@ -31,8 +32,9 @@ Or run individual examples by navigating to their directories and following the 
 2. **LESS**: How logical properties are transformed in LESS preprocessor workflows
 3. **SASS**: How logical properties are transformed in SASS preprocessor workflows
 4. **Output Order**: How to control the generation order of LTR and RTL rules using the `outputOrder` configuration
-5. **PostCSS CLI**: How to use the plugin with PostCSS CLI and configuration files
-6. **Webpack**: How direction-specific selectors are handled in Webpack build systems
+5. **Selector Priority**: How rightmost priority optimization makes CSS behavior predictable with complex direction selectors
+6. **PostCSS CLI**: How to use the plugin with PostCSS CLI and configuration files
+7. **Webpack**: How direction-specific selectors are handled in Webpack build systems
 
 ## Key Concepts Illustrated
 
@@ -40,6 +42,9 @@ Or run individual examples by navigating to their directories and following the 
 - Direction-specific styling with `:dir(rtl)` pseudo-class
 - Direction-specific styling with `[dir="rtl"]` attribute selector
 - Controlling output order with `outputOrder` configuration (`ltr-first` vs `rtl-first`)
+- **Smart selector priority**: Rightmost direction selector precedence for predictable behavior
+- Custom direction selectors with framework integration (Tailwind-style classes)
+- Complex nested selector chains with multiple direction contexts
 - Impact of output order on CSS specificity and rule precedence
 - Nested selectors with logical properties
 - Complex scenarios with both RTL and LTR rules

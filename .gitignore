@@ -75,5 +75,5 @@ Thumbs.db
 *.tsbuildinfo
 
 # Example outputs
-examples/**/*.output.*
-examples/**/output.*
+examples/**/*.output.
+examples/**/output*.css
