@@ -66,6 +66,8 @@ These properties only affect the block dimension (vertical in most writing modes
 - `scroll-padding-block` → `scroll-padding-top` + `scroll-padding-bottom`
 - `scroll-padding-block-start` → `scroll-padding-top`
 - `scroll-padding-block-end` → `scroll-padding-bottom`
+- `overscroll-behavior-block` → `overscroll-behavior-y`
+- `overscroll-behavior-inline` → `overscroll-behavior-x`
 
 ## Inline-Direction Properties
 

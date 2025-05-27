@@ -6,6 +6,7 @@
  *
  * Supported extensions:
  * - Scroll-related logical properties (scroll-margin-*, scroll-padding-*)
+ * - Overscroll behavior logical properties (overscroll-behavior-block, overscroll-behavior-inline)
  * - Float/Clear logical values (inline-start, inline-end)
  * - Resize logical values (block, inline)
  *
@@ -166,6 +167,19 @@ export const SHIM_DECLARATIONS: Record<
       decl.cloneBefore({ prop: 'resize', value: 'horizontal' });
       decl.remove();
     }
+  },
+
+  // Overscroll behavior logical properties
+  'overscroll-behavior-block': (decl) => {
+    decl.cloneBefore({ prop: 'overscroll-behavior-y' });
+    decl.remove();
+  },
+
+  'overscroll-behavior-inline': (decl, { inlineDirection }) => {
+    // overscroll-behavior-inline maps to overscroll-behavior-x
+    // regardless of inline direction
+    decl.cloneBefore({ prop: 'overscroll-behavior-x' });
+    decl.remove();
   }
 };
 

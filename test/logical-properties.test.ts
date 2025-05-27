@@ -301,6 +301,47 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
             scroll-padding-bottom: 16px;
           }
         `
+      },
+      {
+        name: 'overscroll-behavior block properties',
+        input: `
+          .element {
+            overscroll-behavior-block: contain;
+          }
+        `,
+        expected: `
+          .element {
+            overscroll-behavior-y: contain;
+          }
+        `
+      },
+      {
+        name: 'overscroll-behavior inline properties', 
+        input: `
+          .element {
+            overscroll-behavior-inline: none;
+          }
+        `,
+        expected: `
+          .element {
+            overscroll-behavior-x: none;
+          }
+        `
+      },
+      {
+        name: 'mixed overscroll-behavior logical properties',
+        input: `
+          .scroll-area {
+            overscroll-behavior-block: auto;
+            overscroll-behavior-inline: contain;
+          }
+        `,
+        expected: `
+          .scroll-area {
+            overscroll-behavior-y: auto;
+            overscroll-behavior-x: contain;
+          }
+        `
       }
     ];
 
