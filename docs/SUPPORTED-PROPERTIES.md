@@ -66,8 +66,16 @@ These properties only affect the block dimension (vertical in most writing modes
 - `scroll-padding-block` → `scroll-padding-top` + `scroll-padding-bottom`
 - `scroll-padding-block-start` → `scroll-padding-top`
 - `scroll-padding-block-end` → `scroll-padding-bottom`
+
+### Overflow Properties (⭐ NEW via shim)
 - `overscroll-behavior-block` → `overscroll-behavior-y`
 - `overscroll-behavior-inline` → `overscroll-behavior-x`
+- `overflow-block` → `overflow-y`
+- `overflow-inline` → `overflow-x`
+
+### CSS Containment Properties (⭐ NEW via shim)
+- `contain-intrinsic-block-size` → `contain-intrinsic-height`
+- `contain-intrinsic-inline-size` → `contain-intrinsic-width`
 
 ## Inline-Direction Properties
 
@@ -213,6 +221,24 @@ All scroll-related logical properties are now fully supported:
 **Inline-Direction Scroll Properties:**
 - `scroll-margin-inline`, `scroll-margin-inline-start`, `scroll-margin-inline-end`
 - `scroll-padding-inline`, `scroll-padding-inline-start`, `scroll-padding-inline-end`
+
+### Overflow Properties
+
+Logical overflow properties that control content overflow behavior:
+- `overflow-block` → `overflow-y` (controls overflow in the block direction)
+- `overflow-inline` → `overflow-x` (controls overflow in the inline direction)
+
+### CSS Containment Properties
+
+CSS containment logical properties for intrinsic sizing:
+- `contain-intrinsic-block-size` → `contain-intrinsic-height`
+- `contain-intrinsic-inline-size` → `contain-intrinsic-width`
+
+### Overscroll Behavior Properties
+
+Control the browser's overscroll behavior in logical directions:
+- `overscroll-behavior-block` → `overscroll-behavior-y`
+- `overscroll-behavior-inline` → `overscroll-behavior-x`
 
 ### Logical Values
 

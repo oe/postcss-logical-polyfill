@@ -51,3 +51,11 @@
     font-family: "Segoe UI", sans-serif;
   }
 }
+
+/* New logical properties - overflow and containment */
+.scroll-container {
+  overflow-block: hidden;
+  overflow-inline: scroll;
+  contain-intrinsic-block-size: 300px;
+  contain-intrinsic-inline-size: 500px;
+}

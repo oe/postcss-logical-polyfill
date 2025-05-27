@@ -298,6 +298,10 @@ Having issues? Check our troubleshooting guide for common problems and solutions
 - **[Integration Guide](./docs/INTEGRATION-GUIDE.md)** - Setup instructions for popular build tools
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
+## Learn More
+
+- **[CSS Logical Properties and Values (MDN)](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_logical_properties_and_values)** - Official documentation and browser support information
+
 ## Requirements
 
 - Node.js 16.0.0 or later

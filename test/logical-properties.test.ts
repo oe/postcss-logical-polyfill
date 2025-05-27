@@ -342,6 +342,36 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
             overscroll-behavior-x: contain;
           }
         `
+      },
+      {
+        name: 'overflow logical properties',
+        input: `
+          .element {
+            overflow-block: hidden;
+            overflow-inline: scroll;
+          }
+        `,
+        expected: `
+          .element {
+            overflow-y: hidden;
+            overflow-x: scroll;
+          }
+        `
+      },
+      {
+        name: 'contain-intrinsic logical size properties',
+        input: `
+          .element {
+            contain-intrinsic-block-size: 100px;
+            contain-intrinsic-inline-size: 200px;
+          }
+        `,
+        expected: `
+          .element {
+            contain-intrinsic-height: 100px;
+            contain-intrinsic-width: 200px;
+          }
+        `
       }
     ];
 

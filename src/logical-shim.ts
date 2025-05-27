@@ -7,6 +7,8 @@
  * Supported extensions:
  * - Scroll-related logical properties (scroll-margin-*, scroll-padding-*)
  * - Overscroll behavior logical properties (overscroll-behavior-block, overscroll-behavior-inline)
+ * - Overflow logical properties (overflow-block, overflow-inline)
+ * - CSS Containment logical properties (contain-intrinsic-block-size, contain-intrinsic-inline-size)
  * - Float/Clear logical values (inline-start, inline-end)
  * - Resize logical values (block, inline)
  *
@@ -179,6 +181,28 @@ export const SHIM_DECLARATIONS: Record<
     // overscroll-behavior-inline maps to overscroll-behavior-x
     // regardless of inline direction
     decl.cloneBefore({ prop: 'overscroll-behavior-x' });
+    decl.remove();
+  },
+
+  // Overflow logical properties
+  'overflow-block': (decl) => {
+    decl.cloneBefore({ prop: 'overflow-y' });
+    decl.remove();
+  },
+
+  'overflow-inline': (decl) => {
+    decl.cloneBefore({ prop: 'overflow-x' });
+    decl.remove();
+  },
+
+  // CSS Containment logical properties
+  'contain-intrinsic-block-size': (decl) => {
+    decl.cloneBefore({ prop: 'contain-intrinsic-height' });
+    decl.remove();
+  },
+
+  'contain-intrinsic-inline-size': (decl) => {
+    decl.cloneBefore({ prop: 'contain-intrinsic-width' });
     decl.remove();
   }
 };

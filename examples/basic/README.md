@@ -24,6 +24,11 @@ pnpm run examples
 
 ## What to Look For
 
-1. Logical properties like `margin-inline` and `padding-inline-start` are converted to physical properties
-2. Direction-specific selectors (`:dir(rtl)` and `[dir="rtl"]`) are handled correctly
-3. The RTL-specific rules apply the correct transformations to logical properties
+1. **Standard logical properties** like `margin-inline` and `padding-inline-start` are converted to physical properties
+2. **Direction-specific selectors** (`:dir(rtl)` and `[dir="rtl"]`) are handled correctly
+3. **RTL-specific rules** apply the correct transformations to logical properties
+4. **New logical properties** including:
+   - `overflow-block` → `overflow-y`
+   - `overflow-inline` → `overflow-x`
+   - `contain-intrinsic-block-size` → `contain-intrinsic-height`
+   - `contain-intrinsic-inline-size` → `contain-intrinsic-width`
