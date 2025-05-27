@@ -204,4 +204,162 @@ describe('logical-properties module - Public API Tests', () => {
       }
     });
   });
+
+  describe('Shim Features - Extended Logical Support', () => {
+    describe('Float logical values', () => {
+      test('should transform float: inline-start correctly', async () => {
+        const root = postcss.parse('.test { float: inline-start; }');
+        const rule = root.first as Rule;
+        
+        const ltrRule = await applyLogicalTransformation(rule, 'ltr');
+        const rtlRule = await applyLogicalTransformation(rule, 'rtl');
+        
+        expect(ltrRule).not.toBeNull();
+        expect(rtlRule).not.toBeNull();
+        
+        if (ltrRule && rtlRule) {
+          const ltrCss = ltrRule.toString();
+          const rtlCss = rtlRule.toString();
+          
+          expect(ltrCss).toContain('float: left');
+          expect(rtlCss).toContain('float: right');
+        }
+      });
+
+      test('should transform float: inline-end correctly', async () => {
+        const root = postcss.parse('.test { float: inline-end; }');
+        const rule = root.first as Rule;
+        
+        const ltrRule = await applyLogicalTransformation(rule, 'ltr');
+        const rtlRule = await applyLogicalTransformation(rule, 'rtl');
+        
+        expect(ltrRule).not.toBeNull();
+        expect(rtlRule).not.toBeNull();
+        
+        if (ltrRule && rtlRule) {
+          const ltrCss = ltrRule.toString();
+          const rtlCss = rtlRule.toString();
+          
+          expect(ltrCss).toContain('float: right');
+          expect(rtlCss).toContain('float: left');
+        }
+      });
+    });
+
+    describe('Clear logical values', () => {
+      test('should transform clear: inline-start correctly', async () => {
+        const root = postcss.parse('.test { clear: inline-start; }');
+        const rule = root.first as Rule;
+        
+        const ltrRule = await applyLogicalTransformation(rule, 'ltr');
+        const rtlRule = await applyLogicalTransformation(rule, 'rtl');
+        
+        expect(ltrRule).not.toBeNull();
+        expect(rtlRule).not.toBeNull();
+        
+        if (ltrRule && rtlRule) {
+          const ltrCss = ltrRule.toString();
+          const rtlCss = rtlRule.toString();
+          
+          expect(ltrCss).toContain('clear: left');
+          expect(rtlCss).toContain('clear: right');
+        }
+      });
+
+      test('should transform clear: inline-end correctly', async () => {
+        const root = postcss.parse('.test { clear: inline-end; }');
+        const rule = root.first as Rule;
+        
+        const ltrRule = await applyLogicalTransformation(rule, 'ltr');
+        const rtlRule = await applyLogicalTransformation(rule, 'rtl');
+        
+        expect(ltrRule).not.toBeNull();
+        expect(rtlRule).not.toBeNull();
+        
+        if (ltrRule && rtlRule) {
+          const ltrCss = ltrRule.toString();
+          const rtlCss = rtlRule.toString();
+          
+          expect(ltrCss).toContain('clear: right');
+          expect(rtlCss).toContain('clear: left');
+        }
+      });
+    });
+
+    describe('Resize logical values', () => {
+      test('should transform resize: block correctly', async () => {
+        const root = postcss.parse('.test { resize: block; }');
+        const rule = root.first as Rule;
+        
+        const transformedRule = await applyLogicalTransformation(rule, 'ltr');
+        
+        expect(transformedRule).not.toBeNull();
+        
+        if (transformedRule) {
+          const css = transformedRule.toString();
+          expect(css).toContain('resize: vertical');
+        }
+      });
+
+      test('should transform resize: inline correctly', async () => {
+        const root = postcss.parse('.test { resize: inline; }');
+        const rule = root.first as Rule;
+        
+        const transformedRule = await applyLogicalTransformation(rule, 'ltr');
+        
+        expect(transformedRule).not.toBeNull();
+        
+        if (transformedRule) {
+          const css = transformedRule.toString();
+          expect(css).toContain('resize: horizontal');
+        }
+      });
+    });
+
+    describe('Scroll logical properties', () => {
+      test('should transform scroll-margin-inline-start correctly', async () => {
+        const root = postcss.parse('.test { scroll-margin-inline-start: 10px; }');
+        const rule = root.first as Rule;
+        
+        const ltrRule = await applyLogicalTransformation(rule, 'ltr');
+        const rtlRule = await applyLogicalTransformation(rule, 'rtl');
+        
+        expect(ltrRule).not.toBeNull();
+        expect(rtlRule).not.toBeNull();
+        
+        if (ltrRule && rtlRule) {
+          const ltrCss = ltrRule.toString();
+          const rtlCss = rtlRule.toString();
+          
+          expect(ltrCss).toContain('scroll-margin-left: 10px');
+          expect(rtlCss).toContain('scroll-margin-right: 10px');
+        }
+      });
+
+      test('should transform scroll-padding-block correctly', async () => {
+        const root = postcss.parse('.test { scroll-padding-block: 5px; }');
+        const rule = root.first as Rule;
+        
+        const transformedRule = await applyLogicalTransformation(rule, 'ltr');
+        
+        expect(transformedRule).not.toBeNull();
+        
+        if (transformedRule) {
+          const css = transformedRule.toString();
+          expect(css).toContain('scroll-padding-top: 5px');
+          expect(css).toContain('scroll-padding-bottom: 5px');
+        }
+      });
+
+      test('should detect scroll properties as logical', () => {
+        const root1 = postcss.parse('.test { scroll-margin-inline-start: 10px; }');
+        const root2 = postcss.parse('.test { scroll-padding-block: 5px; }');
+        const rule1 = root1.first as Rule;
+        const rule2 = root2.first as Rule;
+        
+        expect(hasLogicalProperties(rule1)).toBe(true);
+        expect(hasLogicalProperties(rule2)).toBe(true);
+      });
+    });
+  });
 });

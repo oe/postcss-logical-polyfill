@@ -4,9 +4,12 @@
  * This module handles the detection, transformation, and analysis of CSS logical properties.
  * It provides core functionality for converting logical properties to physical properties
  * and analyzing the differences between LTR and RTL transformations.
+ * 
+ * Enhanced with shim support for additional logical properties and values.
  */
-import postcss, { Rule } from 'postcss';
+import postcss, { Rule, Declaration } from 'postcss';
 import logical from 'postcss-logical';
+import { extendProcessors, SHIM_DECLARATIONS } from './logical-shim';
 
 // Logical processors for LTR and RTL transformations
 const PROCESSORS = {
@@ -14,11 +17,14 @@ const PROCESSORS = {
   rtl: logical({ inlineDirection: 'right-to-left' as any })
 } as const;
 
-// Get supported logical properties from the processor
-const supportedLogicalPropertiesSet = new Set(Object.keys(
-  // @ts-expect-error ignore missing types for postcss-logical
-  PROCESSORS.ltr.Declaration
-) as string[]);
+// Extend processors with our shim declarations
+extendProcessors(PROCESSORS);
+
+// Get supported logical properties from the processor (including shim properties)
+const supportedLogicalPropertiesSet = new Set([
+  ...Object.keys((PROCESSORS.ltr as any).Declaration || {}),
+  ...Object.keys(SHIM_DECLARATIONS)
+]);
 
 /**
  * Check if a rule contains logical properties

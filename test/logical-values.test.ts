@@ -95,7 +95,7 @@ describe('CSS Logical Values Tests', () => {
     test.each(textAlignTests)('$name', runTestCase);
   });
 
-  describe('Float Values (Not Supported - Skipped)', () => {
+  describe('Float Values', () => {
     const floatTests: TestCase[] = [
       {
         name: 'float: inline-start - should be converted',
@@ -164,12 +164,10 @@ describe('CSS Logical Values Tests', () => {
       }
     ];
 
-    // Skip float logical values tests as they are not yet supported by postcss-logical
-    // TODO: Enable these tests when float logical values support is added
-    test.skip.each(floatTests)('$name', runTestCase);
+    test.each(floatTests)('$name', runTestCase);
   });
 
-  describe('Clear Values (Not Supported - Skipped)', () => {
+  describe('Clear Values', () => {
     const clearTests: TestCase[] = [
       {
         name: 'clear: inline-start - should be converted',
@@ -238,12 +236,10 @@ describe('CSS Logical Values Tests', () => {
       }
     ];
 
-    // Skip clear logical values tests as they are not yet supported by postcss-logical
-    // TODO: Enable these tests when clear logical values support is added
-    test.skip.each(clearTests)('$name', runTestCase);
+    test.each(clearTests)('$name', runTestCase);
   });
 
-  describe('Resize Values (Not Supported - Skipped)', () => {
+  describe('Resize Values', () => {
     const resizeTests: TestCase[] = [
       {
         name: 'resize: block - should be converted',
@@ -300,9 +296,7 @@ describe('CSS Logical Values Tests', () => {
       }
     ];
 
-    // Skip resize logical values tests as they are not yet supported by postcss-logical
-    // TODO: Enable these tests when resize logical values support is added
-    test.skip.each(resizeTests)('$name', runTestCase);
+    test.each(resizeTests)('$name', runTestCase);
   });
 
   describe('Complex Scenarios with Logical Values', () => {

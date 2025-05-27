@@ -490,9 +490,7 @@ describe('Block-Direction Properties Specialized Tests', () => {
       }
     ];
 
-    // Skip scroll properties tests as they are not yet supported by postcss-logical
-    // TODO: Enable these tests when scroll properties support is added
-    test.skip.each(scrollBlockTests)('$name', runTestCase);
+    test.each(scrollBlockTests)('$name', runTestCase);
   });
 
   describe('Block Properties in Media Queries and Complex Selectors', () => {

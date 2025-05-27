@@ -143,7 +143,6 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
 
     test.each(inlinePropertyTests)('$name', runTestCase);
     
-    // Scroll inline properties - skipped as not supported by postcss-logical
     const scrollInlineTests: TestCase[] = [
       {
         name: 'scroll-inline properties - unscoped',
@@ -159,22 +158,14 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
         `,
         expected: `
           [dir="ltr"] .element {
-            scroll-margin-left: 5px;
-            scroll-margin-right: 5px;
             scroll-margin-left: 10px;
             scroll-margin-right: 15px;
-            scroll-padding-left: 8px;
-            scroll-padding-right: 8px;
             scroll-padding-left: 12px;
             scroll-padding-right: 16px;
           }
           [dir="rtl"] .element {
-            scroll-margin-right: 5px;
-            scroll-margin-left: 5px;
             scroll-margin-right: 10px;
             scroll-margin-left: 15px;
-            scroll-padding-right: 8px;
-            scroll-padding-left: 8px;
             scroll-padding-right: 12px;
             scroll-padding-left: 16px;
           }
@@ -182,9 +173,8 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
       }
     ];
 
-    // Skip scroll inline properties tests as they are not yet supported by postcss-logical
-    // TODO: Enable these tests when scroll properties support is added
-    test.skip.each(scrollInlineTests)('$name', runTestCase);
+    // Now supported by our shim implementation
+    test.each(scrollInlineTests)('$name', runTestCase);
   });
 
   describe('Block-Direction Properties (generate single rule)', () => {
@@ -301,12 +291,14 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
         `,
         expected: `
           .element {
-            scroll-margin-block: 5px;
-            scroll-margin-block-start: 10px;
-            scroll-margin-block-end: 15px;
-            scroll-padding-block: 8px;
-            scroll-padding-block-start: 12px;
-            scroll-padding-block-end: 16px;
+            scroll-margin-top: 5px;
+            scroll-margin-bottom: 5px;
+            scroll-margin-top: 10px;
+            scroll-margin-bottom: 15px;
+            scroll-padding-top: 8px;
+            scroll-padding-bottom: 8px;
+            scroll-padding-top: 12px;
+            scroll-padding-bottom: 16px;
           }
         `
       }
