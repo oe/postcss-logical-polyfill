@@ -1,0 +1,357 @@
+---
+title: Quick Start
+description: Get up and running with PostCSS Logical Polyfill in minutes.
+---
+
+# Quick Start
+
+This guide will help you get PostCSS Logical Polyfill up and running in just a few minutes. We'll cover the basic installation, configuration, and usage patterns.
+
+## Installation
+
+First, install the plugin using your preferred package manager:
+
+```bash
+# npm
+npm install postcss-logical-polyfill --save-dev
+
+# pnpm  
+pnpm add -D postcss-logical-polyfill
+
+# yarn
+yarn add -D postcss-logical-polyfill
+```
+
+## Basic Configuration
+
+Add the plugin to your PostCSS configuration:
+
+```js
+// postcss.config.js
+module.exports = {
+  plugins: [
+    require('postcss-logical-polyfill')()
+  ]
+}
+```
+
+## HTML Setup
+
+Make sure your HTML has the `dir` attribute:
+
+```html
+<!DOCTYPE html>
+<html dir="ltr"> <!-- or dir="rtl" -->
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <!-- Your content -->
+</body>
+</html>
+```
+
+## Basic Usage
+
+### Inline Properties (Direction-Aware)
+
+These properties generate separate LTR and RTL rules:
+
+```css
+/* Input */
+.container {
+  margin-inline: 1rem;
+  padding-inline-start: 2rem;
+  border-inline-end: 1px solid blue;
+}
+
+/* Output */
+.container {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+[dir="ltr"] .container {
+  padding-left: 2rem;
+  border-right: 1px solid blue;
+}
+[dir="rtl"] .container {
+  padding-right: 2rem;
+  border-left: 1px solid blue;
+}
+```
+
+### Block Properties (Direction-Independent)
+
+These properties generate a single optimized rule:
+
+```css
+/* Input */
+.content {
+  margin-block: 2rem;
+  padding-block-start: 1rem;
+  border-block-end: 1px solid gray;
+}
+
+/* Output */
+.content {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+  border-bottom: 1px solid gray;
+}
+```
+
+### Logical Values
+
+The plugin also supports logical values for existing properties:
+
+```css
+/* Input */
+.sidebar {
+  float: inline-start;
+  clear: inline-end;
+  resize: block;
+}
+
+/* Output */
+[dir="ltr"] .sidebar {
+  float: left;
+  clear: right;
+}
+[dir="rtl"] .sidebar {
+  float: right;
+  clear: left;
+}
+.sidebar {
+  resize: vertical;
+}
+```
+
+### Extended Properties
+
+The plugin includes support for newer logical properties:
+
+```css
+/* Input */
+.scroll-area {
+  scroll-margin-inline: 10px;
+  scroll-padding-block: 5px;
+  overflow-block: hidden;
+  overflow-inline: scroll;
+}
+
+/* Output */
+[dir="ltr"] .scroll-area {
+  scroll-margin-left: 10px;
+  scroll-margin-right: 10px;
+}
+[dir="rtl"] .scroll-area {
+  scroll-margin-right: 10px;
+  scroll-margin-left: 10px;
+}
+.scroll-area {
+  scroll-padding-top: 5px;
+  scroll-padding-bottom: 5px;
+  overflow-y: hidden;
+  overflow-x: scroll;
+}
+```
+
+## Working with Existing Direction Selectors
+
+The plugin is smart about existing direction selectors in your CSS:
+
+```css
+/* Input */
+[dir="ltr"] .element {
+  margin-inline-start: 1rem;
+}
+
+[dir="rtl"] .element {
+  margin-inline-start: 2rem;
+}
+
+/* Output */
+[dir="ltr"] .element {
+  margin-left: 1rem;
+}
+
+[dir="rtl"] .element {
+  margin-right: 2rem;
+}
+```
+
+## Real-World Example
+
+Here's a complete example of a typical component using logical properties:
+
+```css
+/* Input - Card Component */
+.card {
+  /* Block properties - same in all directions */
+  margin-block: 1rem;
+  padding-block: 1.5rem;
+  border-block-end: 1px solid #eee;
+  
+  /* Inline properties - direction-aware */
+  margin-inline: auto;
+  padding-inline: 2rem;
+  border-inline-start: 4px solid #007acc;
+  
+  /* Logical values */
+  text-align: start;
+}
+
+.card__title {
+  margin-block-end: 1rem;
+  margin-inline-start: 0.5rem;
+}
+
+.card__actions {
+  margin-block-start: 1rem;
+  text-align: end;
+}
+
+/* Output */
+.card {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  text-align: start;
+}
+[dir="ltr"] .card {
+  border-left: 4px solid #007acc;
+}
+[dir="rtl"] .card {
+  border-right: 4px solid #007acc;
+}
+
+.card__title {
+  margin-bottom: 1rem;
+}
+[dir="ltr"] .card__title {
+  margin-left: 0.5rem;
+}
+[dir="rtl"] .card__title {
+  margin-right: 0.5rem;
+}
+
+.card__actions {
+  margin-top: 1rem;
+  text-align: end;
+}
+```
+
+## Common Patterns
+
+### Navigation Bars
+
+```css
+.navbar {
+  padding-inline: 1rem;
+  border-block-end: 1px solid #ddd;
+}
+
+.navbar__item {
+  margin-inline-end: 1rem;
+  padding-inline: 0.5rem;
+}
+
+.navbar__logo {
+  margin-inline-end: auto;
+}
+```
+
+### Form Layouts
+
+```css
+.form-field {
+  margin-block-end: 1rem;
+}
+
+.form-label {
+  margin-block-end: 0.5rem;
+  margin-inline-end: 1rem;
+}
+
+.form-input {
+  padding-inline: 1rem;
+  padding-block: 0.5rem;
+  border-inline-start: 3px solid transparent;
+}
+
+.form-input:focus {
+  border-inline-start-color: #007acc;
+}
+```
+
+### Content Layouts
+
+```css
+.article {
+  max-inline-size: 800px;
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+.article__meta {
+  margin-block-end: 2rem;
+  padding-inline-start: 1rem;
+  border-inline-start: 2px solid #ccc;
+}
+
+.article__content {
+  margin-block: 2rem;
+}
+```
+
+## Testing Your Setup
+
+Create a simple test file to verify everything is working:
+
+```html
+<!DOCTYPE html>
+<html dir="ltr">
+<head>
+  <style>
+    .test {
+      margin-inline: 2rem;
+      padding-block: 1rem;
+      border-inline-start: 3px solid red;
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="test">
+    This should have horizontal margins and a left border in LTR mode.
+  </div>
+  
+  <script>
+    // Toggle direction for testing
+    document.querySelector('button')?.addEventListener('click', () => {
+      const html = document.documentElement;
+      html.dir = html.dir === 'ltr' ? 'rtl' : 'ltr';
+    });
+  </script>
+  <button>Toggle Direction</button>
+</body>
+</html>
+```
+
+After processing with PostCSS, the styles should adapt correctly when you toggle the direction.
+
+## Next Steps
+
+Now that you're up and running:
+
+- Explore [Configuration Options](/guides/configuration/) to customize the plugin
+- Check out [Supported Properties](/reference/supported-properties/) for a complete reference
+- Try the [Playground](/tools/playground/) to experiment with different properties
+- Read [How It Works](/guides/how-it-works/) to understand the transformation process

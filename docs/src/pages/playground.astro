@@ -1,0 +1,80 @@
+---
+import Layout from '../layouts/PlaygroundLayout.astro';
+---
+
+<Layout title="CSS Logical Properties Playground">
+  <div id="playground-app">
+    <div class="playground-config">
+      <div class="config-header">
+        <h3>Plugin Configuration</h3>
+        <button id="theme-toggle" class="btn-secondary" type="button">
+          <span class="theme-icon">🌙</span>
+          <span class="theme-text">Dark Theme</span>
+        </button>
+      </div>
+      <div class="config-grid">
+        <div class="config-group">
+          <label for="output-order">Output Order:</label>
+          <select id="output-order">
+            <option value="ltr-first">LTR First</option>
+            <option value="rtl-first">RTL First</option>
+          </select>
+        </div>
+        
+        <div class="config-group">
+          <label for="ltr-selector">LTR Selector:</label>
+          <input type="text" id="ltr-selector" value='[dir="ltr"]' />
+        </div>
+        
+        <div class="config-group">
+          <label for="rtl-selector">RTL Selector:</label>
+          <input type="text" id="rtl-selector" value='[dir="rtl"]' />
+        </div>
+      </div>
+    </div>
+
+    <div class="playground-editors">
+      <div class="editor-panel">
+        <div class="editor-header">
+          <h4>Input CSS (Logical Properties)</h4>
+          <button id="reset-btn" class="btn-secondary">Reset to Example</button>
+        </div>
+        <div id="input-editor" class="editor"></div>
+      </div>
+
+      <div class="editor-panel">
+        <div class="editor-header">
+          <h4>Output CSS (Physical Properties)</h4>
+          <button id="copy-btn" class="btn-secondary">Copy Output</button>
+        </div>
+        <div id="output-editor" class="editor readonly"></div>
+      </div>
+    </div>
+
+    <div class="playground-preview">
+      <h4>Live Preview</h4>
+      <div class="preview-controls">
+        <label>
+          <input type="radio" name="preview-direction" value="ltr" checked>
+          LTR Preview
+        </label>
+        <label>
+          <input type="radio" name="preview-direction" value="rtl">
+          RTL Preview
+        </label>
+      </div>
+      <div id="preview-container" dir="ltr">
+        <div class="preview-element">
+          <h5>Preview Element</h5>
+          <p>This element uses the CSS you write above. Toggle between LTR and RTL to see the directional behavior.</p>
+          <div class="nested-element">Nested Element</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<!-- <script>
+  import { setupPlayground } from '../scripts/playground.js';
+  setupPlayground();
+</script> -->

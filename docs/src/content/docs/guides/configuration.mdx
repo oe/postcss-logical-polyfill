@@ -1,0 +1,416 @@
+---
+title: Configuration
+description: Learn how to configure postcss-logical-polyfill for your project needs
+---
+
+import { Card, CardGrid, Code, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Basic Configuration
+
+The plugin works out of the box with zero configuration, but offers powerful customization options for advanced use cases.
+
+### Default Usage
+
+```js
+// postcss.config.js
+module.exports = {
+  plugins: [
+    require('postcss-logical-polyfill')()
+  ]
+}
+```
+
+### With Options
+
+```js
+const logicalPolyfill = require('postcss-logical-polyfill');
+
+module.exports = {
+  plugins: [
+    logicalPolyfill({
+      // Direction selectors (default shown)
+      rtl: { selector: '[dir="rtl"]' },
+      ltr: { selector: '[dir="ltr"]' },
+      
+      // Output order for unscoped properties
+      outputOrder: 'ltr-first'  // or 'rtl-first'
+    })
+  ]
+}
+```
+
+## Configuration Options
+
+### Direction Selectors
+
+Control how the plugin generates direction-specific selectors:
+
+<Tabs>
+  <TabItem label="Default">
+    ```js
+    {
+      rtl: { selector: '[dir="rtl"]' },
+      ltr: { selector: '[dir="ltr"]' }
+    }
+    ```
+  </TabItem>
+  <TabItem label="Custom Classes">
+    ```js
+    {
+      rtl: { selector: '.rtl' },
+      ltr: { selector: '.ltr' }
+    }
+    ```
+  </TabItem>
+  <TabItem label="CSS-in-JS">
+    ```js
+    {
+      rtl: { selector: '[data-theme="rtl"]' },
+      ltr: { selector: '[data-theme="ltr"]' }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Output Order
+
+Control the order of generated rules for unscoped properties:
+
+```js
+{
+  outputOrder: 'ltr-first'  // Default: LTR rules first, then RTL
+  // outputOrder: 'rtl-first' // RTL rules first, then LTR
+}
+```
+
+**Example Output:**
+
+<Tabs>
+  <TabItem label="LTR First (Default)">
+    ```css
+    .container {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+    [dir="ltr"] .container {
+      padding-left: 1rem;
+    }
+    [dir="rtl"] .container {
+      padding-right: 1rem;
+    }
+    ```
+  </TabItem>
+  <TabItem label="RTL First">
+    ```css
+    .container {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+    [dir="rtl"] .container {
+      padding-right: 1rem;
+    }
+    [dir="ltr"] .container {
+      padding-left: 1rem;
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Framework Integration
+
+### Next.js
+
+```js
+// next.config.js
+module.exports = {
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.css$/,
+      use: [
+        'style-loader',
+        'css-loader',
+        {
+          loader: 'postcss-loader',
+          options: {
+            postcssOptions: {
+              plugins: [
+                require('postcss-logical-polyfill')({
+                  rtl: { selector: '[dir="rtl"]' },
+                  ltr: { selector: '[dir="ltr"]' }
+                })
+              ]
+            }
+          }
+        }
+      ]
+    });
+    return config;
+  }
+};
+```
+
+### Vite
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [
+        require('postcss-logical-polyfill')({
+          outputOrder: 'ltr-first'
+        })
+      ]
+    }
+  }
+});
+```
+
+### Webpack
+
+```js
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  require('postcss-logical-polyfill')({
+                    rtl: { selector: '.rtl' },
+                    ltr: { selector: '.ltr' }
+                  })
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+};
+```
+
+### Tailwind CSS
+
+```js
+// tailwind.config.js
+module.exports = {
+  content: ['./src/**/*.{html,js}'],
+  theme: {
+    extend: {}
+  },
+  plugins: [],
+  // Add to PostCSS processing
+  corePlugins: {
+    // Disable Tailwind's logical properties if using this plugin
+    margin: true,
+    padding: true
+  }
+};
+
+// postcss.config.js
+module.exports = {
+  plugins: [
+    require('tailwindcss'),
+    require('postcss-logical-polyfill')(),
+    require('autoprefixer')
+  ]
+};
+```
+
+## Advanced Configuration
+
+### Custom Selector Patterns
+
+For complex scenarios, you can use advanced selector patterns:
+
+```js
+{
+  rtl: { 
+    selector: 'html[dir="rtl"]',  // More specific
+  },
+  ltr: { 
+    selector: 'html[dir="ltr"]',
+  }
+}
+```
+
+### Multiple Selector Support
+
+```js
+{
+  rtl: { 
+    selector: '[dir="rtl"], .rtl-mode'  // Multiple selectors
+  },
+  ltr: { 
+    selector: '[dir="ltr"], .ltr-mode'
+  }
+}
+```
+
+## HTML Setup Requirements
+
+### Basic HTML Structure
+
+You **must** set the `dir` attribute on your HTML for the generated CSS to work:
+
+```html
+<!DOCTYPE html>
+<html dir="ltr">  <!-- For left-to-right layouts -->
+<head>
+  <meta charset="UTF-8">
+  <title>My App</title>
+</head>
+<body>
+  <!-- Your content -->
+</body>
+</html>
+```
+
+For RTL languages:
+```html
+<html dir="rtl">  <!-- For right-to-left layouts -->
+```
+
+### Dynamic Direction Switching
+
+For applications that support dynamic direction switching:
+
+```js
+// JavaScript to toggle direction
+function toggleDirection() {
+  const html = document.documentElement;
+  const currentDir = html.getAttribute('dir');
+  html.setAttribute('dir', currentDir === 'rtl' ? 'ltr' : 'rtl');
+}
+```
+
+### React Example
+
+```jsx
+import { useState } from 'react';
+
+function App() {
+  const [direction, setDirection] = useState('ltr');
+  
+  useEffect(() => {
+    document.documentElement.setAttribute('dir', direction);
+  }, [direction]);
+  
+  return (
+    <div>
+      <button onClick={() => setDirection(direction === 'ltr' ? 'rtl' : 'ltr')}>
+        Switch to {direction === 'ltr' ? 'RTL' : 'LTR'}
+      </button>
+      {/* Your app content */}
+    </div>
+  );
+}
+```
+
+## Performance Considerations
+
+### Block-Direction Optimization
+
+The plugin automatically optimizes block-direction properties to generate fewer rules:
+
+```css
+/* Input */
+.element {
+  margin-block: 1rem;
+  padding-block-start: 0.5rem;
+}
+
+/* Optimized Output - No direction selectors needed */
+.element {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-top: 0.5rem;
+}
+```
+
+### Selective Processing
+
+For large codebases, consider processing only files that contain logical properties:
+
+```js
+// Only process certain file patterns
+module.exports = {
+  plugins: [
+    // Other plugins
+    require('postcss-logical-polyfill')()
+  ]
+};
+```
+
+## Debugging
+
+### Enable Verbose Output
+
+You can debug the transformation process by examining the generated CSS:
+
+```js
+const postcss = require('postcss');
+const logicalPolyfill = require('postcss-logical-polyfill');
+
+const result = postcss([logicalPolyfill()])
+  .process(css, { from: undefined });
+
+console.log('Original CSS:', css);
+console.log('Transformed CSS:', result.css);
+```
+
+### Common Issues
+
+<CardGrid>
+  <Card title="Direction Attribute Missing" icon="warning">
+    Ensure `dir="ltr"` or `dir="rtl"` is set on your HTML element
+  </Card>
+  <Card title="Selector Specificity" icon="star">
+    Check that your direction selectors have appropriate specificity
+  </Card>
+  <Card title="Order Matters" icon="list-format">
+    Consider the `outputOrder` option for consistent rule ordering
+  </Card>
+</CardGrid>
+
+## Best Practices
+
+1. **Set HTML Direction**: Always set the `dir` attribute on your `<html>` element
+2. **Test Both Directions**: Test your layout in both LTR and RTL modes
+3. **Use Block Properties**: Prefer block-direction properties when possible for better performance
+4. **Consistent Selectors**: Use consistent direction selectors across your application
+5. **Framework Integration**: Configure the plugin early in your PostCSS pipeline
+
+## Migration Guide
+
+### From Physical Properties
+
+```css
+/* Before: Physical properties */
+.element {
+  margin-left: 1rem;
+  margin-right: 2rem;
+  padding-left: 0.5rem;
+}
+
+/* After: Logical properties */
+.element {
+  margin-inline: 1rem 2rem;
+  padding-inline-start: 0.5rem;
+}
+```
+
+### From Other Logical Property Tools
+
+If migrating from other logical property tools, note that this plugin works in the opposite direction - it converts logical properties TO physical properties for compatibility.

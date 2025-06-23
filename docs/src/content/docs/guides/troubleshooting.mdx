@@ -1,0 +1,332 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when using postcss-logical-polyfill
+---
+
+# Troubleshooting
+
+This guide covers common issues you might encounter when using postcss-logical-polyfill and how to resolve them.
+
+## Common Issues
+
+### Plugin Not Working
+
+If the plugin doesn't seem to be transforming your CSS:
+
+1. **Check Plugin Order**: Ensure postcss-logical-polyfill runs before autoprefixer:
+   ```js
+   // ✅ Correct order
+   plugins: [
+     'postcss-logical-polyfill',
+     'autoprefixer'
+   ]
+   
+   // ❌ Wrong order
+   plugins: [
+     'autoprefixer',
+     'postcss-logical-polyfill'
+   ]
+   ```
+
+2. **Verify Configuration**: Make sure the plugin is properly configured:
+   ```js
+   // postcss.config.js
+   module.exports = {
+     plugins: [
+       require('postcss-logical-polyfill')({
+         preserve: false
+       })
+     ]
+   }
+   ```
+
+3. **Check CSS Syntax**: Ensure your logical properties are correctly written:
+   ```css
+   /* ✅ Correct */
+   .element {
+     margin-inline: 1rem;
+     padding-block-start: 2rem;
+   }
+   
+   /* ❌ Incorrect */
+   .element {
+     margin-inline-horizontal: 1rem; /* Invalid property */
+     padding-block-top: 2rem; /* Invalid property */
+   }
+   ```
+
+### Unexpected Output
+
+If the transformed CSS doesn't match your expectations:
+
+1. **Review Direction Settings**: Check if the `dir` option matches your layout:
+   ```js
+   // For RTL layouts
+   require('postcss-logical-polyfill')({
+     dir: 'rtl'
+   })
+   ```
+
+2. **Understand Preserve Option**: When `preserve: true`, both logical and physical properties are output:
+   ```css
+   /* Input */
+   .element { margin-inline: 1rem; }
+   
+   /* Output with preserve: true */
+   .element {
+     margin-inline: 1rem;
+     margin-left: 1rem;
+     margin-right: 1rem;
+   }
+   
+   /* Output with preserve: false */
+   .element {
+     margin-left: 1rem;
+     margin-right: 1rem;
+   }
+   ```
+
+### Build Tool Integration Issues
+
+#### Webpack Issues
+
+If using with webpack and css-loader:
+
+```js
+// Ensure PostCSS runs after CSS imports are resolved
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1 // Important for processing @imports
+            }
+          },
+          'postcss-loader'
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Vite Issues
+
+For Vite hot reload issues:
+
+```js
+// vite.config.js
+export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [
+        require('postcss-logical-polyfill')()
+      ]
+    },
+    devSourcemap: true // Enable source maps for debugging
+  }
+})
+```
+
+#### Next.js Issues
+
+If styles aren't applying in Next.js:
+
+1. Ensure PostCSS config is in the project root
+2. Restart the development server after adding the plugin
+3. Check for CSS module conflicts
+
+### Browser Compatibility
+
+#### IE11 Support
+For IE11 compatibility, ensure you're not using CSS custom properties with logical values:
+
+```css
+/* ❌ Won't work in IE11 even with polyfill */
+:root {
+  --margin: margin-inline;
+}
+.element {
+  var(--margin): 1rem;
+}
+
+/* ✅ Works with polyfill */
+.element {
+  margin-inline: 1rem; /* Transformed to physical properties */
+}
+```
+
+#### Safari Quirks
+Some older Safari versions may need additional prefixes. Combine with autoprefixer:
+
+```js
+plugins: [
+  'postcss-logical-polyfill',
+  ['autoprefixer', { overrideBrowserslist: ['> 1%', 'last 2 versions'] }]
+]
+```
+
+### Performance Issues
+
+#### Large CSS Files
+For large CSS files, consider:
+
+1. **Enable Source Maps Only in Development**:
+   ```js
+   module.exports = {
+     plugins: [
+       require('postcss-logical-polyfill')({
+         preserve: process.env.NODE_ENV === 'development'
+       })
+     ]
+   }
+   ```
+
+2. **Split CSS Processing**:
+   ```js
+   // Process only files that use logical properties
+   module.exports = {
+     plugins: [
+       require('postcss-logical-polyfill')({
+         // Only process files with logical properties
+         filter: /logical/
+       })
+     ]
+   }
+   ```
+
+### CSS Framework Conflicts
+
+#### Bootstrap Integration
+When using with Bootstrap or other frameworks:
+
+```css
+/* Process framework CSS first, then your logical properties */
+@import 'bootstrap/dist/css/bootstrap.css';
+
+.my-component {
+  margin-inline: 1rem; /* This will be transformed */
+}
+```
+
+#### Tailwind CSS
+With Tailwind CSS, add the plugin to process utility classes:
+
+```js
+// tailwind.config.js
+module.exports = {
+  // ... other config
+  plugins: [
+    // Tailwind plugins
+  ]
+}
+
+// postcss.config.js
+module.exports = {
+  plugins: [
+    'tailwindcss',
+    'postcss-logical-polyfill', // After Tailwind
+    'autoprefixer'
+  ]
+}
+```
+
+## Debug Mode
+
+Enable debug mode to see what the plugin is transforming:
+
+```js
+require('postcss-logical-polyfill')({
+  preserve: true, // Keep original properties for comparison
+  // Add debug logging in development
+  debug: process.env.NODE_ENV === 'development'
+})
+```
+
+## Source Maps
+
+Enable source maps to debug transformed CSS:
+
+```js
+// webpack.config.js
+module.exports = {
+  devtool: 'source-map',
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: { sourceMap: true }
+          },
+          {
+            loader: 'postcss-loader',
+            options: { sourceMap: true }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Validation Tools
+
+Use CSS validation tools to ensure your logical properties are correct:
+
+1. **W3C CSS Validator**: Check if your CSS is valid
+2. **Browser DevTools**: Inspect computed styles
+3. **PostCSS CLI**: Test transformations manually:
+   ```bash
+   npx postcss input.css -o output.css --verbose
+   ```
+
+## Getting Help
+
+If you're still experiencing issues:
+
+1. Check the [GitHub Issues](https://github.com/oe/postcss-logical-polyfill/issues)
+2. Create a minimal reproduction case
+3. Include your PostCSS configuration
+4. Specify your build tool and version
+5. Share the input CSS and expected output
+
+## Common Error Messages
+
+### "Plugin is not a function"
+```js
+// ❌ Incorrect
+plugins: ['postcss-logical-polyfill']
+
+// ✅ Correct
+plugins: [require('postcss-logical-polyfill')()]
+```
+
+### "Cannot resolve 'postcss-logical-polyfill'"
+```bash
+# Install the plugin
+npm install postcss-logical-polyfill
+```
+
+### "Invalid CSS after transformation"
+Check that your CSS syntax is valid before transformation and that you're not mixing logical and physical properties for the same dimension:
+
+```css
+/* ❌ Conflicting properties */
+.element {
+  margin-left: 1rem;
+  margin-inline-start: 2rem; /* Conflicts with margin-left */
+}
+
+/* ✅ Use only logical properties */
+.element {
+  margin-inline-start: 2rem;
+}
+```

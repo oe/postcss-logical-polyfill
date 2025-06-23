@@ -292,11 +292,12 @@ Having issues? Check our troubleshooting guide for common problems and solutions
 
 ## Documentation
 
-- **[Advanced Usage Guide](./docs/ADVANCED-USAGE.md)** - Configuration options, best practices, and advanced features
-- **[Supported Properties](./docs/SUPPORTED-PROPERTIES.md)** - Complete reference of all supported logical properties  
-- **[How It Works](./docs/HOW-IT-WORKS.md)** - Technical details about the processing pipeline
-- **[Integration Guide](./docs/INTEGRATION-GUIDE.md)** - Setup instructions for popular build tools
-- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[📖 Full Documentation](./docs/)** - Complete documentation site built with Astro Starlight
+- **[🚀 Getting Started Guide](./docs/src/content/docs/getting-started/introduction.mdx)** - Quick start and installation
+- **[⚙️ Configuration](./docs/src/content/docs/guides/configuration.mdx)** - Configuration options and framework integration
+- **[📋 Supported Properties](./docs/src/content/docs/references/supported-properties.mdx)** - Complete reference of all supported logical properties  
+- **[🔧 How It Works](./docs/src/content/docs/guides/how-it-works.mdx)** - Technical details about the processing pipeline
+- **[🎮 Interactive Playground](./docs/src/content/docs/playground.mdx)** - Try the plugin online with live preview
 
 ## Learn More
 

@@ -1,0 +1,63 @@
+---
+title: Playground
+description: Interactive CSS Logical Properties playground with live preview
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+# CSS Logical Properties Playground
+
+Experience the power of postcss-logical-polyfill with our interactive playground featuring:
+
+<div class="feature-grid">
+  <Card title="🎯 Live Transformation" icon="rocket">
+    See CSS logical properties transformed to physical properties in real-time as you type.
+  </Card>
+  
+  <Card title="🔧 Plugin Configuration" icon="setting">
+    Adjust output order, LTR/RTL selectors, and see how they affect the generated CSS.
+  </Card>
+  
+  <Card title="👀 Visual Preview" icon="eye">
+    Toggle between LTR and RTL directions to see how your styles behave in different text directions.
+  </Card>
+  
+  <Card title="💻 Monaco Editor" icon="laptop">
+    Full-featured code editor with syntax highlighting and dark/light theme support.
+  </Card>
+</div>
+
+## Quick Start
+
+The playground comes pre-loaded with examples of various logical properties:
+
+- **Margin & Padding**: `margin-inline`, `padding-block-start`
+- **Borders**: `border-inline-start`, `border-start-start-radius`
+- **Positioning**: `inset-inline-start`, `float: inline-start`
+- **Sizing**: `inline-size`, `block-size`
+- **Text Alignment**: `text-align: start`
+
+## Features
+
+### Real-time Transformation
+Type CSS with logical properties and instantly see the transformed output with physical properties and appropriate direction selectors.
+
+### Configuration Options
+- **Output Order**: Choose whether LTR or RTL rules come first
+- **Custom Selectors**: Modify the LTR and RTL selectors to match your project needs
+- **Theme Support**: Switch between light and dark themes
+
+### Browser Compatibility
+The playground runs entirely in your browser - no server required! It uses a simplified version of the actual postcss-logical-polyfill plugin.
+
+---
+
+<div class="playground-cta">
+  <a href="/playground/" class="playground-link">
+    <span class="playground-icon">🚀</span>
+    <div>
+      <strong>Launch Playground</strong>
+      <p>Try CSS logical properties transformation online</p>
+    </div>
+  </a>
+</div>

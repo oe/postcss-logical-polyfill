@@ -1,0 +1,92 @@
+---
+title: PostCSS Logical Polyfill
+description: Transform CSS logical properties into physical properties with appropriate direction selectors for maximum browser compatibility.
+template: splash
+hero:
+  tagline: Transform CSS logical properties into physical properties with appropriate direction selectors for maximum browser compatibility.
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Get Started
+      link: /getting-started/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/oe/postcss-logical-polyfill
+      icon: external
+      variant: secondary
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Features
+
+<CardGrid stagger>
+	<Card title="🔄 Polyfill Direction" icon="setting">
+		Transforms logical properties → physical properties (reverse of most tools)
+	</Card>
+	<Card title="🎯 Smart Generation" icon="add-document">
+		Creates both LTR and RTL versions automatically
+	</Card>
+	<Card title="⚡ Optimized Output" icon="rocket">
+		Block-direction properties generate single rules (no duplication)
+	</Card>
+	<Card title="🔗 Extended Support" icon="puzzle">
+		Includes scroll properties and logical values via integrated shim
+	</Card>
+	<Card title="🧪 Experimental Features" icon="star">
+		Linear gradient logical directions and draft CSS specs
+	</Card>
+	<Card title="🎛️ Configurable" icon="setting">
+		Custom selectors and output order control
+	</Card>
+</CardGrid>
+
+## Why Use This Plugin?
+
+While modern browsers support CSS logical properties, older browsers don't. This plugin acts as a polyfill, converting your modern logical properties to physical properties that work everywhere, while preserving the directional behavior for international layouts.
+
+**Perfect for:**
+- ✅ Supporting older browsers while using modern CSS
+- ✅ Gradual migration from physical to logical properties  
+- ✅ RTL/LTR internationalization
+- ✅ Framework integration with directional layouts
+
+## Quick Example
+
+### Input CSS:
+```css
+.container {
+  margin-inline: 1rem;
+  padding-block: 2rem;
+  border-inline-start: 2px solid blue;
+}
+```
+
+### Output CSS:
+```css
+.container {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+[dir="ltr"] .container {
+  border-left: 2px solid blue;
+}
+[dir="rtl"] .container {
+  border-right: 2px solid blue;
+}
+```
+
+## What It Does
+
+This plugin transforms **CSS Logical Properties** into physical properties with appropriate direction selectors for browser compatibility. It intelligently processes:
+
+- **All standard logical properties** (margin, padding, border, inset, sizing, etc.)
+- **Logical values** (float: inline-start, clear: inline-end, resize: block)
+- **Scroll properties** (scroll-margin, scroll-padding)
+- **Overflow properties** (overflow-block, overflow-inline)
+- **CSS Containment properties** (contain-intrinsic-block-size, contain-intrinsic-inline-size)
+- **Experimental features** (linear-gradient logical directions)
+- **Both scoped and unscoped** logical properties

@@ -1,0 +1,272 @@
+---
+title: Installation
+description: Learn how to install PostCSS Logical Polyfill in your project.
+---
+
+# Installation
+
+PostCSS Logical Polyfill can be installed using your preferred package manager and integrated into any PostCSS workflow.
+
+## Requirements
+
+- **Node.js** 16.0.0 or later
+- **PostCSS** 8.0.0 or later
+
+## Package Manager Installation
+
+### npm
+
+```bash
+npm install postcss-logical-polyfill --save-dev
+```
+
+### pnpm
+
+```bash
+pnpm add -D postcss-logical-polyfill
+```
+
+### yarn
+
+```bash
+yarn add -D postcss-logical-polyfill
+```
+
+## Basic Setup
+
+After installation, add the plugin to your PostCSS configuration:
+
+### postcss.config.js
+
+```js
+module.exports = {
+  plugins: [
+    require('postcss-logical-polyfill')()
+  ]
+}
+```
+
+### postcss.config.mjs (ES Modules)
+
+```js
+import logicalPolyfill from 'postcss-logical-polyfill';
+
+export default {
+  plugins: [
+    logicalPolyfill()
+  ]
+};
+```
+
+### package.json (PostCSS CLI)
+
+```json
+{
+  "postcss": {
+    "plugins": {
+      "postcss-logical-polyfill": {}
+    }
+  }
+}
+```
+
+## Build Tool Integration
+
+### Vite
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+import logicalPolyfill from 'postcss-logical-polyfill';
+
+export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [
+        logicalPolyfill()
+      ]
+    }
+  }
+});
+```
+
+### Webpack
+
+```js
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  require('postcss-logical-polyfill')()
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+};
+```
+
+### Next.js
+
+```js
+// next.config.js
+module.exports = {
+  experimental: {
+    // Enable if using experimental features
+  },
+  webpack: (config) => {
+    // Find the CSS rule
+    const cssRule = config.module.rules.find(
+      (rule) => rule.test && rule.test.toString().includes('css')
+    );
+    
+    if (cssRule) {
+      // Add PostCSS plugin
+      cssRule.use.forEach((use) => {
+        if (use.loader && use.loader.includes('postcss-loader')) {
+          use.options.postcssOptions.plugins.push(
+            require('postcss-logical-polyfill')()
+          );
+        }
+      });
+    }
+    
+    return config;
+  }
+};
+```
+
+### Nuxt.js
+
+```js
+// nuxt.config.js
+export default {
+  build: {
+    postcss: {
+      plugins: {
+        'postcss-logical-polyfill': {}
+      }
+    }
+  }
+};
+```
+
+### Rollup
+
+```js
+// rollup.config.js
+import postcss from 'rollup-plugin-postcss';
+import logicalPolyfill from 'postcss-logical-polyfill';
+
+export default {
+  plugins: [
+    postcss({
+      plugins: [
+        logicalPolyfill()
+      ]
+    })
+  ]
+};
+```
+
+## Configuration Options
+
+You can configure the plugin behavior by passing options:
+
+```js
+// postcss.config.js
+module.exports = {
+  plugins: [
+    require('postcss-logical-polyfill')({
+      // Direction selectors (default shown)
+      rtl: { selector: '[dir="rtl"]' },
+      ltr: { selector: '[dir="ltr"]' },
+      
+      // Output order for unscoped properties
+      outputOrder: 'ltr-first'  // or 'rtl-first'
+    })
+  ]
+}
+```
+
+See the [Configuration Guide](/guides/configuration/) for detailed configuration options.
+
+## HTML Setup
+
+**Important:** For the generated CSS to work correctly, you must set the `dir` attribute on your HTML:
+
+```html
+<!DOCTYPE html>
+<html dir="ltr"> <!-- For left-to-right layouts -->
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <!-- Your content -->
+</body>
+</html>
+```
+
+For right-to-left layouts:
+
+```html
+<html dir="rtl"> <!-- For right-to-left layouts -->
+```
+
+Without the `dir` attribute, the generated `[dir="ltr"]` and `[dir="rtl"]` selectors won't match any elements.
+
+## Verification
+
+To verify the plugin is working correctly, create a simple CSS file with logical properties:
+
+```css
+/* input.css */
+.test {
+  margin-inline: 1rem;
+  padding-block: 2rem;
+  border-inline-start: 1px solid red;
+}
+```
+
+After processing, you should see output like:
+
+```css
+/* output.css */
+.test {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+[dir="ltr"] .test {
+  border-left: 1px solid red;
+}
+[dir="rtl"] .test {
+  border-right: 1px solid red;
+}
+```
+
+## Troubleshooting
+
+If you're having issues with installation or setup, check the [Troubleshooting Guide](/guides/troubleshooting/) for common problems and solutions.
+
+## Next Steps
+
+Now that you have PostCSS Logical Polyfill installed, check out:
+
+- [Quick Start](/getting-started/quick-start/) - Learn the basics with examples
+- [Configuration](/guides/configuration/) - Customize the plugin for your needs
+- [Integration Guide](/guides/integration/) - Deep dive into build tool integration

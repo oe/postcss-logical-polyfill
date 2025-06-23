@@ -1,0 +1,737 @@
+---
+title: Examples
+description: Practical examples of using postcss-logical-polyfill with different CSS patterns and use cases
+---
+
+# Examples
+
+This page provides practical examples of using postcss-logical-polyfill in various scenarios and CSS patterns.
+
+## Basic Examples
+
+### Simple Margin and Padding
+
+```css
+/* Input CSS */
+.container {
+  margin-inline: 1rem 2rem;
+  padding-block: 1rem;
+  padding-inline-start: 0.5rem;
+}
+
+/* Output CSS */
+[dir="ltr"] .container {
+  margin-left: 1rem;
+  margin-right: 2rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 0.5rem;
+}
+
+[dir="rtl"] .container {
+  margin-left: 2rem;
+  margin-right: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-right: 0.5rem;
+}
+```
+
+### Border Properties
+
+```css
+/* Input CSS */
+.card {
+  border-inline: 2px solid blue;
+  border-block-start: 1px solid gray;
+  border-start-start-radius: 8px;
+  border-end-end-radius: 8px;
+}
+
+/* Output CSS */
+[dir="ltr"] .card {
+  border-left: 2px solid blue;
+  border-right: 2px solid blue;
+  border-top: 1px solid gray;
+  border-top-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+[dir="rtl"] .card {
+  border-left: 2px solid blue;
+  border-right: 2px solid blue;
+  border-top: 1px solid gray;
+  border-top-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+```
+
+## Layout Examples
+
+### Flexbox Layout
+
+```css
+/* Input CSS */
+.flex-container {
+  display: flex;
+  gap: 1rem;
+  padding-inline: 2rem;
+  margin-block: 1rem;
+}
+
+.flex-item {
+  margin-inline-end: auto;
+  padding-inline-start: 1rem;
+  border-inline-start: 3px solid #007acc;
+}
+
+/* Output CSS */
+[dir="ltr"] .flex-container {
+  display: flex;
+  gap: 1rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+[dir="ltr"] .flex-item {
+  margin-right: auto;
+  padding-left: 1rem;
+  border-left: 3px solid #007acc;
+}
+
+[dir="rtl"] .flex-container {
+  display: flex;
+  gap: 1rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+[dir="rtl"] .flex-item {
+  margin-left: auto;
+  padding-right: 1rem;
+  border-right: 3px solid #007acc;
+}
+```
+
+### Grid Layout
+
+```css
+/* Input CSS */
+.grid-container {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+  padding-inline: 2rem;
+  margin-block: 2rem;
+}
+
+.grid-sidebar {
+  padding-inline-end: 1rem;
+  border-inline-end: 1px solid #ddd;
+}
+
+.grid-content {
+  padding-inline-start: 1rem;
+  max-inline-size: 800px;
+}
+
+/* Output CSS */
+[dir="ltr"] .grid-container {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+[dir="ltr"] .grid-sidebar {
+  padding-right: 1rem;
+  border-right: 1px solid #ddd;
+}
+
+[dir="ltr"] .grid-content {
+  padding-left: 1rem;
+  max-width: 800px;
+}
+
+[dir="rtl"] .grid-container {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+[dir="rtl"] .grid-sidebar {
+  padding-left: 1rem;
+  border-left: 1px solid #ddd;
+}
+
+[dir="rtl"] .grid-content {
+  padding-right: 1rem;
+  max-width: 800px;
+}
+```
+
+## Component Examples
+
+### Navigation Bar
+
+```css
+/* Input CSS */
+.navbar {
+  display: flex;
+  align-items: center;
+  padding-inline: 2rem;
+  border-block-end: 1px solid #e5e5e5;
+}
+
+.navbar-brand {
+  margin-inline-end: auto;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.navbar-nav {
+  display: flex;
+  gap: 1rem;
+  margin-inline-start: 2rem;
+}
+
+.navbar-item {
+  padding-inline: 0.75rem;
+  border-inline-start: 2px solid transparent;
+}
+
+.navbar-item:hover {
+  border-inline-start-color: #007acc;
+}
+
+/* Output CSS */
+[dir="ltr"] .navbar {
+  display: flex;
+  align-items: center;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+[dir="ltr"] .navbar-brand {
+  margin-right: auto;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+[dir="ltr"] .navbar-nav {
+  display: flex;
+  gap: 1rem;
+  margin-left: 2rem;
+}
+
+[dir="ltr"] .navbar-item {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-left: 2px solid transparent;
+}
+
+[dir="ltr"] .navbar-item:hover {
+  border-left-color: #007acc;
+}
+
+[dir="rtl"] .navbar {
+  display: flex;
+  align-items: center;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+[dir="rtl"] .navbar-brand {
+  margin-left: auto;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+[dir="rtl"] .navbar-nav {
+  display: flex;
+  gap: 1rem;
+  margin-right: 2rem;
+}
+
+[dir="rtl"] .navbar-item {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-right: 2px solid transparent;
+}
+
+[dir="rtl"] .navbar-item:hover {
+  border-right-color: #007acc;
+}
+```
+
+### Card Component
+
+```css
+/* Input CSS */
+.card {
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  overflow: hidden;
+  margin-block: 1rem;
+}
+
+.card-header {
+  padding-inline: 1.5rem;
+  padding-block: 1rem;
+  border-block-end: 1px solid #e5e5e5;
+  background-color: #f8f9fa;
+}
+
+.card-body {
+  padding-inline: 1.5rem;
+  padding-block: 1.5rem;
+}
+
+.card-footer {
+  padding-inline: 1.5rem;
+  padding-block: 0.75rem;
+  border-block-start: 1px solid #e5e5e5;
+  background-color: #f8f9fa;
+  text-align: end;
+}
+
+.card-button {
+  margin-inline-start: 0.5rem;
+  padding-inline: 1rem;
+  padding-block: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007acc;
+  color: white;
+}
+
+/* Output CSS */
+[dir="ltr"] .card {
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  overflow: hidden;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+[dir="ltr"] .card-header {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e5e5;
+  background-color: #f8f9fa;
+}
+
+[dir="ltr"] .card-body {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+[dir="ltr"] .card-footer {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f8f9fa;
+  text-align: right;
+}
+
+[dir="ltr"] .card-button {
+  margin-left: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007acc;
+  color: white;
+}
+
+[dir="rtl"] .card {
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  overflow: hidden;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+[dir="rtl"] .card-header {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e5e5;
+  background-color: #f8f9fa;
+}
+
+[dir="rtl"] .card-body {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+[dir="rtl"] .card-footer {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f8f9fa;
+  text-align: left;
+}
+
+[dir="rtl"] .card-button {
+  margin-right: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007acc;
+  color: white;
+}
+```
+
+## Advanced Examples
+
+### Positioning with Inset
+
+```css
+/* Input CSS */
+.modal {
+  position: fixed;
+  inset-block-start: 10vh;
+  inset-inline: 10vw;
+  max-block-size: 80vh;
+  max-inline-size: 80vw;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tooltip {
+  position: absolute;
+  inset-block-end: 100%;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  margin-block-end: 0.5rem;
+}
+
+/* Output CSS */
+[dir="ltr"] .modal {
+  position: fixed;
+  top: 10vh;
+  left: 10vw;
+  right: 10vw;
+  max-height: 80vh;
+  max-width: 80vw;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+[dir="ltr"] .tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 0.5rem;
+}
+
+[dir="rtl"] .modal {
+  position: fixed;
+  top: 10vh;
+  left: 10vw;
+  right: 10vw;
+  max-height: 80vh;
+  max-width: 80vw;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+[dir="rtl"] .tooltip {
+  position: absolute;
+  bottom: 100%;
+  right: 50%;
+  transform: translateX(50%);
+  margin-bottom: 0.5rem;
+}
+```
+
+### Float and Clear with Logical Values
+
+```css
+/* Input CSS */
+.sidebar {
+  float: inline-start;
+  inline-size: 250px;
+  margin-inline-end: 2rem;
+  padding-inline: 1rem;
+}
+
+.main-content {
+  overflow: hidden; /* Creates new block formatting context */
+}
+
+.clear-float {
+  clear: inline-start;
+}
+
+/* Output CSS */
+[dir="ltr"] .sidebar {
+  float: left;
+  width: 250px;
+  margin-right: 2rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+[dir="ltr"] .main-content {
+  overflow: hidden;
+}
+
+[dir="ltr"] .clear-float {
+  clear: left;
+}
+
+[dir="rtl"] .sidebar {
+  float: right;
+  width: 250px;
+  margin-left: 2rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .main-content {
+  overflow: hidden;
+}
+
+[dir="rtl"] .clear-float {
+  clear: right;
+}
+```
+
+### Text Alignment
+
+```css
+/* Input CSS */
+.header {
+  text-align: start;
+  padding-inline: 2rem;
+}
+
+.footer {
+  text-align: end;
+  padding-inline: 2rem;
+}
+
+.centered {
+  text-align: center;
+  margin-inline: auto;
+  max-inline-size: 600px;
+}
+
+/* Output CSS */
+[dir="ltr"] .header {
+  text-align: left;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+[dir="ltr"] .footer {
+  text-align: right;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+[dir="ltr"] .centered {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 600px;
+}
+
+[dir="rtl"] .header {
+  text-align: right;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+[dir="rtl"] .footer {
+  text-align: left;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+[dir="rtl"] .centered {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 600px;
+}
+```
+
+## Experimental Properties
+
+### Overflow Properties
+
+```css
+/* Input CSS (requires experimental: true) */
+.scroll-container {
+  block-size: 300px;
+  inline-size: 100%;
+  overflow-block: auto;
+  overflow-inline: hidden;
+}
+
+.content {
+  min-block-size: 500px;
+  min-inline-size: 800px;
+}
+
+/* Output CSS */
+.scroll-container {
+  height: 300px;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content {
+  min-height: 500px;
+  min-width: 800px;
+}
+```
+
+### Container Queries with Logical Properties
+
+```css
+/* Input CSS (requires experimental: true) */
+.container {
+  container-type: inline-size;
+  padding-inline: 1rem;
+}
+
+.card {
+  contain-intrinsic-inline-size: 300px;
+  contain-intrinsic-block-size: 200px;
+  margin-block: 1rem;
+}
+
+@container (min-width: 500px) {
+  .card {
+    padding-inline: 2rem;
+    margin-inline: 1rem;
+  }
+}
+
+/* Output CSS */
+.container {
+  container-type: inline-size;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.card {
+  contain-intrinsic-width: 300px;
+  contain-intrinsic-height: 200px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+@container (min-width: 500px) {
+  [dir="ltr"] .card {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+  
+  [dir="rtl"] .card {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+}
+```
+
+## Real-World Use Cases
+
+### Form Layout
+
+```css
+/* Input CSS */
+.form-group {
+  margin-block: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-block-end: 0.25rem;
+  font-weight: 500;
+}
+
+.form-input {
+  inline-size: 100%;
+  padding-inline: 0.75rem;
+  padding-block: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.25);
+}
+
+.form-help {
+  font-size: 0.875rem;
+  color: #666;
+  margin-block-start: 0.25rem;
+}
+
+.form-error {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-block-start: 0.25rem;
+}
+
+.form-actions {
+  margin-block-start: 2rem;
+  text-align: end;
+}
+
+.form-button {
+  padding-inline: 1rem;
+  padding-block: 0.5rem;
+  margin-inline-start: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+```
+
+This comprehensive examples page demonstrates how postcss-logical-polyfill transforms various CSS patterns, making them work across different text directions while maintaining clean, logical code.

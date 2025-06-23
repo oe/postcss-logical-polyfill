@@ -1,0 +1,306 @@
+---
+title: Integration Guide
+description: How to integrate postcss-logical-polyfill with different build tools and frameworks
+---
+
+# Integration Guide
+
+PostCSS Logical Polyfill can be easily integrated with various build tools and frameworks. This guide covers the most common setups.
+
+## PostCSS CLI
+
+The simplest way to use the plugin with PostCSS CLI:
+
+1. Install the dependencies:
+```bash
+npm install postcss postcss-cli postcss-logical-polyfill
+```
+
+2. Create a `postcss.config.js`:
+```js
+module.exports = {
+  plugins: [
+    require('postcss-logical-polyfill')({
+      preserve: false
+    })
+  ]
+}
+```
+
+3. Run PostCSS:
+```bash
+npx postcss input.css -o output.css
+```
+
+## Webpack
+
+To integrate with Webpack, add the plugin to your PostCSS loader configuration:
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  ['postcss-logical-polyfill', {
+                    preserve: false,
+                    dir: 'ltr'
+                  }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Vite
+
+For Vite projects, add the plugin to your `vite.config.js`:
+
+```js
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [
+        require('postcss-logical-polyfill')({
+          preserve: false
+        })
+      ]
+    }
+  }
+})
+```
+
+## Next.js
+
+In Next.js projects, create or update your `postcss.config.js`:
+
+```js
+module.exports = {
+  plugins: [
+    'postcss-flexbugs-fixes',
+    'postcss-logical-polyfill',
+    [
+      'postcss-preset-env',
+      {
+        autoprefixer: {
+          flexbox: 'no-2009'
+        },
+        stage: 3,
+        features: {
+          'custom-properties': false
+        }
+      }
+    ]
+  ]
+}
+```
+
+## Sass/SCSS Integration
+
+When using with Sass, ensure PostCSS processes the compiled CSS:
+
+```js
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.scss$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  'postcss-logical-polyfill'
+                ]
+              }
+            }
+          },
+          'sass-loader'
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Less Integration
+
+Similar to Sass, ensure PostCSS runs after Less compilation:
+
+```js
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.less$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  'postcss-logical-polyfill'
+                ]
+              }
+            }
+          },
+          'less-loader'
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Gulp Integration
+
+For Gulp-based builds:
+
+```js
+const gulp = require('gulp')
+const postcss = require('gulp-postcss')
+const logicalPolyfill = require('postcss-logical-polyfill')
+
+gulp.task('css', () => {
+  return gulp.src('src/**/*.css')
+    .pipe(postcss([
+      logicalPolyfill({
+        preserve: false
+      })
+    ]))
+    .pipe(gulp.dest('dist'))
+})
+```
+
+## Rollup Integration
+
+With Rollup and rollup-plugin-postcss:
+
+```js
+import postcss from 'rollup-plugin-postcss'
+import logicalPolyfill from 'postcss-logical-polyfill'
+
+export default {
+  plugins: [
+    postcss({
+      plugins: [
+        logicalPolyfill({
+          preserve: false
+        })
+      ]
+    })
+  ]
+}
+```
+
+## Framework-Specific Considerations
+
+### React Applications
+
+For Create React App projects, you'll need to eject or use CRACO to customize the PostCSS configuration:
+
+```js
+// craco.config.js
+module.exports = {
+  style: {
+    postcss: {
+      plugins: [
+        require('postcss-logical-polyfill')({
+          preserve: false
+        })
+      ]
+    }
+  }
+}
+```
+
+### Vue.js
+
+In Vue CLI projects, add to `vue.config.js`:
+
+```js
+module.exports = {
+  css: {
+    loaderOptions: {
+      postcss: {
+        plugins: [
+          require('postcss-logical-polyfill')({
+            preserve: false
+          })
+        ]
+      }
+    }
+  }
+}
+```
+
+### Angular
+
+For Angular projects, add to `angular.json` or create a custom PostCSS config:
+
+```json
+{
+  "projects": {
+    "your-app": {
+      "architect": {
+        "build": {
+          "options": {
+            "postcssConfig": "./postcss.config.js"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Common Issues and Solutions
+
+### Plugin Order
+Always place postcss-logical-polyfill before autoprefixer to ensure proper vendor prefix handling.
+
+### CSS-in-JS Solutions
+For styled-components or emotion, you may need to process CSS at build time or use a custom PostCSS setup.
+
+### Hot Module Replacement
+Some development servers may cache transformed CSS. Restart the development server if changes aren't reflected.
+
+## Performance Optimization
+
+For production builds, consider:
+
+1. Setting `preserve: false` to reduce output size
+2. Using with other PostCSS optimizations like cssnano
+3. Enabling source maps for debugging during development
+
+```js
+// Production config
+module.exports = {
+  plugins: [
+    require('postcss-logical-polyfill')({ preserve: false }),
+    require('cssnano')({ preset: 'default' })
+  ]
+}
+```
