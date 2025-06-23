@@ -14,13 +14,7 @@ const { title } = Astro.props;
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   
-  <!-- Monaco Editor -->
-  <script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
-  
-  <!-- PostCSS and Plugin (bundled for browser) -->
-  <script src="https://unpkg.com/postcss@8.4.32/dist/postcss.min.js"></script>
-  
-  <!-- 增强样式 -->
+  <!-- Playground Styles -->
   <link rel="stylesheet" href="/src/styles/playground-enhanced.css">
 </head>
 <body>
@@ -287,70 +281,101 @@ const { title } = Astro.props;
     .editor {
       flex: 1;
       min-height: 300px;
+      padding: 1rem;
+      border: none;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      tab-size: 2;
     }
 
-    .playground-preview {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      box-shadow: var(--shadow);
+    .editor:focus {
+      background: var(--bg-primary);
     }
 
-    .playground-preview h4 {
-      margin: 0 0 1rem 0;
-      font-size: 1.25rem;
-      font-weight: 600;
+    .editor.readonly {
+      background: var(--bg-tertiary);
+      cursor: default;
     }
 
-    .preview-controls {
+    .btn-icon {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      transition: all 0.2s ease;
       display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
+      align-items: center;
+      justify-content: center;
     }
 
-    .preview-controls label {
+    .btn-icon:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .error-display {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      background: #ef4444;
+      color: white;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      max-width: 400px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .error-display.hidden {
+      opacity: 0;
+      transform: translateY(-100%);
+      pointer-events: none;
+    }
+
+    .error-content {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      cursor: pointer;
-      font-weight: 500;
+      font-size: 0.875rem;
     }
 
-    #preview-container {
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: 0.5rem;
-      padding: 2rem;
-      min-height: 200px;
-      transition: all 0.3s ease;
-    }
-
-    .preview-element {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1.5rem;
-      border-radius: 0.5rem;
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1rem;
     }
 
-    .preview-element h5 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.125rem;
+    .preview-header h4 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    .preview-element p {
-      margin: 0 0 1rem 0;
-      opacity: 0.9;
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      cursor: pointer;
     }
 
-    .nested-element {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 1rem;
-      border-radius: 0.25rem;
-      backdrop-filter: blur(10px);
+    .radio-label input[type="radio"] {
+      margin: 0;
     }
-
     @media (max-width: 1024px) {
       .playground-editors {
         grid-template-columns: 1fr;
