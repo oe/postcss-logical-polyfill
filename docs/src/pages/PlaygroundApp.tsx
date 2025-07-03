@@ -17,6 +17,7 @@ export default function PlaygroundApp() {
   useEffect(() => {
     async function transform() {
       try {
+        // @ts-expect-error ignore for types
         const result = await postcss([
           postcssLogicalPolyfill({
             ltr: { selector: ltrSelector },
