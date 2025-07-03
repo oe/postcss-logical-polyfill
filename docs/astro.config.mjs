@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
@@ -10,6 +11,7 @@ export default defineConfig({
 		}
 	},
 	integrations: [
+		react(),
 		starlight({
 			title: 'PostCSS Logical Polyfill',
 			description: 'Documentation for PostCSS Logical Polyfill - Transform CSS logical properties into physical properties with appropriate direction selectors.',

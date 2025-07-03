@@ -7,7 +7,7 @@
  * Logical property processing has been modularized into ./logical-properties
  * Selector-related logic has been modularized into ./selector-utils for better maintainability.
  */
-import postcss, { PluginCreator, Root, Rule, AtRule } from 'postcss';
+import { PluginCreator, Root, Rule, AtRule } from 'postcss';
 import {
   detectDirection,
   generateSelector,
@@ -87,14 +87,30 @@ function categorizeSelectors(selectors: string[], config: DirectionConfig) {
 
 // Helper function to create a rule with specific properties and selectors
 function createRuleWithPropertiesAndSelectors(
-  baseRule: Rule, 
-  selectors: string[], 
-  properties: Map<string, string>
+  baseRule: Rule,
+  selectors: string[],
+  properties: Map<string, string>,
+  origDecl?: any // Pass the original logical declaration for sourcemap
 ): Rule {
   const newRule = baseRule.clone();
   newRule.selectors = selectors;
   newRule.removeAll();
-  properties.forEach((value, prop) => newRule.append({ prop, value }));
+  properties.forEach((value, prop) => {
+    // Always clone from the original logical declaration if provided
+    if (origDecl) {
+      newRule.append(origDecl.clone({ prop, value }));
+    } else {
+      // Fallback: try to find a decl to clone, else create new
+      const foundDecl = baseRule.nodes.find(
+        node => node.type === 'decl'
+      );
+      if (foundDecl) {
+        newRule.append((foundDecl as any).clone({ prop, value }));
+      } else {
+        newRule.append({ prop, value });
+      }
+    }
+  });
   return newRule;
 }
 
@@ -122,12 +138,12 @@ function createDirectionRule(
   selectors: string[],
   properties: Map<string, string>,
   direction: 'ltr' | 'rtl',
-  config: DirectionConfig
+  config: DirectionConfig,
+  origDecl?: any
 ): Rule | null {
   if (properties.size === 0) return null;
-  
   const scopedSelectors = selectors.map(sel => generateSelector(sel, direction, config));
-  return createRuleWithPropertiesAndSelectors(baseRule, scopedSelectors, properties);
+  return createRuleWithPropertiesAndSelectors(baseRule, scopedSelectors, properties, origDecl);
 }
 
 // Helper function to process direction-specific rules from property analysis

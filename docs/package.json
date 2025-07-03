@@ -14,7 +14,15 @@
     "@astrojs/starlight": "^0.34.4",
     "astro": "^5.6.1",
     "postcss": "^8.5.6",
+    "prismjs": "^1.30.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-simple-code-editor": "^0.14.1",
     "sharp": "^0.32.5",
     "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@astrojs/react": "^4.3.0",
+    "@types/react": "catalog:"
   }
 }

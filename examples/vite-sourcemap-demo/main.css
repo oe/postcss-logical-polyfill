@@ -1,0 +1,21 @@
+/* main.css: 使用逻辑属性，演示 sourcemap */
+.header {
+  margin-inline: 2rem;
+}
+.sidebar {
+  padding-block: 1rem;
+  margin-block-end: 2rem;
+}
+.card {
+  margin-inline: 1rem;
+  background: white;
+  border-radius: 8px;
+}
+.navigation {
+  margin-inline-start: 1rem;
+  padding-inline-end: 0.5rem;
+}
+.content {
+  text-align: start;
+  border-inline-start: 1px solid #ddd;
+}
