@@ -8,7 +8,7 @@ hero:
     file: ../../assets/houston.webp
   actions:
     - text: Get Started
-      link: /getting-started/introduction/
+      link: /postcss-logical-polyfill/getting-started/introduction/
       icon: right-arrow
       variant: primary
     - text: View on GitHub
@@ -18,6 +18,13 @@ hero:
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+  <Card title="🧑‍💻 Playground" icon="puzzle">
+    <a href="/postcss-logical-polyfill/playground/" style={{display:'inline-block',marginTop:'0.5rem',fontWeight:600,color:'var(--sl-color-accent)'}}>Try the interactive Playground →</a>
+    <br />Experiment with logical/physical CSS live in your browser.
+  </Card>
+</CardGrid>
 
 ## Features
 
@@ -57,8 +64,11 @@ While modern browsers support CSS logical properties, older browsers don't. This
 ### Input CSS:
 ```css
 .container {
-  margin-inline: 1rem;
+  margin-inline: 1rem 2px;
   padding-block: 2rem;
+}
+
+[dir="rtl"] .container {
   border-inline-start: 2px solid blue;
 }
 ```
@@ -66,15 +76,16 @@ While modern browsers support CSS logical properties, older browsers don't. This
 ### Output CSS:
 ```css
 .container {
-  margin-left: 1rem;
-  margin-right: 1rem;
   padding-top: 2rem;
   padding-bottom: 2rem;
 }
 [dir="ltr"] .container {
-  border-left: 2px solid blue;
+  margin-left: 1rem;
+  margin-right: 2px;
 }
 [dir="rtl"] .container {
+  margin-right: 2px;
+  margin-left: 1rem;
   border-right: 2px solid blue;
 }
 ```

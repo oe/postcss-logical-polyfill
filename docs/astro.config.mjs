@@ -5,6 +5,7 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
+	base: '/postcss-logical-polyfill/',
 	image: {
 		service: {
 			entrypoint: 'astro/assets/services/noop'
@@ -60,9 +61,12 @@ export default defineConfig({
 						{ label: 'Examples', slug: 'references/examples' },
 					],
 				},
-			],
-			customCss: [
-				'./src/styles/custom.css',
+				{
+					label: 'Playground',
+					items: [
+						{ label: 'Playground', slug: 'playground' }
+					]
+				},
 			],
 		})
 	]
