@@ -26,6 +26,8 @@ yarn add -D postcss-logical-polyfill
 
 [Playground](http://app.evecalm.com/postcss-logical-polyfill/playground/)
 
+[Full document](https://app.evecalm.com/postcss-logical-polyfill/)
+
 ```js
 // postcss.config.js
 module.exports = {
