@@ -1,4 +1,9 @@
 ---
 import PlaygroundApp from './PlaygroundApp.tsx';
+import Layout from '../layouts/PlaygroundLayout.astro';
 ---
-<PlaygroundApp client:only="react" />
+
+<Layout title='Playground'>
+  <PlaygroundApp client:only="react" />
+</Layout>
+

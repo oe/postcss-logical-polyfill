@@ -19,6 +19,9 @@ export default defineConfig({
 				src: './src/assets/logo.svg',
 				replacesTitle: true,
 			},
+			editLink: {
+				baseUrl: 'https://github.com/oe/postcss-logical-polyfill/edit/main/docs',
+			},
 			social: [
 				{ 
 					icon: 'github', 
@@ -58,9 +61,6 @@ export default defineConfig({
 					],
 				},
 			],
-			components: {
-				Header: './src/components/Header.astro',
-			},
 			customCss: [
 				'./src/styles/custom.css',
 			],
