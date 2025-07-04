@@ -5,13 +5,17 @@ template: splash
 hero:
   tagline: Transform CSS logical properties into physical properties with appropriate direction selectors for maximum browser compatibility.
   image:
-    file: ../../assets/houston.webp
+    file: ../../assets/hero-css-plugin.svg
   actions:
     - text: Get Started
       link: /postcss-logical-polyfill/getting-started/introduction/
       icon: right-arrow
       variant: primary
-    - text: View on GitHub
+    - text: Playground
+      link: /postcss-logical-polyfill/playground/
+      icon: puzzle
+      variant: secondary
+    - text: GitHub
       link: https://github.com/oe/postcss-logical-polyfill
       icon: external
       variant: secondary
@@ -19,34 +23,65 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-<CardGrid stagger>
-  <Card title="🧑‍💻 Playground" icon="puzzle">
-    <a href="/postcss-logical-polyfill/playground/" style={{display:'inline-block',marginTop:'0.5rem',fontWeight:600,color:'var(--sl-color-accent)'}}>Try the interactive Playground →</a>
-    <br />Experiment with logical/physical CSS live in your browser.
-  </Card>
-</CardGrid>
+## Quick Example
+<div style={{display:'flex',gap:'2rem',alignItems:'flex-start',justifyContent:'center',margin:'2.5rem 0 2rem 0',flexWrap:'wrap'}}>
+  <div style={{flex:'1 1 320px',minWidth:'260px',maxWidth:'420px'}}>
+    <div style={{fontWeight:600,fontSize:'1.1rem',marginBottom:'0.5rem',color:'#334155'}}>Input</div>
+
+    ```css
+    /* Input */
+    .container {
+      margin-inline: 1rem 2px;
+      padding-block: 2rem;
+    }
+    [dir="rtl"] .container {
+      border-inline-start: 2px solid blue;
+    }
+    ```
+  </div>
+  <div style={{flex:'1 1 320px',minWidth:'260px',maxWidth:'420px'}}>
+    <div style={{fontWeight:600,fontSize:'1.1rem',marginBottom:'0.5rem',color:'#334155'}}>Output</div>
+
+    ```css
+    /* Output */
+    .container {
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+    [dir="ltr"] .container {
+      margin-left: 1rem;
+      margin-right: 2px;
+    }
+    [dir="rtl"] .container {
+      margin-right: 2px;
+      margin-left: 1rem;
+      border-right: 2px solid blue;
+    }
+    ```
+  </div>
+</div>
 
 ## Features
 
 <CardGrid stagger>
-	<Card title="🔄 Polyfill Direction" icon="setting">
-		Transforms logical properties → physical properties (reverse of most tools)
-	</Card>
-	<Card title="🎯 Smart Generation" icon="add-document">
-		Creates both LTR and RTL versions automatically
-	</Card>
-	<Card title="⚡ Optimized Output" icon="rocket">
-		Block-direction properties generate single rules (no duplication)
-	</Card>
-	<Card title="🔗 Extended Support" icon="puzzle">
-		Includes scroll properties and logical values via integrated shim
-	</Card>
-	<Card title="🧪 Experimental Features" icon="star">
-		Linear gradient logical directions and draft CSS specs
-	</Card>
-	<Card title="🎛️ Configurable" icon="setting">
-		Custom selectors and output order control
-	</Card>
+  <Card title="Polyfill Direction" icon="setting">
+    Transforms logical properties → physical properties (reverse of most tools)
+  </Card>
+  <Card title="Smart Generation" icon="add-document">
+    Creates both LTR and RTL versions automatically
+  </Card>
+  <Card title="Optimized Output" icon="rocket">
+    Block-direction properties generate single rules (no duplication)
+  </Card>
+  <Card title="Extended Support" icon="puzzle">
+    Includes scroll properties and logical values via integrated shim
+  </Card>
+  <Card title="Experimental Features" icon="star">
+    Linear gradient logical directions and draft CSS specs
+  </Card>
+  <Card title="Configurable" icon="setting">
+    Custom selectors and output order control
+  </Card>
 </CardGrid>
 
 ## Why Use This Plugin?
@@ -59,36 +94,6 @@ While modern browsers support CSS logical properties, older browsers don't. This
 - ✅ RTL/LTR internationalization
 - ✅ Framework integration with directional layouts
 
-## Quick Example
-
-### Input CSS:
-```css
-.container {
-  margin-inline: 1rem 2px;
-  padding-block: 2rem;
-}
-
-[dir="rtl"] .container {
-  border-inline-start: 2px solid blue;
-}
-```
-
-### Output CSS:
-```css
-.container {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
-[dir="ltr"] .container {
-  margin-left: 1rem;
-  margin-right: 2px;
-}
-[dir="rtl"] .container {
-  margin-right: 2px;
-  margin-left: 1rem;
-  border-right: 2px solid blue;
-}
-```
 
 ## What It Does
 
