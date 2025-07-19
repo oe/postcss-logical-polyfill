@@ -198,6 +198,64 @@ For large CSS files, consider:
    }
    ```
 
+### Experimental Features Issues
+
+#### Gradient Logical Directions Not Working
+If logical gradient directions aren't being transformed:
+
+1. **Check Gradient Syntax**: Ensure proper syntax for logical gradients:
+   ```css
+   /* ✅ Correct */
+   .element {
+     background: linear-gradient(to inline-end, red, blue);
+     background: radial-gradient(circle at inline-start, red, blue);
+   }
+   
+   /* ❌ Incorrect */
+   .element {
+     background: linear-gradient(to inline-horizontal, red, blue); /* Invalid direction */
+     background: radial-gradient(at inline-start, red, blue); /* Missing shape */
+   }
+   ```
+
+2. **Complex Gradient Positions**: For mixed positioning, ensure proper order:
+   ```css
+   /* ✅ Correct - logical direction first or last */
+   background: radial-gradient(circle at inline-start top, red, blue);
+   background: radial-gradient(circle at 50% inline-end, red, blue);
+   
+   /* ⚠️ May not transform - logical direction in middle */
+   background: radial-gradient(circle at 25% inline-start 75%, red, blue);
+   ```
+
+3. **Multiple Gradients**: Each gradient in a list is processed separately:
+   ```css
+   /* ✅ All gradients will be transformed */
+   background: 
+     linear-gradient(to inline-end, red, blue),
+     radial-gradient(circle at inline-start, yellow, green);
+   ```
+
+#### !important Flags Not Preserved
+If `!important` flags are appearing on all properties when only some should have them:
+
+1. **Check Plugin Version**: Ensure you have the latest version that handles `!important` correctly
+2. **Verify Input Syntax**: Make sure `!important` is placed correctly:
+   ```css
+   /* ✅ Correct */
+   .element {
+     margin-inline-start: 1rem !important;
+     padding-inline: 2rem; /* No !important */
+   }
+   
+   /* Output should preserve the distinction */
+   [dir="ltr"] .element {
+     margin-left: 1rem !important;
+     padding-left: 2rem;
+     padding-right: 2rem;
+   }
+   ```
+
 ### CSS Framework Conflicts
 
 #### Bootstrap Integration

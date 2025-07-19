@@ -222,6 +222,70 @@ The plugin includes experimental support for draft-stage CSS logical properties 
 - `to block-start` → `to top` (direction-independent)
 - `to block-end` → `to bottom` (direction-independent)
 
+### Radial Gradient Logical Positions <Badge text="NEW" variant="tip" />
+
+**⚠️ Experimental Feature** - Enhanced support for radial gradient logical positioning.
+
+```css
+/* Simple logical positions */
+.element {
+  background: radial-gradient(circle at inline-start, red, blue);
+}
+
+/* LTR Output */
+[dir="ltr"] .element {
+  background: radial-gradient(circle at left, red, blue);
+}
+
+/* RTL Output */
+[dir="rtl"] .element {
+  background: radial-gradient(circle at right, red, blue);
+}
+```
+
+**Advanced mixed positioning:**
+```css
+/* Mixed logical and physical positions */
+.element {
+  background: radial-gradient(circle at inline-start top, red, blue);
+}
+
+/* LTR Output */
+[dir="ltr"] .element {
+  background: radial-gradient(circle at left top, red, blue);
+}
+
+/* RTL Output */
+[dir="rtl"] .element {
+  background: radial-gradient(circle at right top, red, blue);
+}
+```
+
+**Supported logical positions:**
+- `at inline-start` → direction-aware `at left`/`at right`
+- `at inline-end` → direction-aware `at right`/`at left`
+- `at block-start` → `at top` (direction-independent)
+- `at block-end` → `at bottom` (direction-independent)
+- Mixed positions like `at inline-start top`, `at bottom inline-end`, `at 50% inline-start` etc.
+
+**Compound directions:**
+```css
+/* Compound logical positions */
+.element {
+  background: radial-gradient(circle at inline-start block-end, red, blue);
+}
+
+/* LTR Output */
+[dir="ltr"] .element {
+  background: radial-gradient(circle at left bottom, red, blue);
+}
+
+/* RTL Output */
+[dir="rtl"] .element {
+  background: radial-gradient(circle at right bottom, red, blue);
+}
+```
+
 ## Processing Examples
 
 ### Block-Only Example

@@ -732,4 +732,120 @@ This page provides practical examples of using postcss-logical-polyfill in vario
 }
 ```
 
+## Experimental Features Examples
+
+### Linear Gradient Logical Directions
+
+```css
+/* Input CSS */
+.hero-banner {
+  background: linear-gradient(to inline-end, #1e3a8a, #3b82f6);
+  color: white;
+  padding: 3rem;
+}
+
+.card-gradient {
+  background: linear-gradient(to block-end, rgba(255,255,255,0.1), transparent);
+}
+
+/* Output CSS */
+[dir="ltr"] .hero-banner {
+  background: linear-gradient(to right, #1e3a8a, #3b82f6);
+  color: white;
+  padding: 3rem;
+}
+
+[dir="rtl"] .hero-banner {
+  background: linear-gradient(to left, #1e3a8a, #3b82f6);
+  color: white;
+  padding: 3rem;
+}
+
+.card-gradient {
+  background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+}
+```
+
+### Radial Gradient Logical Positions
+
+```css
+/* Input CSS */
+.spotlight {
+  background: radial-gradient(circle at inline-start, rgba(255,255,255,0.3), transparent);
+}
+
+.complex-radial {
+  background: radial-gradient(ellipse at inline-start top, #ff6b6b, #4ecdc4);
+}
+
+.mixed-position {
+  background: radial-gradient(circle at 25% inline-end, #ffd93d, #ff6b6b);
+}
+
+.compound-direction {
+  background: radial-gradient(ellipse at inline-start block-end, #667eea, #764ba2);
+}
+
+/* Output CSS */
+[dir="ltr"] .spotlight {
+  background: radial-gradient(circle at left, rgba(255,255,255,0.3), transparent);
+}
+
+[dir="rtl"] .spotlight {
+  background: radial-gradient(circle at right, rgba(255,255,255,0.3), transparent);
+}
+
+[dir="ltr"] .complex-radial {
+  background: radial-gradient(ellipse at left top, #ff6b6b, #4ecdc4);
+}
+
+[dir="rtl"] .complex-radial {
+  background: radial-gradient(ellipse at right top, #ff6b6b, #4ecdc4);
+}
+
+[dir="ltr"] .mixed-position {
+  background: radial-gradient(circle at 25% right, #ffd93d, #ff6b6b);
+}
+
+[dir="rtl"] .mixed-position {
+  background: radial-gradient(circle at 25% left, #ffd93d, #ff6b6b);
+}
+
+[dir="ltr"] .compound-direction {
+  background: radial-gradient(ellipse at left bottom, #667eea, #764ba2);
+}
+
+[dir="rtl"] .compound-direction {
+  background: radial-gradient(ellipse at right bottom, #667eea, #764ba2);
+}
+```
+
+### Multiple Gradients with Logical Directions
+
+```css
+/* Input CSS */
+.layered-effect {
+  background: 
+    radial-gradient(circle at inline-start center, rgba(255,0,0,0.3), transparent),
+    linear-gradient(to inline-end, #1e3a8a, #3b82f6),
+    radial-gradient(ellipse at center inline-end, rgba(255,255,0,0.2), transparent);
+}
+
+/* Output CSS */
+[dir="ltr"] .layered-effect {
+  background: 
+    radial-gradient(circle at left center, rgba(255,0,0,0.3), transparent),
+    linear-gradient(to right, #1e3a8a, #3b82f6),
+    radial-gradient(ellipse at center right, rgba(255,255,0,0.2), transparent);
+}
+
+[dir="rtl"] .layered-effect {
+  background: 
+    radial-gradient(circle at right center, rgba(255,0,0,0.3), transparent),
+    linear-gradient(to left, #1e3a8a, #3b82f6),
+    radial-gradient(ellipse at center left, rgba(255,255,0,0.2), transparent);
+}
+```
+```
+
 This comprehensive examples page demonstrates how postcss-logical-polyfill transforms various CSS patterns, making them work across different text directions while maintaining clean, logical code.
