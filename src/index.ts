@@ -89,25 +89,37 @@ function categorizeSelectors(selectors: string[], config: DirectionConfig) {
 function createRuleWithPropertiesAndSelectors(
   baseRule: Rule,
   selectors: string[],
-  properties: Map<string, string>,
+  properties: Map<string, { value: string; important: boolean }>,
   origDecl?: any // Pass the original logical declaration for sourcemap
 ): Rule {
   const newRule = baseRule.clone();
   newRule.selectors = selectors;
   newRule.removeAll();
-  properties.forEach((value, prop) => {
+  properties.forEach((decl, prop) => {
     // Always clone from the original logical declaration if provided
     if (origDecl) {
-      newRule.append(origDecl.clone({ prop, value }));
+      newRule.append(origDecl.clone({ 
+        prop, 
+        value: decl.value,
+        important: decl.important
+      }));
     } else {
       // Fallback: try to find a decl to clone, else create new
       const foundDecl = baseRule.nodes.find(
         node => node.type === 'decl'
       );
       if (foundDecl) {
-        newRule.append((foundDecl as any).clone({ prop, value }));
+        newRule.append((foundDecl as any).clone({ 
+          prop, 
+          value: decl.value,
+          important: decl.important
+        }));
       } else {
-        newRule.append({ prop, value });
+        newRule.append({ 
+          prop, 
+          value: decl.value,
+          important: decl.important
+        });
       }
     }
   });
@@ -136,7 +148,7 @@ function addDirectionRules(
 function createDirectionRule(
   baseRule: Rule,
   selectors: string[],
-  properties: Map<string, string>,
+  properties: Map<string, { value: string; important: boolean }>,
   direction: 'ltr' | 'rtl',
   config: DirectionConfig,
   origDecl?: any
@@ -150,8 +162,8 @@ function createDirectionRule(
 function processDirectionSpecificRules(
   rule: Rule,
   selectors: string[],
-  ltrProps: Map<string, string>,
-  rtlProps: Map<string, string>,
+  ltrProps: Map<string, { value: string; important: boolean }>,
+  rtlProps: Map<string, { value: string; important: boolean }>,
   config: DirectionConfig,
   outputOrder: 'ltr-first' | 'rtl-first'
 ): Rule[] {

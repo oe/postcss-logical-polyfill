@@ -68,12 +68,14 @@ export async function applyLogicalTransformation(rule: Rule, direction: 'ltr' | 
  * Extract declarations from a rule into a Map
  * @internal - Used internally by rulesAreIdentical and analyzePropertyDifferences
  */
-function extractDeclarations(rule: Rule): Map<string, string> {
-  const declarations = new Map<string, string>();
+function extractDeclarations(rule: Rule): Map<string, { value: string; important: boolean }> {
+  const declarations = new Map<string, { value: string; important: boolean }>();
   rule.each(node => {
     if (node.type === 'decl') {
-      const value = node.important ? `${node.value} !important` : node.value;
-      declarations.set(node.prop, value);
+      declarations.set(node.prop, {
+        value: node.value,
+        important: Boolean(node.important)
+      });
     }
   });
   return declarations;
@@ -88,8 +90,11 @@ export function rulesAreIdentical(rule1: Rule, rule2: Rule): boolean {
   
   if (decls1.size !== decls2.size) return false;
   
-  for (const [prop, value] of decls1) {
-    if (decls2.get(prop) !== value) return false;
+  for (const [prop, decl1] of decls1) {
+    const decl2 = decls2.get(prop);
+    if (!decl2 || decl2.value !== decl1.value || decl2.important !== decl1.important) {
+      return false;
+    }
   }
   
   return true;
@@ -102,23 +107,24 @@ export function analyzePropertyDifferences(ltrRule: Rule, rtlRule: Rule) {
   const ltrProps = extractDeclarations(ltrRule);
   const rtlProps = extractDeclarations(rtlRule);
   
-  const commonProps = new Map<string, string>();
-  const ltrOnlyProps = new Map<string, string>();
-  const rtlOnlyProps = new Map<string, string>();
+  const commonProps = new Map<string, { value: string; important: boolean }>();
+  const ltrOnlyProps = new Map<string, { value: string; important: boolean }>();
+  const rtlOnlyProps = new Map<string, { value: string; important: boolean }>();
 
   // Categorize LTR properties
-  ltrProps.forEach((value, prop) => {
-    if (rtlProps.has(prop) && rtlProps.get(prop) === value) {
-      commonProps.set(prop, value);
+  ltrProps.forEach((decl, prop) => {
+    const rtlDecl = rtlProps.get(prop);
+    if (rtlDecl && rtlDecl.value === decl.value && rtlDecl.important === decl.important) {
+      commonProps.set(prop, decl);
     } else {
-      ltrOnlyProps.set(prop, value);
+      ltrOnlyProps.set(prop, decl);
     }
   });
 
   // Find RTL-only properties (those not already categorized as common)
-  rtlProps.forEach((value, prop) => {
+  rtlProps.forEach((decl, prop) => {
     if (!commonProps.has(prop)) {
-      rtlOnlyProps.set(prop, value);
+      rtlOnlyProps.set(prop, decl);
     }
   });
 

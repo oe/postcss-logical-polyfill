@@ -152,14 +152,18 @@ describe('logical-properties module - Public API Tests', () => {
       const { commonProps, ltrOnlyProps, rtlOnlyProps } = analyzePropertyDifferences(rule1, rule2);
       
       expect(commonProps.size).toBe(2);
-      expect(commonProps.get('color')).toBe('red');
-      expect(commonProps.get('font-size')).toBe('16px');
+      expect(commonProps.get('color')?.value).toBe('red');
+      expect(commonProps.get('color')?.important).toBe(false);
+      expect(commonProps.get('font-size')?.value).toBe('16px');
+      expect(commonProps.get('font-size')?.important).toBe(false);
       
       expect(ltrOnlyProps.size).toBe(1);
-      expect(ltrOnlyProps.get('margin')).toBe('10px');
+      expect(ltrOnlyProps.get('margin')?.value).toBe('10px');
+      expect(ltrOnlyProps.get('margin')?.important).toBe(false);
       
       expect(rtlOnlyProps.size).toBe(1);
-      expect(rtlOnlyProps.get('padding')).toBe('5px');
+      expect(rtlOnlyProps.get('padding')?.value).toBe('5px');
+      expect(rtlOnlyProps.get('padding')?.important).toBe(false);
     });
 
     test('should handle identical rules', () => {
@@ -198,7 +202,8 @@ describe('logical-properties module - Public API Tests', () => {
         // Analyze differences
         const { commonProps, ltrOnlyProps, rtlOnlyProps } = analyzePropertyDifferences(ltrRule, rtlRule);
         
-        expect(commonProps.get('color')).toBe('red');
+        expect(commonProps.get('color')?.value).toBe('red');
+        expect(commonProps.get('color')?.important).toBe(false);
         expect(ltrOnlyProps.size).toBeGreaterThan(0);
         expect(rtlOnlyProps.size).toBeGreaterThan(0);
       }
