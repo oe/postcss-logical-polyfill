@@ -105,6 +105,160 @@ describe('Experimental Logical Properties', () => {
     test.each(gradientTests)('$name', runTestCase);
   });
 
+  describe('Radial Gradient Logical Directions', () => {
+    const radialGradientTests: TestCase[] = [
+      {
+        name: 'radial-gradient with inline-start position',
+        input: `
+          .test {
+            background: radial-gradient(circle at inline-start, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .test {
+            background: radial-gradient(circle at left, red, blue);
+          }
+          [dir="rtl"] .test {
+            background: radial-gradient(circle at right, red, blue);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient with inline-end position',
+        input: `
+          .test {
+            background: radial-gradient(ellipse at inline-end, green, yellow);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .test {
+            background: radial-gradient(ellipse at right, green, yellow);
+          }
+          [dir="rtl"] .test {
+            background: radial-gradient(ellipse at left, green, yellow);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient with block directions',
+        input: `
+          .test {
+            background: radial-gradient(circle at block-start, red, blue);
+            background-image: radial-gradient(ellipse at block-end, green, yellow);
+          }
+        `,
+        expected: `
+          .test {
+            background: radial-gradient(circle at top, red, blue);
+            background-image: radial-gradient(ellipse at bottom, green, yellow);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient with compound directions',
+        input: `
+          .complex {
+            background: radial-gradient(circle at inline-start block-end, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .complex {
+            background: radial-gradient(circle at left bottom, red, blue);
+          }
+          [dir="rtl"] .complex {
+            background: radial-gradient(circle at right bottom, red, blue);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient with mixed logical and physical positions',
+        input: `
+          .mixed {
+            background: radial-gradient(circle at inline-start top, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .mixed {
+            background: radial-gradient(circle at left top, red, blue);
+          }
+          [dir="rtl"] .mixed {
+            background: radial-gradient(circle at right top, red, blue);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient with physical then logical position',
+        input: `
+          .physical-logical {
+            background: radial-gradient(ellipse at top inline-end, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .physical-logical {
+            background: radial-gradient(ellipse at top right, red, blue);
+          }
+          [dir="rtl"] .physical-logical {
+            background: radial-gradient(ellipse at top left, red, blue);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient with percentage and logical position',
+        input: `
+          .percentage-logical {
+            background: radial-gradient(circle at 50% block-start, red, blue);
+          }
+        `,
+        expected: `
+          .percentage-logical {
+            background: radial-gradient(circle at 50% top, red, blue);
+          }
+        `
+      },
+      {
+        name: 'complex radial-gradient with multiple logical keywords',
+        input: `
+          .complex {
+            background: radial-gradient(ellipse 50px 100px at inline-start block-end, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .complex {
+            background: radial-gradient(ellipse 50px 100px at left bottom, red, blue);
+          }
+          [dir="rtl"] .complex {
+            background: radial-gradient(ellipse 50px 100px at right bottom, red, blue);
+          }
+        `
+      }
+    ];
+
+    test.each(radialGradientTests)('$name', runTestCase);
+  });
+
+  describe('Enhanced Linear Gradient Support', () => {
+    const enhancedLinearTests: TestCase[] = [
+      {
+        name: 'linear-gradient with complex logical directions',
+        input: `
+          .complex-linear {
+            background: linear-gradient(45deg, to inline-end, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .complex-linear {
+            background: linear-gradient(45deg, to right, red, blue);
+          }
+          [dir="rtl"] .complex-linear {
+            background: linear-gradient(45deg, to left, red, blue);
+          }
+        `
+      }
+    ];
+
+    test.each(enhancedLinearTests)('$name', runTestCase);
+  });
+
   describe('Scoped Experimental Properties', () => {
     const scopedTests: TestCase[] = [
       {
@@ -205,5 +359,98 @@ describe('Experimental Logical Properties', () => {
     ];
 
     test.each(mixedTests)('$name', runTestCase);
+  });
+
+  describe('Mixed Logical and Physical Gradient Positions', () => {
+    const mixedPositionTests: TestCase[] = [
+      {
+        name: 'radial-gradient(circle at inline-start top, red, blue)',
+        input: `
+          .test {
+            background: radial-gradient(circle at inline-start top, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .test {
+            background: radial-gradient(circle at left top, red, blue);
+          }
+          [dir="rtl"] .test {
+            background: radial-gradient(circle at right top, red, blue);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient(ellipse at bottom inline-end, red, blue)',
+        input: `
+          .test {
+            background: radial-gradient(ellipse at bottom inline-end, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .test {
+            background: radial-gradient(ellipse at bottom right, red, blue);
+          }
+          [dir="rtl"] .test {
+            background: radial-gradient(ellipse at bottom left, red, blue);
+          }
+        `
+      },
+      {
+        name: 'linear-gradient(45deg, to inline-end, red, blue)',
+        input: `
+          .test {
+            background: linear-gradient(45deg, to inline-end, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .test {
+            background: linear-gradient(45deg, to right, red, blue);
+          }
+          [dir="rtl"] .test {
+            background: linear-gradient(45deg, to left, red, blue);
+          }
+        `
+      },
+      {
+        name: 'radial-gradient with percentage and logical position',
+        input: `
+          .percentage {
+            background: radial-gradient(circle at 50% inline-start, red, blue);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .percentage {
+            background: radial-gradient(circle at 50% left, red, blue);
+          }
+          [dir="rtl"] .percentage {
+            background: radial-gradient(circle at 50% right, red, blue);
+          }
+        `
+      },
+      {
+        name: 'multiple gradients with mixed logical positions',
+        input: `
+          .multiple {
+            background: radial-gradient(circle at inline-start center, red, blue),
+                        linear-gradient(to block-end, yellow, green),
+                        radial-gradient(ellipse at center inline-end, purple, orange);
+          }
+        `,
+        expected: `
+          [dir="ltr"] .multiple {
+            background: radial-gradient(circle at left center, red, blue),
+                        linear-gradient(to bottom, yellow, green),
+                        radial-gradient(ellipse at center right, purple, orange);
+          }
+          [dir="rtl"] .multiple {
+            background: radial-gradient(circle at right center, red, blue),
+                        linear-gradient(to bottom, yellow, green),
+                        radial-gradient(ellipse at center left, purple, orange);
+          }
+        `
+      }
+    ];
+
+    test.each(mixedPositionTests)('$name', runTestCase);
   });
 });

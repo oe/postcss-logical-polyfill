@@ -5,6 +5,237 @@ import { runTestCase, TestCase } from './test-utils';
 
 describe('Additional Edge Cases', () => {
   
+  describe('Important Flag Handling', () => {
+    test('should not add important to all properties when only some have important', async () => {
+      const input = `
+        .test {
+          margin-inline-start: 10px !important;
+          padding-inline-start: 20px;
+          color: red;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      // Should only have !important on margin-left/right, not on padding or color
+      expect(result.css).toMatch(/margin-left:\s*10px\s*!important/);
+      expect(result.css).toMatch(/margin-right:\s*10px\s*!important/);
+      expect(result.css).toMatch(/padding-left:\s*20px(?!\s*!important)/);
+      expect(result.css).toMatch(/padding-right:\s*20px(?!\s*!important)/);
+      expect(result.css).toMatch(/color:\s*red(?!\s*!important)/);
+    });
+
+    test('should handle first property with important', async () => {
+      const input = `
+        .first-important {
+          margin-inline-start: 5px !important;
+          padding-inline-start: 10px;
+          border-inline-start: 1px solid;
+          inset-inline-start: 0;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*5px\s*!important/);
+      expect(result.css).toMatch(/margin-right:\s*5px\s*!important/);
+      expect(result.css).toMatch(/padding-left:\s*10px(?!\s*!important)/);
+      expect(result.css).toMatch(/padding-right:\s*10px(?!\s*!important)/);
+      expect(result.css).toMatch(/border-left:\s*1px solid(?!\s*!important)/);
+      expect(result.css).toMatch(/left:\s*0(?!\s*!important)/);
+    });
+
+    test('should handle last property with important', async () => {
+      const input = `
+        .last-important {
+          margin-inline-start: 5px;
+          padding-inline-start: 10px;
+          border-inline-start: 1px solid;
+          inset-inline-start: 0 !important;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*5px(?!\s*!important)/);
+      expect(result.css).toMatch(/padding-left:\s*10px(?!\s*!important)/);
+      expect(result.css).toMatch(/border-left:\s*1px solid(?!\s*!important)/);
+      expect(result.css).toMatch(/left:\s*0\s*!important/);
+      expect(result.css).toMatch(/right:\s*0\s*!important/);
+    });
+
+    test('should handle middle property with important', async () => {
+      const input = `
+        .middle-important {
+          margin-inline-start: 5px;
+          padding-inline-start: 10px !important;
+          border-inline-start: 1px solid;
+          inset-inline-start: 0;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*5px(?!\s*!important)/);
+      expect(result.css).toMatch(/padding-left:\s*10px\s*!important/);
+      expect(result.css).toMatch(/padding-right:\s*10px\s*!important/);
+      expect(result.css).toMatch(/border-left:\s*1px solid(?!\s*!important)/);
+      expect(result.css).toMatch(/left:\s*0(?!\s*!important)/);
+    });
+
+    test('should handle consecutive properties with important', async () => {
+      const input = `
+        .consecutive-important {
+          margin-inline-start: 5px !important;
+          padding-inline-start: 10px !important;
+          border-inline-start: 1px solid !important;
+          inset-inline-start: 0;
+          color: red;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*5px\s*!important/);
+      expect(result.css).toMatch(/margin-right:\s*5px\s*!important/);
+      expect(result.css).toMatch(/padding-left:\s*10px\s*!important/);
+      expect(result.css).toMatch(/padding-right:\s*10px\s*!important/);
+      expect(result.css).toMatch(/border-left:\s*1px solid\s*!important/);
+      expect(result.css).toMatch(/border-right:\s*1px solid\s*!important/);
+      expect(result.css).toMatch(/left:\s*0(?!\s*!important)/);
+      expect(result.css).toMatch(/color:\s*red(?!\s*!important)/);
+    });
+
+    test('should handle mixed important declarations correctly', async () => {
+      const input = `
+        .mixed {
+          margin-inline-start: 5px;
+          margin-inline-end: 10px !important;
+          padding-block-start: 15px !important;
+          padding-block-end: 20px;
+          border-inline: 1px solid !important;
+          color: blue;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*5px(?!\s*!important)/);
+      expect(result.css).toMatch(/margin-right:\s*10px\s*!important/);
+      expect(result.css).toMatch(/padding-top:\s*15px\s*!important/);
+      expect(result.css).toMatch(/padding-bottom:\s*20px(?!\s*!important)/);
+      expect(result.css).toMatch(/border-left:\s*1px solid\s*!important/);
+      expect(result.css).toMatch(/border-right:\s*1px solid\s*!important/);
+      expect(result.css).toMatch(/color:\s*blue(?!\s*!important)/);
+    });
+
+    test('should handle block-direction properties with important', async () => {
+      const input = `
+        .block {
+          margin-block-start: 1rem !important;
+          margin-block-end: 2rem;
+          padding-block: 0.5rem !important;
+          border-block-width: 2px;
+          inset-block-start: 10px !important;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-top:\s*1rem\s*!important/);
+      expect(result.css).toMatch(/margin-bottom:\s*2rem(?!\s*!important)/);
+      expect(result.css).toMatch(/padding-top:\s*0\.5rem\s*!important/);
+      expect(result.css).toMatch(/padding-bottom:\s*0\.5rem\s*!important/);
+      expect(result.css).toMatch(/border-top-width:\s*2px(?!\s*!important)/);
+      expect(result.css).toMatch(/border-bottom-width:\s*2px(?!\s*!important)/);
+      expect(result.css).toMatch(/top:\s*10px\s*!important/);
+    });
+
+    test('should preserve important with different spacing formats', async () => {
+      const input = `
+        .spacing {
+          margin-inline-start: 10px!important;
+          margin-inline-end: 20px  !important;
+          padding-inline: 5px   !   important;
+          border-inline-width: 2px!IMPORTANT;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*10px\s*!important/);
+      expect(result.css).toMatch(/margin-right:\s*20px\s*!important/);
+      expect(result.css).toMatch(/padding-left:\s*5px\s*!important/);
+      expect(result.css).toMatch(/padding-right:\s*5px\s*!important/);
+      expect(result.css).toMatch(/border-left-width:\s*2px\s*!important/i);
+      expect(result.css).toMatch(/border-right-width:\s*2px\s*!important/i);
+    });
+
+    test('should prevent double important flags', async () => {
+      const input = `
+        .double {
+          margin-inline-start: 10px !important;
+          padding-inline: 5px !important;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      // Should not have "!important !important"
+      expect(result.css).not.toMatch(/!important\s*!important/);
+      expect(result.css).toMatch(/margin-left:\s*10px\s*!important/);
+      expect(result.css).toMatch(/margin-right:\s*10px\s*!important/);
+      expect(result.css).toMatch(/padding-left:\s*5px\s*!important/);
+      expect(result.css).toMatch(/padding-right:\s*5px\s*!important/);
+    });
+
+    test('should handle alternating important and normal properties', async () => {
+      const input = `
+        .alternating {
+          margin-inline-start: 5px !important;
+          margin-inline-end: 10px;
+          padding-inline-start: 15px !important;
+          padding-inline-end: 20px;
+          border-inline-start: 1px solid !important;
+          border-inline-end: 2px dashed;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*5px\s*!important/);
+      expect(result.css).toMatch(/margin-right:\s*10px(?!\s*!important)/);
+      expect(result.css).toMatch(/padding-left:\s*15px\s*!important/);
+      expect(result.css).toMatch(/padding-right:\s*20px(?!\s*!important)/);
+      expect(result.css).toMatch(/border-left:\s*1px solid\s*!important/);
+      expect(result.css).toMatch(/border-right:\s*2px dashed(?!\s*!important)/);
+    });
+
+    test('should handle all properties with important', async () => {
+      const input = `
+        .all-important {
+          margin-inline-start: 5px !important;
+          padding-inline-start: 10px !important;
+          border-inline-start: 1px solid !important;
+          inset-inline-start: 0 !important;
+          color: red !important;
+        }
+      `;
+      
+      const result = await postcss([plugin()]).process(input, { from: undefined });
+      
+      expect(result.css).toMatch(/margin-left:\s*5px\s*!important/);
+      expect(result.css).toMatch(/margin-right:\s*5px\s*!important/);
+      expect(result.css).toMatch(/padding-left:\s*10px\s*!important/);
+      expect(result.css).toMatch(/padding-right:\s*10px\s*!important/);
+      expect(result.css).toMatch(/border-left:\s*1px solid\s*!important/);
+      expect(result.css).toMatch(/border-right:\s*1px solid\s*!important/);
+      expect(result.css).toMatch(/left:\s*0\s*!important/);
+      expect(result.css).toMatch(/right:\s*0\s*!important/);
+      expect(result.css).toMatch(/color:\s*red\s*!important/);
+    });
+  });
+
   describe('Selector Edge Cases', () => {
     const selectorEdgeCases: TestCase[] = [
       {

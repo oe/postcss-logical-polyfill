@@ -254,4 +254,170 @@ describe('Special At-Rules - Detailed Tests', () => {
       });
     });
   });
+  
+  describe('@media and Responsive Support', () => {
+    const mediaTests: TestCase[] = [
+      {
+        name: 'logical properties inside @media queries',
+        input: `
+          @media (min-width: 768px) {
+            .responsive {
+              margin-inline-start: 20px;
+              padding-block: 10px;
+            }
+          }
+        `,
+        expected: `
+          @media (min-width: 768px) {
+            .responsive {
+              padding-top: 10px;
+              padding-bottom: 10px;
+            }
+            [dir="ltr"] .responsive {
+              margin-left: 20px;
+            }
+            [dir="rtl"] .responsive {
+              margin-right: 20px;
+            }
+          }
+        `
+      },
+      {
+        name: 'nested @media queries within @supports',
+        input: `
+          @supports (margin-inline-start: 0) {
+            @media (min-width: 768px) {
+              .nested {
+                margin-inline-start: 15px;
+              }
+            }
+          }
+        `,
+        expected: `
+          @supports (margin-inline-start: 0) {
+            @media (min-width: 768px) {
+              [dir="ltr"] .nested {
+                margin-left: 15px;
+              }
+              [dir="rtl"] .nested {
+                margin-right: 15px;
+              }
+            }
+          }
+        `
+      },
+      {
+        name: 'multiple @media queries with different logical properties',
+        input: `
+          @media (max-width: 767px) {
+            .mobile {
+              margin-inline: 10px;
+            }
+          }
+          
+          @media (min-width: 768px) {
+            .desktop {
+              padding-inline-start: 20px;
+            }
+          }
+        `,
+        expected: `
+          @media (max-width: 767px) {
+            .mobile {
+              margin-left: 10px;
+              margin-right: 10px;
+            }
+          }
+          
+          @media (min-width: 768px) {
+            [dir="ltr"] .desktop {
+              padding-left: 20px;
+            }
+            [dir="rtl"] .desktop {
+              padding-right: 20px;
+            }
+          }
+        `
+      }
+    ];
+
+    test.each(mediaTests)('$name', runTestCase);
+  });
+
+  describe('@container and Modern At-Rules', () => {
+    const containerTests: TestCase[] = [
+      {
+        name: '@container queries with logical properties',
+        input: `
+          @container (min-width: 300px) {
+            .container-element {
+              padding-inline: 1rem;
+            }
+          }
+        `,
+        expected: `
+          @container (min-width: 300px) {
+            .container-element {
+              padding-left: 1rem;
+              padding-right: 1rem;
+            }
+          }
+        `
+      },
+      {
+        name: '@layer with logical properties',
+        input: `
+          @layer utilities {
+            .utility {
+              margin-inline-start: 10px;
+            }
+          }
+        `,
+        expected: `
+          @layer utilities {
+            [dir="ltr"] .utility {
+              margin-left: 10px;
+            }
+            [dir="rtl"] .utility {
+              margin-right: 10px;
+            }
+          }
+        `
+      },
+      {
+        name: 'complex nested at-rules',
+        input: `
+          @layer base {
+            @supports (margin-inline-start: 0) {
+              @media (min-width: 768px) {
+                .complex-nested {
+                  margin-inline-start: 20px;
+                  padding-block-start: 10px;
+                }
+              }
+            }
+          }
+        `,
+        expected: `
+          @layer base {
+            @supports (margin-inline-start: 0) {
+              @media (min-width: 768px) {
+                .complex-nested {
+                  padding-top: 10px;
+                }
+                [dir="ltr"] .complex-nested {
+                  margin-left: 20px;
+                }
+                [dir="rtl"] .complex-nested {
+                  margin-right: 20px;
+                }
+              }
+            }
+          }
+        `
+      }
+    ];
+
+    test.each(containerTests)('$name', runTestCase);
+  });
 });

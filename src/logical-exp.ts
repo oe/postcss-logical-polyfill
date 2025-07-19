@@ -6,6 +6,7 @@
  *
  * Supported experimental features:
  * - Linear gradient logical directions (to inline-start, to inline-end, to block-start, to block-end)
+ * - Radial gradient logical directions (at inline-start, at inline-end, at block-start, at block-end)
  *
  * @format
  */
@@ -37,8 +38,8 @@ function handleGradientProperty(
 ): void {
   const value = decl.value;
   
-  // Check if the value contains linear-gradient with logical directions
-  if (value.includes('linear-gradient') && hasLogicalGradientDirection(value)) {
+  // Check if the value contains gradients with logical directions
+  if ((value.includes('linear-gradient') || value.includes('radial-gradient')) && hasLogicalGradientDirection(value)) {
     const transformedValue = transformLogicalGradient(value, inlineDirection);
     if (transformedValue !== value) {
       decl.cloneBefore({ prop: decl.prop, value: transformedValue });
@@ -51,19 +52,15 @@ function handleGradientProperty(
  * Check if a gradient value contains logical directions
  */
 function hasLogicalGradientDirection(value: string): boolean {
-  const logicalDirections = [
-    'to inline-start',
-    'to inline-end', 
-    'to block-start',
-    'to block-end',
+  const logicalKeywords = [
     'inline-start',
-    'inline-end',
-    'block-start', 
+    'inline-end', 
+    'block-start',
     'block-end'
   ];
   
-  return logicalDirections.some(direction => 
-    value.includes(direction)
+  return logicalKeywords.some(keyword => 
+    new RegExp(`\\b${keyword}\\b`).test(value)
   );
 }
 
@@ -76,27 +73,61 @@ function transformLogicalGradient(
 ): string {
   let transformedValue = value;
   
-  // Transform inline directions based on writing mode
-  if (inlineDirection === 'left-to-right') {
-    transformedValue = transformedValue
-      .replace(/to inline-start/g, 'to left')
-      .replace(/to inline-end/g, 'to right')
-      .replace(/\binline-start\b/g, 'left')
-      .replace(/\binline-end\b/g, 'right');
-  } else {
-    transformedValue = transformedValue
-      .replace(/to inline-start/g, 'to right')
-      .replace(/to inline-end/g, 'to left')
-      .replace(/\binline-start\b/g, 'right')
-      .replace(/\binline-end\b/g, 'left');
+  // Define logical to physical mappings
+  const inlineMapping = inlineDirection === 'left-to-right' 
+    ? { 'inline-start': 'left', 'inline-end': 'right' }
+    : { 'inline-start': 'right', 'inline-end': 'left' };
+  
+  const blockMapping = {
+    'block-start': 'top',
+    'block-end': 'bottom'
+  };
+  
+  // First pass: Transform inline directions
+  for (const [logical, physical] of Object.entries(inlineMapping)) {
+    // Handle "to" syntax for linear gradients
+    transformedValue = transformedValue.replace(
+      new RegExp(`\\bto\\s+${logical}\\b`, 'g'),
+      `to ${physical}`
+    );
+    
+    // Handle "at" syntax for radial gradients - more flexible matching
+    transformedValue = transformedValue.replace(
+      new RegExp(`\\bat\\s+([^,)]*\\s+)?${logical}(\\s+[^,)]*)?`, 'g'),
+      (match, before = '', after = '') => {
+        return `at ${before}${physical}${after}`;
+      }
+    );
+    
+    // Handle standalone logical keywords with word boundaries
+    transformedValue = transformedValue.replace(
+      new RegExp(`\\b${logical}\\b`, 'g'),
+      physical
+    );
   }
   
-  // Transform block directions (these are the same regardless of writing mode)
-  transformedValue = transformedValue
-    .replace(/to block-start/g, 'to top')
-    .replace(/to block-end/g, 'to bottom')
-    .replace(/\bblock-start\b/g, 'top')
-    .replace(/\bblock-end\b/g, 'bottom');
+  // Second pass: Transform block directions
+  for (const [logical, physical] of Object.entries(blockMapping)) {
+    // Handle "to" syntax for linear gradients
+    transformedValue = transformedValue.replace(
+      new RegExp(`\\bto\\s+${logical}\\b`, 'g'),
+      `to ${physical}`
+    );
+    
+    // Handle "at" syntax for radial gradients - more flexible matching
+    transformedValue = transformedValue.replace(
+      new RegExp(`\\bat\\s+([^,)]*\\s+)?${logical}(\\s+[^,)]*)?`, 'g'),
+      (match, before = '', after = '') => {
+        return `at ${before}${physical}${after}`;
+      }
+    );
+    
+    // Handle standalone logical keywords with word boundaries
+    transformedValue = transformedValue.replace(
+      new RegExp(`\\b${logical}\\b`, 'g'),
+      physical
+    );
+  }
   
   return transformedValue;
 }
