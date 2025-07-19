@@ -1,6 +1,6 @@
 {
   "name": "postcss-logical-polyfill",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A PostCSS plugin that provides physical property polyfills for CSS logical properties with intelligent direction-aware selector handling, block-direction optimization, and extended logical property support via shim system",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
