@@ -286,6 +286,50 @@ The plugin includes experimental support for draft-stage CSS logical properties 
 }
 ```
 
+### Repeating Gradients <Badge text="NEW" variant="tip" />
+
+**⚠️ Experimental Feature** - Full support for repeating gradient logical directions.
+
+Both `repeating-linear-gradient` and `repeating-radial-gradient` support all the same logical directions as their non-repeating counterparts:
+
+```css
+/* Repeating linear gradients */
+.stripes {
+  background: repeating-linear-gradient(to inline-end, red 0%, blue 10px);
+}
+
+/* LTR Output */
+[dir="ltr"] .stripes {
+  background: repeating-linear-gradient(to right, red 0%, blue 10px);
+}
+
+/* RTL Output */
+[dir="rtl"] .stripes {
+  background: repeating-linear-gradient(to left, red 0%, blue 10px);
+}
+```
+
+```css
+/* Repeating radial gradients */
+.pattern {
+  background: repeating-radial-gradient(circle at inline-start, red 0%, transparent 15px);
+}
+
+/* LTR Output */
+[dir="ltr"] .pattern {
+  background: repeating-radial-gradient(circle at left, red 0%, transparent 15px);
+}
+
+/* RTL Output */
+[dir="rtl"] .pattern {
+  background: repeating-radial-gradient(circle at right, red 0%, transparent 15px);
+}
+```
+
+**All logical directions are supported:**
+- `repeating-linear-gradient` with `to inline-start/end`, `to block-start/end`
+- `repeating-radial-gradient` with all logical positioning including mixed and compound directions
+
 ## Processing Examples
 
 ### Block-Only Example

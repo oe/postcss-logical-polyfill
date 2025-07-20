@@ -260,6 +260,40 @@ Compound logical directions are also supported:
 }
 ```
 
+#### Repeating Gradients
+
+Both `repeating-linear-gradient` and `repeating-radial-gradient` support all logical directions:
+
+```css
+/* Input */
+.stripes {
+  background: repeating-linear-gradient(to inline-end, red 0%, blue 10px);
+}
+
+.pattern {
+  background: repeating-radial-gradient(circle at inline-start, red 0%, transparent 15px);
+}
+
+/* Output */
+[dir="ltr"] .stripes {
+  background: repeating-linear-gradient(to right, red 0%, blue 10px);
+}
+[dir="rtl"] .stripes {
+  background: repeating-linear-gradient(to left, red 0%, blue 10px);
+}
+
+[dir="ltr"] .pattern {
+  background: repeating-radial-gradient(circle at left, red 0%, transparent 15px);
+}
+[dir="rtl"] .pattern {
+  background: repeating-radial-gradient(circle at right, red 0%, transparent 15px);
+}
+```
+
+**Supported repeating gradient functions:**
+- `repeating-linear-gradient` with all logical directions (`to inline-start/end`, `to block-start/end`)
+- `repeating-radial-gradient` with all logical positioning (including mixed and compound directions)
+
 ### Important Flag Preservation
 
 The plugin correctly preserves `!important` flags on individual properties:

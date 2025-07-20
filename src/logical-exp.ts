@@ -39,13 +39,27 @@ function handleGradientProperty(
   const value = decl.value;
   
   // Check if the value contains gradients with logical directions
-  if ((value.includes('linear-gradient') || value.includes('radial-gradient')) && hasLogicalGradientDirection(value)) {
+  if (hasGradientWithLogicalDirection(value) && hasLogicalGradientDirection(value)) {
     const transformedValue = transformLogicalGradient(value, inlineDirection);
     if (transformedValue !== value) {
       decl.cloneBefore({ prop: decl.prop, value: transformedValue });
       decl.remove();
     }
   }
+}
+
+/**
+ * Check if a value contains gradient functions (including repeating variants)
+ */
+function hasGradientWithLogicalDirection(value: string): boolean {
+  const gradientTypes = [
+    'linear-gradient',
+    'radial-gradient',
+    'repeating-linear-gradient',
+    'repeating-radial-gradient'
+  ];
+  
+  return gradientTypes.some(type => value.includes(type));
 }
 
 /**

@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'vitest';
+import { runTestCase, TestCase } from './test-utils';
 import { detectDirection, generateSelector, DirectionConfig } from '../src/selector-utils';
 
 describe('Selector Utils', () => {
@@ -287,7 +288,166 @@ describe('Selector Utils', () => {
     });
   });
 
-  describe('Integration tests', () => {
+  describe('Plugin Integration with Selector Utils', () => {
+    const integrationTests: TestCase[] = [
+      {
+        name: 'should work with default direction detection',
+        input: `
+          .button {
+            margin-inline-start: 10px;
+          }
+        `,
+        expected: `
+          [dir="ltr"] .button {
+            margin-left: 10px;
+          }
+          [dir="rtl"] .button {
+            margin-right: 10px;
+          }
+        `
+      },
+      {
+        name: 'should preserve existing direction selectors',
+        input: `
+          :dir(ltr) .button {
+            margin-inline-start: 10px;
+          }
+          
+          [dir="rtl"] .nav {
+            padding-inline-end: 20px;
+          }
+        `,
+        expected: `
+          :dir(ltr) .button {
+            margin-left: 10px;
+          }
+          
+          [dir="rtl"] .nav {
+            padding-left: 20px;
+          }
+        `
+      },
+      {
+        name: 'should handle complex selectors with existing direction',
+        input: `
+          .parent :dir(ltr) .child {
+            margin-inline: 15px;
+          }
+          
+          [dir="rtl"] .sibling + .next {
+            padding-inline-start: 5px;
+          }
+        `,
+        expected: `
+          .parent :dir(ltr) .child {
+            margin-left: 15px;
+            margin-right: 15px;
+          }
+          
+          [dir="rtl"] .sibling + .next {
+            padding-right: 5px;
+          }
+        `
+      },
+      {
+        name: 'should handle multiple direction contexts',
+        input: `
+          :dir(rtl) .container .button {
+            margin-inline-start: 10px;
+          }
+        `,
+        expected: `
+          :dir(rtl) .container .button {
+            margin-right: 10px;
+          }
+        `
+      }
+    ];
+
+    integrationTests.forEach(testCase => {
+      test(testCase.name, async () => {
+        await runTestCase(testCase);
+      });
+    });
+  });
+
+  describe('Custom Direction Configuration', () => {
+    const customConfigTests: TestCase[] = [
+      {
+        name: 'should work with custom direction selectors',
+        input: `
+          .button {
+            margin-inline-start: 10px;
+          }
+        `,
+        expected: `
+          .ltr .button {
+            margin-left: 10px;
+          }
+          .rtl .button {
+            margin-right: 10px;
+          }
+        `,
+        options: {
+          ltr: { selector: '.ltr' },
+          rtl: { selector: '.rtl' }
+        }
+      },
+      {
+        name: 'should preserve existing custom direction selectors',
+        input: `
+          .ltr .button {
+            margin-inline-start: 10px;
+          }
+          
+          .rtl .nav {
+            padding-inline-end: 20px;
+          }
+        `,
+        expected: `
+          .ltr .button {
+            margin-left: 10px;
+          }
+          
+          .rtl .nav {
+            padding-left: 20px;
+          }
+        `,
+        options: {
+          ltr: { selector: '.ltr' },
+          rtl: { selector: '.rtl' }
+        }
+      },
+      {
+        name: 'should handle attribute-based custom selectors',
+        input: `
+          .button {
+            margin-inline-start: 10px;
+          }
+        `,
+        expected: `
+          [data-dir="ltr"] .button {
+            margin-left: 10px;
+          }
+          [data-dir="rtl"] .button {
+            margin-right: 10px;
+          }
+        `,
+        options: {
+          ltr: { selector: '[data-dir="ltr"]' },
+          rtl: { selector: '[data-dir="rtl"]' }
+        }
+      }
+    ];
+
+    customConfigTests.forEach(testCase => {
+      test(testCase.name, async () => {
+        await runTestCase(testCase);
+      });
+    });
+  });
+
+  describe('Integration Tests', () => {
     test('should maintain consistency between detectDirection and generateSelector', () => {
       const testCases = [
         { selector: '.button', direction: 'ltr' as const },

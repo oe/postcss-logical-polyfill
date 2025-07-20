@@ -846,6 +846,53 @@ This page provides practical examples of using postcss-logical-polyfill in vario
     radial-gradient(ellipse at center left, rgba(255,255,0,0.2), transparent);
 }
 ```
+
+### Repeating Gradients with Logical Directions
+
+```css
+/* Input CSS */
+.stripes {
+  background: repeating-linear-gradient(to inline-end, red 0%, white 10px, blue 20px);
+}
+
+.dots-pattern {
+  background: repeating-radial-gradient(circle at inline-start, black 0%, black 2px, transparent 2px, transparent 10px);
+}
+
+.complex-stripes {
+  background: 
+    repeating-linear-gradient(to inline-end, rgba(255,0,0,0.3) 0%, transparent 15px),
+    repeating-radial-gradient(circle at inline-start center, rgba(0,0,255,0.2) 0%, transparent 20px);
+}
+
+/* Output CSS */
+[dir="ltr"] .stripes {
+  background: repeating-linear-gradient(to right, red 0%, white 10px, blue 20px);
+}
+
+[dir="rtl"] .stripes {
+  background: repeating-linear-gradient(to left, red 0%, white 10px, blue 20px);
+}
+
+[dir="ltr"] .dots-pattern {
+  background: repeating-radial-gradient(circle at left, black 0%, black 2px, transparent 2px, transparent 10px);
+}
+
+[dir="rtl"] .dots-pattern {
+  background: repeating-radial-gradient(circle at right, black 0%, black 2px, transparent 2px, transparent 10px);
+}
+
+[dir="ltr"] .complex-stripes {
+  background: 
+    repeating-linear-gradient(to right, rgba(255,0,0,0.3) 0%, transparent 15px),
+    repeating-radial-gradient(circle at left center, rgba(0,0,255,0.2) 0%, transparent 20px);
+}
+
+[dir="rtl"] .complex-stripes {
+  background: 
+    repeating-linear-gradient(to left, rgba(255,0,0,0.3) 0%, transparent 15px),
+    repeating-radial-gradient(circle at right center, rgba(0,0,255,0.2) 0%, transparent 20px);
+}
 ```
 
 This comprehensive examples page demonstrates how postcss-logical-polyfill transforms various CSS patterns, making them work across different text directions while maintaining clean, logical code.
