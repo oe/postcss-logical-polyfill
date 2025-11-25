@@ -39,7 +39,9 @@ After installation, add the plugin to your PostCSS configuration:
 ```js
 module.exports = {
   plugins: [
-    require('postcss-logical-polyfill')()
+    'postcss-logical-polyfill'
+    // same as the following witout any options
+    // require('postcss-logical-polyfill')()
   ]
 }
 ```
@@ -66,118 +68,6 @@ export default {
     }
   }
 }
-```
-
-## Build Tool Integration
-
-### Vite
-
-```js
-// vite.config.js
-import { defineConfig } from 'vite';
-import logicalPolyfill from 'postcss-logical-polyfill';
-
-export default defineConfig({
-  css: {
-    postcss: {
-      plugins: [
-        logicalPolyfill()
-      ]
-    }
-  }
-});
-```
-
-### Webpack
-
-```js
-// webpack.config.js
-module.exports = {
-  module: {
-    rules: [
-      {
-        test: /\.css$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          {
-            loader: 'postcss-loader',
-            options: {
-              postcssOptions: {
-                plugins: [
-                  require('postcss-logical-polyfill')()
-                ]
-              }
-            }
-          }
-        ]
-      }
-    ]
-  }
-};
-```
-
-### Next.js
-
-```js
-// next.config.js
-module.exports = {
-  experimental: {
-    // Enable if using experimental features
-  },
-  webpack: (config) => {
-    // Find the CSS rule
-    const cssRule = config.module.rules.find(
-      (rule) => rule.test && rule.test.toString().includes('css')
-    );
-    
-    if (cssRule) {
-      // Add PostCSS plugin
-      cssRule.use.forEach((use) => {
-        if (use.loader && use.loader.includes('postcss-loader')) {
-          use.options.postcssOptions.plugins.push(
-            require('postcss-logical-polyfill')()
-          );
-        }
-      });
-    }
-    
-    return config;
-  }
-};
-```
-
-### Nuxt.js
-
-```js
-// nuxt.config.js
-export default {
-  build: {
-    postcss: {
-      plugins: {
-        'postcss-logical-polyfill': {}
-      }
-    }
-  }
-};
-```
-
-### Rollup
-
-```js
-// rollup.config.js
-import postcss from 'rollup-plugin-postcss';
-import logicalPolyfill from 'postcss-logical-polyfill';
-
-export default {
-  plugins: [
-    postcss({
-      plugins: [
-        logicalPolyfill()
-      ]
-    })
-  ]
-};
 ```
 
 ## Configuration Options
