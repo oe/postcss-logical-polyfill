@@ -1,355 +1,137 @@
 ---
 title: Quick Start
-description: Get up and running with PostCSS Logical Polyfill in minutes.
+description: Configure PostCSS, set a direction marker and compile one stylesheet for LTR and RTL.
 ---
 
-This guide will help you get PostCSS Logical Polyfill up and running in just a few minutes. We'll cover the basic installation, configuration, and usage patterns.
-
-## Installation
-
-First, install the plugin using your preferred package manager:
+Requires Node.js **20.19.0 or later** and PostCSS **8.4.0 or later within version 8**.
 
 ```bash
-# npm
-npm install postcss-logical-polyfill --save-dev
-
-# pnpm  
-pnpm add -D postcss-logical-polyfill
-
-# yarn
-yarn add -D postcss-logical-polyfill
+npm install --save-dev postcss postcss-logical-polyfill
+# or: pnpm add -D postcss postcss-logical-polyfill
+# or: yarn add -D postcss postcss-logical-polyfill
 ```
 
-## Basic Configuration
-
-Add the plugin to your PostCSS configuration:
+For an ESM project, including Vite projects that load a PostCSS configuration:
 
 ```js
-// postcss.config.js
-module.exports = {
-  plugins: [
-    require('postcss-logical-polyfill')()
-  ]
-}
+// postcss.config.mjs
+import logicalPolyfill from 'postcss-logical-polyfill';
+
+export default {
+  plugins: [logicalPolyfill()]
+};
 ```
 
-## HTML Setup
+For CommonJS:
 
-Make sure your HTML has the `dir` attribute:
+```js
+// postcss.config.cjs
+module.exports = {
+  plugins: [require('postcss-logical-polyfill')()]
+};
+```
+
+**Set an explicit direction marker on an ancestor of your styled elements:**
 
 ```html
-<!DOCTYPE html>
-<html dir="ltr"> <!-- or dir="rtl" -->
-<head>
-  <title>My Website</title>
-</head>
-<body>
-  <!-- Your content -->
-</body>
+<html dir="ltr">
+  <body>
+    <div class="card">Card content</div>
+  </body>
 </html>
 ```
 
-## Basic Usage
+Use `dir="rtl"` for RTL. The browser's default LTR direction does not add a `dir` attribute, so it does not match the default `[dir="ltr"]` selector. Changing `document.documentElement.dir` switches between the generated rules without another CSS build.
 
-### Inline Properties (Direction-Aware)
-
-These properties generate separate LTR and RTL rules:
+Input:
 
 ```css
-/* Input */
-.container {
-  margin-inline: 1rem;
-  padding-inline-start: 2rem;
-  border-inline-end: 1px solid blue;
-}
-
-/* Output */
-.container {
-  margin-left: 1rem;
-  margin-right: 1rem;
-}
-[dir="ltr"] .container {
-  padding-left: 2rem;
-  border-right: 1px solid blue;
-}
-[dir="rtl"] .container {
-  padding-right: 2rem;
-  border-left: 1px solid blue;
-}
-```
-
-### Block Properties (Direction-Independent)
-
-These properties generate a single optimized rule:
-
-```css
-/* Input */
-.content {
-  margin-block: 2rem;
-  padding-block-start: 1rem;
-  border-block-end: 1px solid gray;
-}
-
-/* Output */
-.content {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  padding-top: 1rem;
-  border-bottom: 1px solid gray;
-}
-```
-
-### Logical Values
-
-The plugin also supports logical values for existing properties:
-
-```css
-/* Input */
-.sidebar {
-  float: inline-start;
-  clear: inline-end;
-  resize: block;
-}
-
-/* Output */
-[dir="ltr"] .sidebar {
-  float: left;
-  clear: right;
-}
-[dir="rtl"] .sidebar {
-  float: right;
-  clear: left;
-}
-.sidebar {
-  resize: vertical;
-}
-```
-
-### Extended Properties
-
-The plugin includes support for newer logical properties:
-
-```css
-/* Input */
-.scroll-area {
-  scroll-margin-inline: 10px;
-  scroll-padding-block: 5px;
-  overflow-block: hidden;
-  overflow-inline: scroll;
-}
-
-/* Output */
-[dir="ltr"] .scroll-area {
-  scroll-margin-left: 10px;
-  scroll-margin-right: 10px;
-}
-[dir="rtl"] .scroll-area {
-  scroll-margin-right: 10px;
-  scroll-margin-left: 10px;
-}
-.scroll-area {
-  scroll-padding-top: 5px;
-  scroll-padding-bottom: 5px;
-  overflow-y: hidden;
-  overflow-x: scroll;
-}
-```
-
-## Working with Existing Direction Selectors
-
-The plugin is smart about existing direction selectors in your CSS:
-
-```css
-/* Input */
-[dir="ltr"] .element {
-  margin-inline-start: 1rem;
-}
-
-[dir="rtl"] .element {
+.card {
+  padding-block: 1rem;
   margin-inline-start: 2rem;
 }
+```
 
-/* Output */
-[dir="ltr"] .element {
-  margin-left: 1rem;
+Output:
+
+```css
+.card {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }
-
-[dir="rtl"] .element {
+[dir="ltr"] .card {
+  margin-left: 2rem;
+}
+[dir="rtl"] .card {
   margin-right: 2rem;
 }
 ```
 
-## Real-World Example
+## Existing direction scopes and logical values
 
-Here's a complete example of a typical component using logical properties:
+Recognized direction-scoped rules are transformed for their existing context:
 
 ```css
-/* Input - Card Component */
-.card {
-  /* Block properties - same in all directions */
-  margin-block: 1rem;
-  padding-block: 1.5rem;
-  border-block-end: 1px solid #eee;
-  
-  /* Inline properties - direction-aware */
-  margin-inline: auto;
-  padding-inline: 2rem;
-  border-inline-start: 4px solid #007acc;
-  
-  /* Logical values */
-  text-align: start;
-}
-
-.card__title {
-  margin-block-end: 1rem;
-  margin-inline-start: 0.5rem;
-}
-
-.card__actions {
-  margin-block-start: 1rem;
-  text-align: end;
+/* Input */
+[dir="rtl"] .notice {
+  margin-inline-start: 1rem;
 }
 
 /* Output */
-.card {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #eee;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 2rem;
-  padding-right: 2rem;
-  text-align: start;
-}
-[dir="ltr"] .card {
-  border-left: 4px solid #007acc;
-}
-[dir="rtl"] .card {
-  border-right: 4px solid #007acc;
-}
-
-.card__title {
-  margin-bottom: 1rem;
-}
-[dir="ltr"] .card__title {
-  margin-left: 0.5rem;
-}
-[dir="rtl"] .card__title {
-  margin-right: 0.5rem;
-}
-
-.card__actions {
-  margin-top: 1rem;
-  text-align: end;
+[dir="rtl"] .notice {
+  margin-right: 1rem;
 }
 ```
 
-## Common Patterns
-
-### Navigation Bars
+Additional transformations include scroll margin/padding, logical overflow and containment sizes, and logical values such as `float: inline-start`, `clear: inline-end` and `resize: block`. Experimental logical gradient directions are also supported; they are an extension, not a guarantee of native browser support.
 
 ```css
-.navbar {
-  padding-inline: 1rem;
-  border-block-end: 1px solid #ddd;
+/* Input */
+.notice {
+  float: inline-start;
 }
 
-.navbar__item {
-  margin-inline-end: 1rem;
-  padding-inline: 0.5rem;
+/* Output */
+[dir="ltr"] .notice {
+  float: left;
 }
-
-.navbar__logo {
-  margin-inline-end: auto;
-}
-```
-
-### Form Layouts
-
-```css
-.form-field {
-  margin-block-end: 1rem;
-}
-
-.form-label {
-  margin-block-end: 0.5rem;
-  margin-inline-end: 1rem;
-}
-
-.form-input {
-  padding-inline: 1rem;
-  padding-block: 0.5rem;
-  border-inline-start: 3px solid transparent;
-}
-
-.form-input:focus {
-  border-inline-start-color: #007acc;
+[dir="rtl"] .notice {
+  float: right;
 }
 ```
 
-### Content Layouts
+## Configuration
 
-```css
-.article {
-  max-inline-size: 800px;
-  margin-inline: auto;
-  padding-inline: 2rem;
-}
+The default options are:
 
-.article__meta {
-  margin-block-end: 2rem;
-  padding-inline-start: 1rem;
-  border-inline-start: 2px solid #ccc;
-}
+```js
+import logicalPolyfill from 'postcss-logical-polyfill';
 
-.article__content {
-  margin-block: 2rem;
-}
+export default {
+  plugins: [logicalPolyfill({
+    ltr: { selector: '[dir="ltr"]' },
+    rtl: { selector: '[dir="rtl"]' },
+    outputOrder: 'ltr-first' // or 'rtl-first'
+  })]
+};
 ```
 
-## Testing Your Setup
+Custom direction classes are supported:
 
-Create a simple test file to verify everything is working:
-
-```html
-<!DOCTYPE html>
-<html dir="ltr">
-<head>
-  <style>
-    .test {
-      margin-inline: 2rem;
-      padding-block: 1rem;
-      border-inline-start: 3px solid red;
-      background: #f0f0f0;
-    }
-  </style>
-</head>
-<body>
-  <div class="test">
-    This should have horizontal margins and a left border in LTR mode.
-  </div>
-  
-  <script>
-    // Toggle direction for testing
-    document.querySelector('button')?.addEventListener('click', () => {
-      const html = document.documentElement;
-      html.dir = html.dir === 'ltr' ? 'rtl' : 'ltr';
-    });
-  </script>
-  <button>Toggle Direction</button>
-</body>
-</html>
+```js
+logicalPolyfill({
+  ltr: { selector: '.ltr' },
+  rtl: { selector: '.rtl' }
+});
 ```
 
-After processing with PostCSS, the styles should adapt correctly when you toggle the direction.
+These classes must match ancestors of the styled elements. They scope the generated CSS; also set the HTML `dir` attribute for text direction and other browser behavior.
 
-## Next Steps
+See the [configuration guide](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/configuration.mdx) for selector lists and integration options.
 
-Now that you're up and running:
+## Next steps
 
-- Explore [Configuration Options](/guides/configuration/) to customize the plugin
-- Check out [Supported Properties](/reference/supported-properties/) for a complete reference
-- Try the [Playground](/tools/playground/) to experiment with different properties
-- Read [How It Works](/guides/how-it-works/) to understand the transformation process
+- [Supported properties](../../references/supported-properties/)
+- [Build tool integration](../../guides/integration/)
+- [Troubleshooting](../../guides/troubleshooting/)
+- [Playground](../../playground/)

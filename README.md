@@ -3,326 +3,186 @@
 [![NPM Version][npm-img]][npm-url]
 [![Build Status][build-img]][build-url]
 [![Coverage Status][coverage-img]][coverage-url]
-[![NPM Downloads][downloads-img]][downloads-url]
-[![Types][types-img]][types-url]
-[![Package Size][size-img]][size-url]
 
-A PostCSS plugin that transforms CSS logical properties into physical properties with appropriate direction selectors, enabling backward compatibility for older browsers.
+Write CSS logical properties and compile one stylesheet with LTR and RTL physical-property rules for older browsers and WebViews.
 
-## Quick Start
+Use this plugin when your internationalized application needs both directions in the same CSS file and your target browsers lack the logical properties you use. Direction-independent declarations stay in a common rule; directional declarations use configurable selectors.
 
-### Installation
+[Documentation](https://app.evecalm.com/postcss-logical-polyfill/) · [Playground](https://app.evecalm.com/postcss-logical-polyfill/playground/) · [Examples](https://github.com/oe/postcss-logical-polyfill/tree/main/examples)
+
+## Is this the right tool?
+
+| Your requirement | Consider |
+| --- | --- |
+| Your target browsers support the logical properties you use | Native CSS; no transformation is needed |
+| Compile logical properties for one configured direction or writing mode | [postcss-logical](https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-logical), also available through [postcss-preset-env](https://github.com/csstools/postcss-plugins/tree/main/plugin-packs/postcss-preset-env) |
+| Mirror existing physical LTR styles into RTL styles | [RTLCSS](https://github.com/MohammadYounes/rtlcss) or [postcss-rtlcss](https://github.com/elchininet/postcss-rtlcss) |
+| Compile logical properties into one stylesheet with horizontal LTR/RTL scopes, including existing direction selectors | **postcss-logical-polyfill** |
+| Need logical-property transformations for vertical writing modes or keyframes | Evaluate [postcss-logical-properties-polyfill](https://github.com/erickskrauch/postcss-logical-properties-polyfill), whose documentation lists these features |
+
+Other tools also generate combined LTR/RTL styles. This plugin focuses on logical-property input, existing direction scopes, common declarations and additional logical values. Check the [supported properties](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/references/supported-properties.mdx) and limitations below against your application.
+
+## Quick start
+
+Requires Node.js **20.19.0 or later** and PostCSS **8.4.0 or later within version 8**.
 
 ```bash
-# Using npm
-npm install postcss-logical-polyfill --save-dev
-# Using pnpm
-pnpm add -D postcss-logical-polyfill
-# Using yarn
-yarn add -D postcss-logical-polyfill
+npm install --save-dev postcss postcss-logical-polyfill
+# or: pnpm add -D postcss postcss-logical-polyfill
+# or: yarn add -D postcss postcss-logical-polyfill
 ```
 
-### Basic Usage
-
-[Playground](http://app.evecalm.com/postcss-logical-polyfill/playground/)
-
-[Full document](https://app.evecalm.com/postcss-logical-polyfill/)
+For an ESM project, including Vite projects that load a PostCSS configuration:
 
 ```js
-// postcss.config.js
+// postcss.config.mjs
+import logicalPolyfill from 'postcss-logical-polyfill';
+
+export default {
+  plugins: [logicalPolyfill()]
+};
+```
+
+For CommonJS:
+
+```js
+// postcss.config.cjs
 module.exports = {
-  plugins: [
-    require('postcss-logical-polyfill')()
-  ]
+  plugins: [require('postcss-logical-polyfill')()]
+};
+```
+
+**Set an explicit direction marker on an ancestor of your styled elements:**
+
+```html
+<html dir="ltr">
+  <body>
+    <div class="card">Card content</div>
+  </body>
+</html>
+```
+
+Use `dir="rtl"` for RTL. The browser's default LTR direction does not add a `dir` attribute, so it does not match the default `[dir="ltr"]` selector. Changing `document.documentElement.dir` switches between the generated rules without another CSS build.
+
+Input:
+
+```css
+.card {
+  padding-block: 1rem;
+  margin-inline-start: 2rem;
 }
 ```
 
-### Example Transformation
+Output:
 
-**Input CSS:**
 ```css
-.container {
-  margin-inline: 1rem;
-  padding-block: 2rem;
-  border-inline-start: 2px solid blue;
+.card {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+[dir="ltr"] .card {
+  margin-left: 2rem;
+}
+[dir="rtl"] .card {
+  margin-right: 2rem;
 }
 ```
 
-**Output CSS:**
+## Existing direction scopes and logical values
+
+Recognized direction-scoped rules are transformed for their existing context:
+
 ```css
-.container {
-  margin-left: 1rem;
+/* Input */
+[dir="rtl"] .notice {
+  margin-inline-start: 1rem;
+}
+
+/* Output */
+[dir="rtl"] .notice {
   margin-right: 1rem;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
-[dir="ltr"] .container {
-  border-left: 2px solid blue;
-}
-[dir="rtl"] .container {
-  border-right: 2px solid blue;
 }
 ```
 
-## Key Features
+Additional transformations include scroll margin/padding, logical overflow and containment sizes, and logical values such as `float: inline-start`, `clear: inline-end` and `resize: block`. Experimental logical gradient directions are also supported; they are an extension, not a guarantee of native browser support.
 
-- **🔄 Polyfill Direction**: Transforms logical properties → physical properties (reverse of most tools)
-- **🎯 Smart Generation**: Creates both LTR and RTL versions automatically
-- **⚡ Optimized Output**: Block-direction properties generate single rules (no duplication)
-- **🔗 Extended Support**: Includes scroll properties and logical values via integrated shim
-- **🧪 Experimental Features**: Linear gradient logical directions and draft CSS specs
-- **🎛️ Configurable**: Custom selectors and output order control
-- **🏗️ Framework Ready**: Works with any build tool or CSS framework
-
-## Why Use This Plugin?
-
-While modern browsers support CSS logical properties, older browsers don't. This plugin acts as a polyfill, converting your modern logical properties to physical properties that work everywhere, while preserving the directional behavior for international layouts.
-
-**Perfect for:**
-- ✅ Supporting older browsers while using modern CSS
-- ✅ Gradual migration from physical to logical properties  
-- ✅ RTL/LTR internationalization
-- ✅ Framework integration with directional layouts
-
-## Installation
-
-```bash
-# Using npm
-npm install postcss-logical-polyfill --save-dev
-
-# Using pnpm
-pnpm add -D postcss-logical-polyfill
-
-# Using yarn
-yarn add -D postcss-logical-polyfill
-```
-
-## What It Does
-
-This plugin transforms **CSS Logical Properties** into physical properties with appropriate direction selectors for browser compatibility. It intelligently processes:
-
-- **All standard logical properties** (margin, padding, border, inset, sizing, etc.)
-- **Logical values** (float: inline-start, clear: inline-end, resize: block)
-- **Scroll properties** (scroll-margin, scroll-padding)
-- **Experimental features** (linear-gradient logical directions)
-- **Both scoped and unscoped** logical properties
-
-**➡️ [Complete supported properties list](./docs/SUPPORTED-PROPERTIES.md)**
-
-## Configuration
-
-### Basic Options
-
-```js
-const logicalPolyfill = require('postcss-logical-polyfill');
-
-postcss([
-  logicalPolyfill({
-    // Direction selectors (default shown)
-    rtl: { selector: '[dir="rtl"]' },
-    ltr: { selector: '[dir="ltr"]' },
-    
-    // Output order for unscoped properties
-    outputOrder: 'ltr-first'  // or 'rtl-first'
-  })
-])
-```
-
-**➡️ [Complete configuration guide](./docs/ADVANCED-USAGE.md)**
-
-## Example Transformation
-
-**Input CSS:**
 ```css
-/* Unscoped logical properties - will generate both LTR and RTL versions */
-.container {
-  margin-inline: 1rem;
-  padding-inline-start: 1rem;
-}
-
-/* Block-direction properties - Generate single optimized rule */
-.content {
-  margin-block: 2rem;
-  padding-block-start: 1rem;
-}
-
-/* Extended logical properties via shim system */
-.scroll-area {
-  scroll-margin-inline: 10px;
+/* Input */
+.notice {
   float: inline-start;
 }
 
-/* Experimental: Linear gradient logical directions */
-.gradient-element {
-  background: linear-gradient(to inline-end, red, blue);
-}
-```
-
-**Output CSS:**
-```css
-.container {
-  margin-left: 1rem;
-  margin-right: 1rem;
-}
-[dir="ltr"] .container {
-  padding-left: 1rem;
-}
-[dir="rtl"] .container {
-  padding-right: 1rem;
-}
-
-/* Block-direction properties - Single optimized rule */
-.content {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  padding-top: 1rem;
-}
-
-/* Extended logical properties transformed */
-.scroll-area {
-  scroll-margin-left: 10px;
-  scroll-margin-right: 10px;
-}
-[dir="ltr"] .scroll-area {
+/* Output */
+[dir="ltr"] .notice {
   float: left;
 }
-[dir="rtl"] .scroll-area {
+[dir="rtl"] .notice {
   float: right;
 }
-
-/* Experimental features automatically enabled */
-[dir="ltr"] .gradient-element {
-  background: linear-gradient(to right, red, blue);
-}
-[dir="rtl"] .gradient-element {
-  background: linear-gradient(to left, red, blue);
-}
 ```
 
-## How It Works
+## Configuration
 
-This plugin intelligently processes CSS through a 7-phase optimization pipeline:
-
-1. **🔍 Detection**: Identifies logical properties and existing direction selectors
-2. **🎯 Classification**: Separates block-direction, inline-direction, and mixed properties
-3. **🔄 Transformation**: Converts logical to physical properties based on direction context
-4. **🎯 Selector Application**: Adds appropriate direction selectors when needed
-5. **🔧 Optimization**: Merges rules and eliminates redundant declarations
-6. **🎯 Smart Priority**: Implements rightmost selector precedence for predictable behavior
-7. **✨ Output**: Generates clean, optimized CSS for maximum compatibility
-
-**➡️ [Detailed technical explanation](./docs/HOW-IT-WORKS.md)**
-
-## Getting Started
-
-### Installation
-
-```bash
-npm install postcss-logical-polyfill --save-dev
-```
-
-### Basic Setup
+The default options are:
 
 ```js
-// postcss.config.js
-module.exports = {
-  plugins: [
-    require('postcss-logical-polyfill')()
-  ]
-}
+import logicalPolyfill from 'postcss-logical-polyfill';
+
+export default {
+  plugins: [logicalPolyfill({
+    ltr: { selector: '[dir="ltr"]' },
+    rtl: { selector: '[dir="rtl"]' },
+    outputOrder: 'ltr-first' // or 'rtl-first'
+  })]
+};
 ```
 
-### Build Tool Integration
-
-**➡️ [Integration guides for Webpack, Vite, Next.js, and more](./docs/INTEGRATION-GUIDE.md)**
-
-## Important Notes
-
-### HTML Direction Attribute Required
-
-You **must** set the `dir` attribute on your HTML for the generated CSS to work:
-
-```html
-<html dir="ltr">  <!-- For left-to-right layouts -->
-<html dir="rtl">  <!-- For right-to-left layouts -->
-```
-
-Without the `dir` attribute, the generated `[dir="ltr"]` and `[dir="rtl"]` selectors won't match.
-
-### Custom Selectors
-
-You can configure custom direction selectors for your framework:
+Custom direction classes are supported:
 
 ```js
 logicalPolyfill({
   ltr: { selector: '.ltr' },
   rtl: { selector: '.rtl' }
-})
+});
 ```
 
-**➡️ [Complete usage guide and best practices](./docs/ADVANCED-USAGE.md)**
+These classes must match ancestors of the styled elements. They scope the generated CSS; also set the HTML `dir` attribute for text direction and other browser behavior.
 
-## Examples
+See the [configuration guide](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/configuration.mdx) for selector lists and integration options.
 
-This package includes ready-to-run examples for different build systems and use cases.
+## Compatibility and limitations
+
+- Transformations assume horizontal writing modes. Vertical writing modes are not inferred.
+- Keyframes and certain other at-rules are left untouched. Logical property names in `transition` are transformed by the upstream processor; animation names and keyframe contents are not rewritten.
+- Expand CSS nesting before this plugin, using a tool such as `postcss-nested` or `postcss-nesting`. Unexpanded nested rules are left intact with a PostCSS warning.
+- Direction prefixes add selector specificity. Overrides in separate rules should use matching direction scopes. For subtrees with conflicting direction ancestors, write explicit direction-scoped selectors so the plugin can use the rightmost context.
+- Repeated physical properties within an optimized rule are resolved by `!important` priority, then source order. Overlapping common shorthands are retained in direction rules where needed to preserve their ordering relative to directional longhands.
+- Browser compatibility depends on the physical properties and values in the output. Transforming a logical name does not polyfill unrelated CSS features such as custom properties, scroll behavior or containment.
+
+See [how it works](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/how-it-works.mdx) and [troubleshooting](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/troubleshooting.mdx).
+
+## Examples and documentation
+
+The repository includes examples for plain PostCSS, Vite, Webpack, Sass, Less, the PostCSS CLI, custom selectors and output order. After cloning the repository and installing dependencies:
 
 ```bash
-# View all available examples
-ls examples/
-
-# Run specific examples
-cd examples/basic && npx tsx process.ts
-cd examples/webpack && npx tsx process.ts
-cd examples/sass && npx tsx process.ts
-
-# Run all examples at once
-pnpm run examples
+pnpm build
+pnpm examples
 ```
 
-**Available examples:**
-- **Basic**: Plain CSS with PostCSS
-- **Build Tools**: Webpack integration  
-- **Preprocessors**: SASS and LESS integration
-- **Configuration**: Output order and selector priority
-- **CLI**: PostCSS command-line usage
-
-**➡️ [View all examples](./examples/README.md)**
-
-## Troubleshooting
-
-Having issues? Check our troubleshooting guide for common problems and solutions.
-
-**➡️ [Complete troubleshooting guide](./docs/TROUBLESHOOTING.md)**
-
-## Documentation
-
-- **[📖 Full Documentation](./docs/)** - Complete documentation site built with Astro Starlight
-- **[🚀 Getting Started Guide](./docs/src/content/docs/getting-started/introduction.mdx)** - Quick start and installation
-- **[⚙️ Configuration](./docs/src/content/docs/guides/configuration.mdx)** - Configuration options and framework integration
-- **[📋 Supported Properties](./docs/src/content/docs/references/supported-properties.mdx)** - Complete reference of all supported logical properties  
-- **[🔧 How It Works](./docs/src/content/docs/guides/how-it-works.mdx)** - Technical details about the processing pipeline
-- **[🎮 Interactive Playground](./docs/src/content/docs/playground.mdx)** - Try the plugin online with live preview
-
-## Learn More
-
-- **[CSS Logical Properties and Values (MDN)](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_logical_properties_and_values)** - Official documentation and browser support information
-
-## Requirements
-
-- Node.js 16.0.0 or later
-- PostCSS 8.0.0 or later
+- [Example instructions](https://github.com/oe/postcss-logical-polyfill/blob/main/examples/README.md)
+- [Installation](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/getting-started/installation.mdx)
+- [Build tool integration](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/integration.mdx)
+- [Supported properties](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/references/supported-properties.mdx)
+- [CSS Logical Properties and Values on MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_logical_properties_and_values)
 
 ## Contributing
 
-Contributions are welcome! Please see our [contributing guidelines](./CONTRIBUTING.md) for details.
+[Contributions](https://github.com/oe/postcss-logical-polyfill/blob/main/CONTRIBUTING.md) and reports of real-world compatibility issues are welcome. Include your input CSS, generated CSS, direction markers and target browser when reporting an issue.
 
-## Credits
+## Credits and license
 
-This plugin wraps and extends [postcss-logical](https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-logical) to provide polyfill functionality.
-
-## License
-
-[MIT](./LICENSE)
+This plugin wraps and extends [postcss-logical](https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-logical). Licensed under [MIT](https://github.com/oe/postcss-logical-polyfill/blob/main/LICENSE).
 
 [npm-url]: https://www.npmjs.com/package/postcss-logical-polyfill
 [npm-img]: https://img.shields.io/npm/v/postcss-logical-polyfill
@@ -330,9 +190,3 @@ This plugin wraps and extends [postcss-logical](https://github.com/csstools/post
 [build-img]: https://github.com/oe/postcss-logical-polyfill/actions/workflows/ci.yml/badge.svg
 [coverage-url]: https://codecov.io/gh/oe/postcss-logical-polyfill
 [coverage-img]: https://codecov.io/gh/oe/postcss-logical-polyfill/branch/main/graph/badge.svg
-[downloads-url]: https://www.npmjs.com/package/postcss-logical-polyfill
-[downloads-img]: https://img.shields.io/npm/dm/postcss-logical-polyfill
-[size-url]: https://packagephobia.com/result?p=postcss-logical-polyfill
-[size-img]: https://packagephobia.com/badge?p=postcss-logical-polyfill
-[types-url]: https://www.npmjs.com/package/postcss-logical-polyfill
-[types-img]: https://img.shields.io/npm/types/postcss-logical-polyfill

@@ -1,7 +1,7 @@
 {
   "name": "postcss-logical-polyfill",
   "version": "0.6.1",
-  "description": "A PostCSS plugin that provides physical property polyfills for CSS logical properties with intelligent direction-aware selector handling, block-direction optimization, and extended logical property support via shim system",
+  "description": "Compile CSS logical properties into one stylesheet with LTR and RTL physical-property rules for older browsers and WebViews.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -13,6 +13,8 @@
     "build": "vite build",
     "test": "vitest",
     "test:ci": "vitest run",
+    "test:package": "node scripts/test-package.mjs",
+    "test:browser": "node scripts/test-browser.mjs",
     "test:coverage": "vitest run --coverage",
     "test:coverage:watch": "vitest --coverage",
     "test:coverage:ui": "vitest --coverage --ui",
@@ -37,7 +39,11 @@
     "direction",
     "fallback",
     "compatibility",
-    "typescript"
+    "typescript",
+    "css-logical-properties",
+    "bidirectional",
+    "i18n",
+    "right-to-left"
   ],
   "author": "Saiya",
   "license": "MIT",
@@ -50,13 +56,15 @@
   },
   "homepage": "https://github.com/oe/postcss-logical-polyfill#readme",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=20.19.0"
   },
   "peerDependencies": {
-    "postcss": "^8.0.0"
+    "postcss": "^8.4.0"
   },
   "dependencies": {
-    "postcss-logical": "^8.1.0"
+    "postcss-logical": "^9.0.2",
+    "postcss-selector-parser": "^7.1.0",
+    "postcss-value-parser": "^4.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
@@ -66,6 +74,7 @@
     "html-webpack-plugin": "^5.5.3",
     "less": "^4.2.0",
     "mini-css-extract-plugin": "^2.7.6",
+    "playwright-core": "1.58.2",
     "postcss": "^8.4.0",
     "postcss-cli": "^11.0.1",
     "postcss-less": "^6.0.0",

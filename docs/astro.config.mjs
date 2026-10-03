@@ -5,6 +5,7 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://app.evecalm.com',
 	base: '/postcss-logical-polyfill/',
 	image: {
 		service: {
@@ -15,7 +16,7 @@ export default defineConfig({
 		react(),
 		starlight({
 			title: 'PostCSS Logical Polyfill',
-			description: 'Documentation for PostCSS Logical Polyfill - Transform CSS logical properties into physical properties with appropriate direction selectors.',
+			description: 'Compile logical properties into one stylesheet with horizontal LTR and RTL physical-property rules for older browsers and WebViews.',
 			logo: {
 				src: './src/assets/logo.svg',
 				replacesTitle: true,

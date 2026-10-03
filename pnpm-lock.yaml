@@ -21,8 +21,14 @@ importers:
   .:
     dependencies:
       postcss-logical:
-        specifier: ^8.1.0
-        version: 8.1.0(postcss@8.5.3)
+        specifier: ^9.0.2
+        version: 9.0.2(postcss@8.5.3)
+      postcss-selector-parser:
+        specifier: ^7.1.0
+        version: 7.1.0
+      postcss-value-parser:
+        specifier: ^4.2.0
+        version: 4.2.0
     devDependencies:
       '@types/node':
         specifier: ^22.15.21
@@ -45,6 +51,9 @@ importers:
       mini-css-extract-plugin:
         specifier: ^2.7.6
         version: 2.9.2(webpack@5.99.9)
+      playwright-core:
+        specifier: 1.58.2
+        version: 1.58.2
       postcss:
         specifier: ^8.4.0
         version: 8.5.3
@@ -3504,6 +3513,11 @@ packages:
   pkg-types@2.1.0:
     resolution: {integrity: sha512-wmJwA+8ihJixSoHKxZJRBQG1oY8Yr9pGLzRmSsNms0iNWyHHAlZCa7mmKiFR10YPZuz/2k169JiS/inOjBCZ2A==}
 
+  playwright-core@1.58.2:
+    resolution: {integrity: sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   postcss-attribute-case-insensitive@7.0.1:
     resolution: {integrity: sha512-Uai+SupNSqzlschRyNx3kbCTWgY/2hcwtHEI/ej2LJWc9JJ77qKgGptd8DHwY1mXtZ7Aoh4z4yxfwMBue9eNgw==}
     engines: {node: '>=18'}
@@ -3637,6 +3651,12 @@ packages:
   postcss-logical@8.1.0:
     resolution: {integrity: sha512-pL1hXFQ2fEXNKiNiAgtfA005T9FBxky5zkX6s4GZM2D8RkVgRqz3f4g1JUoq925zXv495qk8UNldDwh8uGEDoA==}
     engines: {node: '>=18'}
+    peerDependencies:
+      postcss: ^8.4
+
+  postcss-logical@9.0.2:
+    resolution: {integrity: sha512-hcAp6ThkFhTaUaJExyvCX+Qot5tD5JD0A5IKT8CLymPcRYMDQnjhYEkyY7FKary5XLz1Ji/ystLqPIp6rl3P5w==}
+    engines: {node: '>=20.19.0'}
     peerDependencies:
       postcss: ^8.4
 
@@ -8939,6 +8959,8 @@ snapshots:
       exsolve: 1.0.5
       pathe: 2.0.3
 
+  playwright-core@1.58.2: {}
+
   postcss-attribute-case-insensitive@7.0.1(postcss@8.5.3):
     dependencies:
       postcss: 8.5.3
@@ -9109,6 +9131,11 @@ snapshots:
       - typescript
 
   postcss-logical@8.1.0(postcss@8.5.3):
+    dependencies:
+      postcss: 8.5.3
+      postcss-value-parser: 4.2.0
+
+  postcss-logical@9.0.2(postcss@8.5.3):
     dependencies:
       postcss: 8.5.3
       postcss-value-parser: 4.2.0

@@ -1,198 +1,109 @@
-/**
- * Core selector utility functions for handling direction-specific CSS selectors
- * 
- * This module provides two main functions:
- * - detectDirection: Determine the direction context of a CSS selector
- * - generateSelector: Generate a new selector for a specific direction context
- */
+/** Parse selector tokens so attributes, negation and query arguments stay intact. */
+import selectorParser, { Node, Selector } from 'postcss-selector-parser';
 
-/**
- * Configuration for direction selector detection and generation
- */
 export interface DirectionConfig {
   ltr?: string;
   rtl?: string;
 }
 
-/**
- * Helper function to escape selector for regex use
- */
-function escapeSelector(selector: string): string {
-  return selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+type Direction = 'ltr' | 'rtl';
+type Match = { direction: Direction; position: number; nodes: Node[] };
+type Pattern = { direction: Direction; nodes: Node[] };
 
-/**
- * Check if a selector contains a custom direction selector
- * Handles various selector patterns including chained classes
- */
-function containsCustomSelector(selector: string, customSelector: string): boolean {
-  const trimmedCustom = customSelector.trim();
-  const trimmedSelector = selector.trim();
-  
-  // For simple selectors (class, id, attribute), check if they appear as separate tokens
-  if (trimmedCustom.match(/^[.#\[]/) || trimmedCustom.startsWith(':')) {
-    const escapedCustom = escapeSelector(trimmedCustom);
-    
-    // Create regex pattern based on selector type
-    let pattern: string;
-    if (trimmedCustom.startsWith('.')) {
-      // Class selectors: match complete class names (avoid partial matches like .theme-ltr)
-      pattern = `${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`;
-    } else {
-      // Other selectors: ensure word boundaries
-      pattern = `(?:^|\\s)${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`;
+function patterns(config: DirectionConfig): Pattern[] {
+  const result: Pattern[] = [];
+  for (const direction of ['ltr', 'rtl'] as const) {
+    const custom = config[direction];
+    if (!custom?.trim()) continue;
+    for (const selector of selectorParser().astSync(custom).nodes) {
+      result.push({ direction, nodes: selector.nodes });
     }
-    
-    return new RegExp(pattern, 'g').test(trimmedSelector);
   }
-  
-  // For complex selectors, check if the custom selector is contained
-  return trimmedSelector.includes(trimmedCustom);
+  return result;
 }
 
-/**
- * Remove direction selectors from a selector string
- * Cleans both built-in and custom direction selectors
- */
-function cleanDirectionSelectors(
-  selector: string, 
-  config: DirectionConfig = {}
-): string {
-  // Built-in direction patterns to remove
-  const builtinPatterns = [
-    /:dir\(\s*rtl\s*\)/g,
-    /:dir\(\s*ltr\s*\)/g,
-    /\[\s*dir\s*=\s*["']?rtl["']?\s*\]/g,
-    /\[\s*dir\s*=\s*["']?ltr["']?\s*\]/g
-  ];
-  
-  let cleaned = selector;
-  
-  // Remove built-in patterns
-  builtinPatterns.forEach(pattern => {
-    cleaned = cleaned.replace(pattern, '');
-  });
-  
-  // Remove custom direction selectors if provided
-  [config.ltr, config.rtl].forEach(customSelector => {
-    if (customSelector) {
-      const escapedCustom = escapeSelector(customSelector);
-      const customRegex = new RegExp(`(^|\\s)${escapedCustom}(?=\\s|$|[:.\\[#>+~,])`, 'g');
-      cleaned = cleaned.replace(customRegex, '$1');
+function sameToken(a: Node, b: Node): boolean {
+  if (a.type !== b.type) return false;
+  if (a.type === 'attribute' && b.type === 'attribute') {
+    return a.attribute === b.attribute && a.operator === b.operator && a.value === b.value &&
+      a.namespace === b.namespace && Boolean(a.insensitive) === Boolean(b.insensitive);
+  }
+  if ((a.type === 'class' && b.type === 'class') || (a.type === 'id' && b.type === 'id')) return a.value === b.value;
+  if (a.type === 'combinator' && b.type === 'combinator') return a.value.trim() === b.value.trim();
+  return a.toString().trim() === b.toString().trim();
+}
+
+function matches(selector: Selector, custom: Pattern[]): Match[] {
+  const result: Match[] = [];
+  selector.nodes.forEach((node, index) => {
+    let direction: Direction | undefined;
+    if (node.type === 'attribute' && node.attribute === 'dir' && !node.namespace && node.operator === '=' &&
+        (node.value === 'ltr' || node.value === 'rtl')) direction = node.value;
+    if (node.type === 'pseudo' && node.value === ':dir') {
+      const value = node.nodes?.length === 1 ? node.nodes[0].toString().trim() : '';
+      if (value === 'ltr' || value === 'rtl') direction = value;
     }
-  });
-  
-  return cleaned
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Detect the direction context of a CSS selector
- * 
- * @param selector - The CSS selector to analyze
- * @param config - Configuration containing custom direction selectors
- * @returns The detected direction: 'ltr', 'rtl', or 'none'
- * 
- * @example
- * detectDirection('.button', { ltr: '.ltr', rtl: '.rtl' }) // 'none'
- * detectDirection('.ltr .button', { ltr: '.ltr', rtl: '.rtl' }) // 'ltr'
- * detectDirection('[dir="rtl"] .button') // 'rtl'
- * detectDirection('.theme.rtl .button', { rtl: '.rtl' }) // 'rtl'
- */
-export function detectDirection(
-  selector: string, 
-  config: DirectionConfig = {}
-): 'ltr' | 'rtl' | 'none' {
-  // Built-in direction patterns
-  const builtinPatterns = [
-    { patterns: [/:dir\(\s*ltr\s*\)/, /\[\s*dir\s*=\s*["']?ltr["']?\s*\]/], direction: 'ltr' as const },
-    { patterns: [/:dir\(\s*rtl\s*\)/, /\[\s*dir\s*=\s*["']?rtl["']?\s*\]/], direction: 'rtl' as const }
-  ];
-  
-  const directionMatches: Array<{ direction: 'ltr' | 'rtl'; position: number }> = [];
-  
-  // Find built-in direction matches
-  builtinPatterns.forEach(({ patterns, direction }) => {
-    patterns.forEach(pattern => {
-      const matches = selector.matchAll(new RegExp(pattern.source, 'g'));
-      for (const match of matches) {
-        if (match.index !== undefined) {
-          directionMatches.push({ direction, position: match.index });
-        }
-      }
-    });
-  });
-  
-  // Check for custom direction selectors
-  const customSelectors = [
-    { selector: config.ltr, direction: 'ltr' as const },
-    { selector: config.rtl, direction: 'rtl' as const }
-  ];
-  
-  customSelectors.forEach(({ selector: customSelector, direction }) => {
-    if (customSelector && containsCustomSelector(selector, customSelector)) {
-      const match = selector.indexOf(customSelector);
-      if (match !== -1) {
-        directionMatches.push({ direction, position: match });
+    // Only infer a positive functional condition when every branch agrees.
+    // :not(), :has() and nth-child query arguments do not scope this subject.
+    if (node.type === 'pseudo' && [':is', ':where'].includes(node.value) && node.nodes?.length) {
+      const branches = node.nodes.map(branch => directionOf(branch, custom));
+      if (branches[0] !== 'none' && branches.every(branch => branch === branches[0])) direction = branches[0];
+    }
+    if (direction) result.push({ direction, position: node.sourceIndex ?? index, nodes: [node] });
+    for (const pattern of custom) {
+      const candidates = selector.nodes.slice(index, index + pattern.nodes.length);
+      if (candidates.length === pattern.nodes.length && candidates.every((candidate, offset) => sameToken(candidate, pattern.nodes[offset]))) {
+        result.push({ direction: pattern.direction, position: candidates[candidates.length - 1].sourceIndex ?? index, nodes: candidates });
       }
     }
   });
-  
-  // If no direction indicators found, return 'none'
-  if (directionMatches.length === 0) {
+  return result;
+}
+
+function directionOf(selector: Selector, custom: Pattern[]): Direction | 'none' {
+  const found = matches(selector, custom);
+  found.sort((a, b) => b.position - a.position);
+  return found[0]?.direction ?? 'none';
+}
+
+export function detectDirection(selector: string, config: DirectionConfig = {}): Direction | 'none' {
+  try {
+    const root = selectorParser().astSync(selector);
+    const custom = patterns(config);
+    const directions = root.nodes.map(branch => directionOf(branch, custom));
+    return directions.length && directions.every(direction => direction === directions[0]) ? directions[0] : 'none';
+  } catch {
     return 'none';
   }
-  
-  // Sort by position (rightmost/last is most specific)
-  directionMatches.sort((a, b) => b.position - a.position);
-  
-  // Return the rightmost (most specific) direction
-  return directionMatches[0].direction;
 }
 
-/**
- * Generate a new selector for a specific direction context
- * 
- * @param selector - The original CSS selector
- * @param direction - The target direction: 'ltr' or 'rtl'
- * @param config - Configuration containing custom direction selectors
- * @returns The generated selector with appropriate direction context
- * 
- * @example
- * generateSelector('.button', 'ltr', { ltr: '.ltr' }) // '.ltr .button'
- * generateSelector('.ltr .button', 'rtl', { ltr: '.ltr', rtl: '.rtl' }) // '.rtl .button'
- * generateSelector('[dir="ltr"] .button', 'rtl') // '[dir="rtl"] .button'
- */
-export function generateSelector(
-  selector: string,
-  direction: 'ltr' | 'rtl',
-  config: DirectionConfig = {}
-): string {
-  const currentDirection = detectDirection(selector, config);
-  
-  // If selector already has the target direction, return as-is
-  if (currentDirection === direction) {
-    return selector;
+function cleanDirectionSelectors(selector: string, config: DirectionConfig): string {
+  const root = selectorParser().astSync(selector);
+  const custom = patterns(config);
+  root.nodes.forEach(branch => {
+    const nodes = new Set(matches(branch, custom).flatMap(match => match.nodes));
+    nodes.forEach(node => node.remove());
+    // Removing a direction-only compound can leave consecutive/edge combinators.
+    branch.nodes.slice().forEach(node => {
+      if (node.type !== 'combinator') return;
+      const before = node.prev();
+      const after = node.next();
+      if (!before || !after || (node.value.trim() === '' && (before.type === 'combinator' || after.type === 'combinator'))) node.remove();
+    });
+  });
+  return root.toString().trim();
+}
+
+export function generateSelector(selector: string, direction: Direction, config: DirectionConfig = {}): string {
+  const current = detectDirection(selector, config);
+  if (current === direction) return selector;
+  let cleaned = selector.trim();
+  if (current !== 'none') {
+    try { cleaned = cleanDirectionSelectors(selector, config); } catch { /* Keep malformed input intact. */ }
   }
-  
-  // Clean the selector of any existing direction selectors
-  const cleanedSelector = cleanDirectionSelectors(selector, config);
-  
-  // Determine the direction selector to use
-  let directionSelector: string;
-  
-  if (direction === 'ltr') {
-    directionSelector = config.ltr || '[dir="ltr"]';
-  } else {
-    directionSelector = config.rtl || '[dir="rtl"]';
-  }
-  
-  // If the cleaned selector is empty, return just the direction selector
-  if (!cleanedSelector) {
-    return directionSelector;
-  }
-  
-  // Combine direction selector with cleaned selector
-  return `${directionSelector} ${cleanedSelector}`;
+  const scoped = config[direction]?.trim() || `[dir="${direction}"]`;
+  // A configured selector list must scope the subject on every branch.
+  return selectorParser().astSync(scoped).nodes.map(branch =>
+    cleaned ? `${branch.toString().trim()} ${cleaned}` : branch.toString().trim()
+  ).join(', ');
 }

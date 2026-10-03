@@ -7,8 +7,8 @@ PostCSS Logical Polyfill can be installed using your preferred package manager a
 
 ## Requirements
 
-- **Node.js** 16.0.0 or later
-- **PostCSS** 8.0.0 or later
+- **Node.js** 20.19.0 or later
+- **PostCSS** 8.4.0 or later
 
 ## Package Manager Installation
 
@@ -39,9 +39,7 @@ After installation, add the plugin to your PostCSS configuration:
 ```js
 module.exports = {
   plugins: [
-    'postcss-logical-polyfill'
-    // same as the following witout any options
-    // require('postcss-logical-polyfill')()
+    require('postcss-logical-polyfill')()
   ]
 }
 ```
@@ -90,7 +88,7 @@ module.exports = {
 }
 ```
 
-See the [Configuration Guide](/guides/configuration/) for detailed configuration options.
+See the [Configuration Guide](../../guides/configuration/) for detailed configuration options.
 
 ## HTML Setup
 
@@ -149,12 +147,12 @@ After processing, you should see output like:
 
 ## Troubleshooting
 
-If you're having issues with installation or setup, check the [Troubleshooting Guide](/guides/troubleshooting/) for common problems and solutions.
+If you're having issues with installation or setup, check the [Troubleshooting Guide](../../guides/troubleshooting/) for common problems and solutions.
 
 ## Next Steps
 
 Now that you have PostCSS Logical Polyfill installed, check out:
 
-- [Quick Start](/getting-started/quick-start/) - Learn the basics with examples
-- [Configuration](/guides/configuration/) - Customize the plugin for your needs
-- [Integration Guide](/guides/integration/) - Deep dive into build tool integration
+- [Quick Start](../../getting-started/quick-start/) - Learn the basics with examples
+- [Configuration](../../guides/configuration/) - Customize the plugin for your needs
+- [Integration Guide](../../guides/integration/) - Deep dive into build tool integration

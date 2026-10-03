@@ -15,7 +15,13 @@
  * @format
  */
 
-import { Declaration } from 'postcss';
+import { Declaration, list } from 'postcss';
+import valueParser from 'postcss-value-parser';
+
+function shorthandValues(value: string): string[] {
+  const nodes = valueParser(value).nodes;
+  return list.space(nodes.map(node => node.type === 'comment' ? ' ' : valueParser.stringify(node)).join(''));
+}
 
 /**
  * Extended Declaration functions for scroll-related logical properties
@@ -48,7 +54,8 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-margin-inline': (decl, { inlineDirection }) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = shorthandValues(decl.value);
+    if (values.length < 1 || values.length > 2) return;
     const startValue = values[0];
     const endValue = values[1] || startValue;
 
@@ -73,7 +80,8 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-margin-block': (decl) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = shorthandValues(decl.value);
+    if (values.length < 1 || values.length > 2) return;
     const startValue = values[0];
     const endValue = values[1] || startValue;
 
@@ -102,7 +110,8 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-padding-inline': (decl, { inlineDirection }) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = shorthandValues(decl.value);
+    if (values.length < 1 || values.length > 2) return;
     const startValue = values[0];
     const endValue = values[1] || startValue;
 
@@ -127,7 +136,8 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-padding-block': (decl) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = shorthandValues(decl.value);
+    if (values.length < 1 || values.length > 2) return;
     const startValue = values[0];
     const endValue = values[1] || startValue;
 
@@ -138,11 +148,11 @@ export const SHIM_DECLARATIONS: Record<
 
   // Logical values for existing properties
   float: (decl, { inlineDirection }) => {
-    if (decl.value === 'inline-start') {
+    if (decl.value.toLowerCase() === 'inline-start') {
       const value = inlineDirection === 'left-to-right' ? 'left' : 'right';
       decl.cloneBefore({ prop: 'float', value });
       decl.remove();
-    } else if (decl.value === 'inline-end') {
+    } else if (decl.value.toLowerCase() === 'inline-end') {
       const value = inlineDirection === 'left-to-right' ? 'right' : 'left';
       decl.cloneBefore({ prop: 'float', value });
       decl.remove();
@@ -150,11 +160,11 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   clear: (decl, { inlineDirection }) => {
-    if (decl.value === 'inline-start') {
+    if (decl.value.toLowerCase() === 'inline-start') {
       const value = inlineDirection === 'left-to-right' ? 'left' : 'right';
       decl.cloneBefore({ prop: 'clear', value });
       decl.remove();
-    } else if (decl.value === 'inline-end') {
+    } else if (decl.value.toLowerCase() === 'inline-end') {
       const value = inlineDirection === 'left-to-right' ? 'right' : 'left';
       decl.cloneBefore({ prop: 'clear', value });
       decl.remove();
@@ -162,10 +172,10 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   resize: (decl) => {
-    if (decl.value === 'block') {
+    if (decl.value.toLowerCase() === 'block') {
       decl.cloneBefore({ prop: 'resize', value: 'vertical' });
       decl.remove();
-    } else if (decl.value === 'inline') {
+    } else if (decl.value.toLowerCase() === 'inline') {
       decl.cloneBefore({ prop: 'resize', value: 'horizontal' });
       decl.remove();
     }

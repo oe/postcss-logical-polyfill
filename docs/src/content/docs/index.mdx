@@ -1,9 +1,9 @@
 ---
 title: PostCSS Logical Polyfill
-description: Transform CSS logical properties into physical properties with appropriate direction selectors for maximum browser compatibility.
+description: Compile logical properties into one stylesheet with LTR and RTL physical-property rules for older browsers and WebViews.
 template: splash
 hero:
-  tagline: Transform CSS logical properties into physical properties with appropriate direction selectors for maximum browser compatibility.
+  tagline: Compile logical properties into one stylesheet with LTR and RTL physical-property rules for older browsers and WebViews.
   image:
     file: ../../assets/hero-css-plugin.svg
   actions:
@@ -53,8 +53,10 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
       margin-right: 2px;
     }
     [dir="rtl"] .container {
-      margin-right: 2px;
-      margin-left: 1rem;
+      margin-right: 1rem;
+      margin-left: 2px;
+    }
+    [dir="rtl"] .container {
       border-right: 2px solid blue;
     }
     ```
@@ -65,7 +67,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <CardGrid stagger>
   <Card title="Polyfill Direction" icon="setting">
-    Transforms logical properties → physical properties (reverse of most tools)
+    Transforms logical properties into physical properties with horizontal LTR and RTL scopes
   </Card>
   <Card title="Smart Generation" icon="add-document">
     Creates both LTR and RTL versions automatically
@@ -86,20 +88,17 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## Why Use This Plugin?
 
-While modern browsers support CSS logical properties, older browsers don't. This plugin acts as a polyfill, converting your modern logical properties to physical properties that work everywhere, while preserving the directional behavior for international layouts.
+Use this plugin when you write logical properties, need physical-property compatibility for your target browsers, and want both horizontal LTR and RTL rules in one stylesheet.
 
-**Perfect for:**
-- ✅ Supporting older browsers while using modern CSS
-- ✅ Gradual migration from physical to logical properties  
-- ✅ RTL/LTR internationalization
-- ✅ Framework integration with directional layouts
+If your browsers already support the logical properties you use, native CSS is sufficient. For a fixed compile-time direction, consider `postcss-logical`; for mirroring existing physical styles, consider RTLCSS. See the [introduction](./getting-started/introduction/) for alternatives and compatibility limits.
 
+Set an explicit `<html dir="ltr">` or `<html dir="rtl">` so the default direction selectors match. Browser support depends on the physical properties and values in the generated output.
 
 ## What It Does
 
 This plugin transforms **CSS Logical Properties** into physical properties with appropriate direction selectors for browser compatibility. It intelligently processes:
 
-- **All standard logical properties** (margin, padding, border, inset, sizing, etc.)
+- **Supported logical properties** (margin, padding, border, inset, sizing, etc.)
 - **Logical values** (float: inline-start, clear: inline-end, resize: block)
 - **Scroll properties** (scroll-margin, scroll-padding)
 - **Overflow properties** (overflow-block, overflow-inline)

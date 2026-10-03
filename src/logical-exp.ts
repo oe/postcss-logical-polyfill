@@ -12,6 +12,7 @@
  */
 
 import { Declaration } from 'postcss';
+import valueParser from 'postcss-value-parser';
 
 /**
  * Experimental Declaration functions for draft-stage logical properties
@@ -36,114 +37,48 @@ function handleGradientProperty(
   decl: Declaration,
   { inlineDirection }: { inlineDirection: 'left-to-right' | 'right-to-left' }
 ): void {
-  const value = decl.value;
-  
-  // Check if the value contains gradients with logical directions
-  if (hasGradientWithLogicalDirection(value) && hasLogicalGradientDirection(value)) {
-    const transformedValue = transformLogicalGradient(value, inlineDirection);
-    if (transformedValue !== value) {
-      decl.cloneBefore({ prop: decl.prop, value: transformedValue });
-      decl.remove();
-    }
-  }
-}
-
-/**
- * Check if a value contains gradient functions (including repeating variants)
- */
-function hasGradientWithLogicalDirection(value: string): boolean {
-  const gradientTypes = [
-    'linear-gradient',
-    'radial-gradient',
-    'repeating-linear-gradient',
-    'repeating-radial-gradient'
-  ];
-  
-  return gradientTypes.some(type => value.includes(type));
-}
-
-/**
- * Check if a gradient value contains logical directions
- */
-function hasLogicalGradientDirection(value: string): boolean {
-  const logicalKeywords = [
-    'inline-start',
-    'inline-end', 
-    'block-start',
-    'block-end'
-  ];
-  
-  return logicalKeywords.some(keyword => 
-    new RegExp(`\\b${keyword}\\b`).test(value)
-  );
-}
-
-/**
- * Transform logical gradient directions to physical directions
- */
-function transformLogicalGradient(
-  value: string,
-  inlineDirection: 'left-to-right' | 'right-to-left'
-): string {
-  let transformedValue = value;
-  
-  // Define logical to physical mappings
-  const inlineMapping = inlineDirection === 'left-to-right' 
-    ? { 'inline-start': 'left', 'inline-end': 'right' }
-    : { 'inline-start': 'right', 'inline-end': 'left' };
-  
-  const blockMapping = {
+  const mappings: Record<string, string> = {
+    'inline-start': inlineDirection === 'left-to-right' ? 'left' : 'right',
+    'inline-end': inlineDirection === 'left-to-right' ? 'right' : 'left',
     'block-start': 'top',
     'block-end': 'bottom'
   };
-  
-  // First pass: Transform inline directions
-  for (const [logical, physical] of Object.entries(inlineMapping)) {
-    // Handle "to" syntax for linear gradients
-    transformedValue = transformedValue.replace(
-      new RegExp(`\\bto\\s+${logical}\\b`, 'g'),
-      `to ${physical}`
-    );
-    
-    // Handle "at" syntax for radial gradients - more flexible matching
-    transformedValue = transformedValue.replace(
-      new RegExp(`\\bat\\s+([^,)]*\\s+)?${logical}(\\s+[^,)]*)?`, 'g'),
-      (match, before = '', after = '') => {
-        return `at ${before}${physical}${after}`;
-      }
-    );
-    
-    // Handle standalone logical keywords with word boundaries
-    transformedValue = transformedValue.replace(
-      new RegExp(`\\b${logical}\\b`, 'g'),
-      physical
-    );
+  let changed = false;
+  const parsed = gradientDirectionWords(decl.value, word => {
+    word.value = mappings[word.value.toLowerCase()];
+    changed = true;
+  });
+  if (changed) {
+    decl.cloneBefore({ value: parsed.toString() });
+    decl.remove();
   }
-  
-  // Second pass: Transform block directions
-  for (const [logical, physical] of Object.entries(blockMapping)) {
-    // Handle "to" syntax for linear gradients
-    transformedValue = transformedValue.replace(
-      new RegExp(`\\bto\\s+${logical}\\b`, 'g'),
-      `to ${physical}`
-    );
-    
-    // Handle "at" syntax for radial gradients - more flexible matching
-    transformedValue = transformedValue.replace(
-      new RegExp(`\\bat\\s+([^,)]*\\s+)?${logical}(\\s+[^,)]*)?`, 'g'),
-      (match, before = '', after = '') => {
-        return `at ${before}${physical}${after}`;
+}
+
+function gradientDirectionWords(value: string, callback: (word: { value: string }) => void) {
+  const parsed = valueParser(value);
+  parsed.walk(node => {
+    if (node.type !== 'function') return;
+    const name = node.value.toLowerCase();
+    if (!['linear-gradient', 'repeating-linear-gradient', 'radial-gradient', 'repeating-radial-gradient'].includes(name)) return;
+    const marker = name.includes('linear') ? 'to' : 'at';
+    let position = false;
+    for (const child of node.nodes) {
+      if (child.type === 'div' && child.value === ',') position = false;
+      if (child.type !== 'word') continue;
+      if (child.value.toLowerCase() === marker) {
+        position = true;
+        continue;
       }
-    );
-    
-    // Handle standalone logical keywords with word boundaries
-    transformedValue = transformedValue.replace(
-      new RegExp(`\\b${logical}\\b`, 'g'),
-      physical
-    );
-  }
-  
-  return transformedValue;
+      if (position && ['inline-start', 'inline-end', 'block-start', 'block-end'].includes(child.value.toLowerCase())) callback(child);
+    }
+  });
+  return parsed;
+}
+
+export function hasLogicalGradientDirection(value: string): boolean {
+  let found = false;
+  gradientDirectionWords(value, () => { found = true; });
+  return found;
 }
 
 /**

@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Forward upstream transformation warnings to the outer PostCSS result, including the v9 transition expansion limit, without duplicating LTR/RTL warnings.
+
+- Resolve repeated physical properties by `!important` priority and source order when producing optimized direction-specific rules.
+- Preserve functions containing spaces in scroll margin and padding shorthand values; ignore separating comments and leave invalid multi-value shorthands intact.
+- Keep shorthand/longhand cascade order when splitting common and direction-specific declarations, including overwritten winners.
+- Parse direction selectors as tokens, preserve negated/query conditions, recognize chained custom selectors and use the last matching context.
+- Apply every branch of a configured direction selector list to every subject selector.
+- Transform gradient direction tokens without rewriting custom property names, URLs or quoted strings.
+- Leave prefixed keyframes and unexpanded CSS nesting intact; warn when nesting needs preprocessing.
+- Preserve rule comments and their positions around generated declarations.
+- Map each generated declaration to its own original source position and recognize case-insensitive CSS properties and logical values.
+
+### Changed
+
+- Upgrade postcss-logical to ^9.0.2 for upstream transformation improvements. CommonJS and ES module package entry points remain available; Node.js >=20.19.0 is required to load the ESM dependency from CommonJS.
+
+- Clarify the plugin’s target users and alternatives, add ESM and explicit direction setup to quick starts, repair documentation links and describe browser compatibility limits.
+- Update the npm description and add relevant logical CSS and internationalization keywords.
+
+- Align runtime requirements with postcss-logical: Node.js >=20.19.0 and PostCSS ^8.4.
+- Update installation documentation and test Node.js 20.19.0, 22 and 24 with pnpm pinned by packageManager and frozen installs in CI.
+- Restrict documentation deployment to pushes to main.
+- Keep the plugin API and default options unchanged.
+
 ## [0.4.0] - 2025-05-27
 
 ### Added
