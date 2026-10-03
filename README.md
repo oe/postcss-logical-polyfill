@@ -211,7 +211,7 @@ This plugin intelligently processes CSS through a 7-phase optimization pipeline:
 6. **🎯 Smart Priority**: Implements rightmost selector precedence for predictable behavior
 7. **✨ Output**: Generates clean, optimized CSS for maximum compatibility
 
-When a transformation produces repeated physical properties, the plugin keeps complete direction-specific declaration sequences to preserve fallbacks, `!important`, and cascade order. Direction-independent declarations also remain in the common rule. This can produce larger CSS than the usual optimized output.
+When generating optimized direction-specific rules, repeated physical properties are resolved by declaration priority: `!important` takes precedence, and the last declaration wins among declarations of equal importance.
 
 **➡️ [Detailed technical explanation](./docs/HOW-IT-WORKS.md)**
 

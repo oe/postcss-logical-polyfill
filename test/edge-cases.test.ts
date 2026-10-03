@@ -519,10 +519,10 @@ describe('Additional Edge Cases', () => {
       // Should preserve !important flags
       expect(result.css).toContain('margin-left: 1rem !important');
       expect(result.css).toContain('margin-right: 1rem !important');
-      expect(result.css).toMatch(/padding-left: 2rem\s*!important/);
-      expect(result.css).toMatch(/padding-right: 2rem\s*!important/);
+      expect(result.css).toContain('padding-left: 2rem!important');
+      expect(result.css).toContain('padding-right: 2rem!important');
       expect(result.css).toContain('border-left: 1px solid !important');
-      expect(result.css).toMatch(/left: 0\s*!important/i);
+      expect(result.css).toContain('left: 0 !IMPORTANT');
     });
   });
   

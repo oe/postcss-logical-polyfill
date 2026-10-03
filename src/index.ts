@@ -17,8 +17,6 @@ import {
   hasLogicalProperties,
   applyLogicalTransformation,
   rulesAreIdentical,
-  hasRepeatedDeclarations,
-  commonDeclarations,
   analyzePropertyDifferences,
 } from './logical-properties';
 
@@ -205,19 +203,6 @@ async function processRule(
     if (rulesAreIdentical(ltrTransformed, rtlTransformed)) {
       // Identical transformations - single rule needed
       results.push(cloneRuleWithSelectors(ltrTransformed, noscopeSelectors));
-    } else if (hasRepeatedDeclarations(ltrTransformed) || hasRepeatedDeclarations(rtlTransformed)) {
-      const common = commonDeclarations(ltrTransformed, rtlTransformed);
-      if (common.length > 0) {
-        const commonRule = cloneRuleWithSelectors(ltrTransformed, noscopeSelectors);
-        commonRule.removeAll();
-        commonRule.append(common.map(decl => decl.clone()));
-        results.push(commonRule);
-      }
-      // A property map would discard fallback declarations and their cascade order.
-      addDirectionRules(results, [
-        cloneRuleWithSelectors(ltrTransformed, noscopeSelectors.map(sel => generateSelector(sel, 'ltr', config))),
-        cloneRuleWithSelectors(rtlTransformed, noscopeSelectors.map(sel => generateSelector(sel, 'rtl', config)))
-      ], outputOrder);
     } else {
       // Different transformations - analyze and create optimized rules
       const { commonProps, ltrOnlyProps, rtlOnlyProps } = analyzePropertyDifferences(ltrTransformed, rtlTransformed);

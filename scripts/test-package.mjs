@@ -24,11 +24,11 @@ try {
   for (const creator of creators) {
     assert.equal(typeof creator, 'function');
     assert.equal(creator.postcss, true);
-    const result = await postcss([creator({ ltr: { selector: '.ltr' }, rtl: { selector: '.rtl' }, outputOrder: 'rtl-first' })]).process('.box{margin-inline-start:10px;margin-inline-start:var(--gap)}', { from: undefined });
+    const result = await postcss([creator({ ltr: { selector: '.ltr' }, rtl: { selector: '.rtl' }, outputOrder: 'rtl-first' })]).process('.box{margin-inline-start:10px!important;margin-inline-start:20px}', { from: undefined });
     assert.match(result.root.first.selector, /rtl/);
     const values = [];
-    result.root.walkDecls(decl => values.push(decl.value));
-    assert.deepEqual(values, ['10px', 'var(--gap)', '10px', 'var(--gap)']);
+    result.root.walkDecls(decl => values.push([decl.value, Boolean(decl.important)]));
+    assert.deepEqual(values, [['10px', true], ['10px', true]]);
   }
   const types = join(dirname(entry), '..', manifest.types);
   assert.match(readFileSync(types, 'utf8'), /LogicalPolyfillOptions/);

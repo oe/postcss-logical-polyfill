@@ -18,30 +18,16 @@ describe('Extended Support - Shim Enhanced Features', () => {
         `,
         expected: `
           .element {
-            scroll-margin-top: 5px;
-            scroll-margin-bottom: 5px;
             scroll-margin-top: 7px;
             scroll-margin-bottom: 9px;
           }
           [dir="ltr"] .element {
-            scroll-margin-left: 10px;
-            scroll-margin-right: 10px;
             scroll-margin-left: 15px;
             scroll-margin-right: 20px;
-            scroll-margin-top: 5px;
-            scroll-margin-bottom: 5px;
-            scroll-margin-top: 7px;
-            scroll-margin-bottom: 9px;
           }
           [dir="rtl"] .element {
-            scroll-margin-right: 10px;
-            scroll-margin-left: 10px;
             scroll-margin-right: 15px;
             scroll-margin-left: 20px;
-            scroll-margin-top: 5px;
-            scroll-margin-bottom: 5px;
-            scroll-margin-top: 7px;
-            scroll-margin-bottom: 9px;
           }
         `
       },
@@ -59,30 +45,16 @@ describe('Extended Support - Shim Enhanced Features', () => {
         `,
         expected: `
           .container {
-            scroll-padding-top: 15px;
-            scroll-padding-bottom: 15px;
             scroll-padding-top: 17px;
             scroll-padding-bottom: 19px;
           }
           [dir="ltr"] .container {
-            scroll-padding-left: 20px;
-            scroll-padding-right: 20px;
             scroll-padding-left: 25px;
             scroll-padding-right: 30px;
-            scroll-padding-top: 15px;
-            scroll-padding-bottom: 15px;
-            scroll-padding-top: 17px;
-            scroll-padding-bottom: 19px;
           }
           [dir="rtl"] .container {
-            scroll-padding-right: 20px;
-            scroll-padding-left: 20px;
             scroll-padding-right: 25px;
             scroll-padding-left: 30px;
-            scroll-padding-top: 15px;
-            scroll-padding-bottom: 15px;
-            scroll-padding-top: 17px;
-            scroll-padding-bottom: 19px;
           }
         `
       },

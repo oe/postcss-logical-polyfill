@@ -7,7 +7,7 @@
  * 
  * Enhanced with shim support for additional logical properties and values.
  */
-import postcss, { Declaration, Rule } from 'postcss';
+import postcss, { Rule } from 'postcss';
 import logical from 'postcss-logical';
 import { extendProcessors } from './logical-shim';
 import { extendProcessorsWithExperimental } from './logical-exp';
@@ -72,6 +72,9 @@ function extractDeclarations(rule: Rule): Map<string, { value: string; important
   const declarations = new Map<string, { value: string; important: boolean }>();
   rule.each(node => {
     if (node.type === 'decl') {
+      const previous = declarations.get(node.prop);
+      // Important declarations beat normal ones; equal priority uses source order.
+      if (previous?.important && !node.important) return;
       declarations.set(node.prop, {
         value: node.value,
         important: Boolean(node.important)
@@ -85,13 +88,19 @@ function extractDeclarations(rule: Rule): Map<string, { value: string; important
  * Helper function to compare if two rules have identical declarations
  */
 export function rulesAreIdentical(rule1: Rule, rule2: Rule): boolean {
-  const decls1 = rule1.nodes.filter(node => node.type === 'decl');
-  const decls2 = rule2.nodes.filter(node => node.type === 'decl');
-  return decls1.length === decls2.length && decls1.every((decl, index) => {
-    const other = decls2[index];
-    return decl.prop === other.prop && decl.value === other.value &&
-      Boolean(decl.important) === Boolean(other.important);
-  });
+  const decls1 = extractDeclarations(rule1);
+  const decls2 = extractDeclarations(rule2);
+  
+  if (decls1.size !== decls2.size) return false;
+  
+  for (const [prop, decl1] of decls1) {
+    const decl2 = decls2.get(prop);
+    if (!decl2 || decl2.value !== decl1.value || decl2.important !== decl1.important) {
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 /**
@@ -126,29 +135,3 @@ export function analyzePropertyDifferences(ltrRule: Rule, rtlRule: Rule) {
 }
 
 
-/** Repeated declarations must retain their order, fallback values and importance. */
-export function hasRepeatedDeclarations(rule: Rule): boolean {
-  const seen = new Set<string>();
-  return rule.nodes.some(node => {
-    if (node.type !== 'decl') return false;
-    if (seen.has(node.prop)) return true;
-    seen.add(node.prop);
-    return false;
-  });
-}
-
-/** Keep invariant declarations available outside a direction selector as well. */
-export function commonDeclarations(ltr: Rule, rtl: Rule): Declaration[] {
-  const declarations = (rule: Rule) => rule.nodes.filter(node => node.type === 'decl');
-  const ltrDecls = declarations(ltr);
-  const rtlDecls = declarations(rtl);
-  const common = new Set<string>();
-  for (const prop of new Set(ltrDecls.map(decl => decl.prop))) {
-    const left = ltrDecls.filter(decl => decl.prop === prop);
-    const right = rtlDecls.filter(decl => decl.prop === prop);
-    if (left.length === right.length && left.every((decl, index) =>
-      decl.value === right[index].value && Boolean(decl.important) === Boolean(right[index].important)
-    )) common.add(prop);
-  }
-  return ltrDecls.filter(decl => common.has(decl.prop));
-}

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Preserve repeated CSS declarations, fallback values, declaration order and `!important` when producing direction-specific rules.
+- Resolve repeated physical properties by `!important` priority and source order when producing optimized direction-specific rules.
 - Preserve functions containing spaces in scroll margin and padding shorthand values.
 
 ### Changed

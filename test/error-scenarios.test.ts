@@ -353,19 +353,10 @@ describe('Error Scenarios and Edge Cases', () => {
           [dir="ltr"] .element {
             margin-left: 10px;
             margin-right: 20px;
-            padding-top: 5px;
-            padding-left: 15px;
-            padding-right: 15px;
-            border-bottom: 1px solid;
             border-left: 2px dashed;
           }
           [dir="rtl"] .element {
-            margin-left: 10px;
             margin-left: 20px;
-            padding-top: 5px;
-            padding-right: 15px;
-            padding-left: 15px;
-            border-bottom: 1px solid;
             border-right: 2px dashed;
           }
         `
@@ -382,9 +373,7 @@ describe('Error Scenarios and Edge Cases', () => {
         `,
         expected: `
           [dir="ltr"] .element {
-            margin-left: 10px;
             margin-left: 20px;
-            padding-right: 5px;
             padding-right: 15px;
           }
           [dir="rtl"] .element {
