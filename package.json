@@ -1,6 +1,6 @@
 {
   "name": "postcss-logical-polyfill",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Compile CSS logical properties into one stylesheet with LTR and RTL physical-property rules for older browsers and WebViews.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -54,7 +54,7 @@
   "bugs": {
     "url": "https://github.com/oe/postcss-logical-polyfill/issues"
   },
-  "homepage": "https://github.com/oe/postcss-logical-polyfill#readme",
+  "homepage": "https://app.evecalm.com/postcss-logical-polyfill/",
   "engines": {
     "node": ">=20.19.0"
   },

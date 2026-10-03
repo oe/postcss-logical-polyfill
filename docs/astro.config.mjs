@@ -17,6 +17,25 @@ export default defineConfig({
 		starlight({
 			title: 'PostCSS Logical Polyfill',
 			description: 'Compile logical properties into one stylesheet with horizontal LTR and RTL physical-property rules for older browsers and WebViews.',
+			head: [
+                { tag: 'meta', attrs: { property: 'og:image', content: 'https://app.evecalm.com/postcss-logical-polyfill/social-preview.png' } },
+                { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
+                { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
+                { tag: 'meta', attrs: { property: 'og:image:alt', content: 'PostCSS Logical Polyfill: one stylesheet for LTR and RTL layouts' } },
+                { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://app.evecalm.com/postcss-logical-polyfill/social-preview.png' } },
+                { tag: 'script', attrs: { type: 'application/ld+json' }, content: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'SoftwareSourceCode',
+                    '@id': 'https://app.evecalm.com/postcss-logical-polyfill/#project',
+                    name: 'postcss-logical-polyfill',
+                    description: 'Compile CSS logical properties into one stylesheet with LTR and RTL physical-property rules for older browsers and WebViews.',
+                    url: 'https://app.evecalm.com/postcss-logical-polyfill/',
+                    codeRepository: 'https://github.com/oe/postcss-logical-polyfill',
+                    programmingLanguage: 'TypeScript',
+                    runtimePlatform: 'Node.js >=20.19.0',
+                    license: 'https://github.com/oe/postcss-logical-polyfill/blob/main/LICENSE'
+                }) }
+            ],
 			logo: {
 				src: './src/assets/logo.svg',
 				replacesTitle: true,

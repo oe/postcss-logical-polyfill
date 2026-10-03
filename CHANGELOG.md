@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-03
+
 ### Fixed
 
 - Forward upstream transformation warnings to the outer PostCSS result, including the v9 transition expansion limit, without duplicating LTR/RTL warnings.
@@ -26,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade postcss-logical to ^9.0.2 for upstream transformation improvements. CommonJS and ES module package entry points remain available; Node.js >=20.19.0 is required to load the ESM dependency from CommonJS.
 
 - Clarify the plugin’s target users and alternatives, add ESM and explicit direction setup to quick starts, repair documentation links and describe browser compatibility limits.
-- Update the npm description and add relevant logical CSS and internationalization keywords.
+- Update npm and GitHub metadata and add relevant logical CSS and internationalization keywords.
+- Configure canonical URLs, sitemap, social preview metadata and project structured data for the documentation site.
 
 - Align runtime requirements with postcss-logical: Node.js >=20.19.0 and PostCSS ^8.4.
 - Update installation documentation and test Node.js 20.19.0, 22 and 24 with pnpm pinned by packageManager and frozen installs in CI.
