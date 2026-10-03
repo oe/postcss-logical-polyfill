@@ -12,6 +12,13 @@ describe('transition-property', () => {
       { 'transition-property': 'margin-right, opacity, --Custom' }
     ]);
   });
+  it('maps additional shim properties as well as upstream properties', async () => {
+    const result = await process('.x{transition-property:scroll-margin-inline-start,overflow-inline,contain-intrinsic-inline-size}');
+    expect((result.root.nodes as Rule[]).map(values)).toEqual([
+      { 'transition-property': 'scroll-margin-left, overflow-x, contain-intrinsic-width' },
+      { 'transition-property': 'scroll-margin-right, overflow-x, contain-intrinsic-width' }
+    ]);
+  });
   it('keeps property expansion aligned with independent timing lists', async () => {
     const result = await process('.x{transition-property:margin-inline,opacity;transition-duration:1s,2s;transition-delay:100ms,200ms;transition-timing-function:steps(2, end),linear;transition-behavior:normal,allow-discrete}');
     for (const rule of (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='))) {

@@ -58,10 +58,9 @@ export async function transformTransitionProperties(rule: Rule, processor: Plugi
     mappingCache.set(processor, cache);
     if (cache.has(name)) { mappings.push(cache.get(name)!); continue; }
     if (!Object.prototype.hasOwnProperty.call(processor.Declaration, name.toLowerCase())) { mappings.push([name]); continue; }
-    const transformed = await postcss([processor]).process(`.x{transition:${name}}`, { from: undefined });
+    const transformed = await postcss([processor]).process(`.x{${name}:initial}`, { from: undefined });
     const first = transformed.root.first as Rule;
-    const decl = first.first as Declaration;
-    const mapped = postcss.list.comma(decl.value);
+    const mapped = first.nodes.filter(node => node.type === 'decl').map(decl => decl.prop);
     cache.set(name, mapped);
     mappings.push(mapped);
   }
