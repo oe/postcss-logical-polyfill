@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-03
+
 ### Added
 
 - Add opt-in `animations: true` support for direction-specific logical keyframes and static `animation`/`animation-name` references, including prefixed definitions, name collisions and conditional same-name definitions. Preserve original definitions and warn for dynamic references.
 
 - Transform logical names in `transition-property`, keeping static duration, delay, timing-function and behavior lists aligned when a property expands into several physical names. Dynamic or inherited timing lists are retained with a warning when expansion cannot be safely aligned.
+
+### Fixed
+
+- Respect transition shorthand grammar, keyword property names, invalid resets and case-insensitive logical property names. Preserve unrelated rules and warn instead of guessing unresolved function-valued shorthand timing lists.
+- Distinguish literal backslashes from hexadecimal escapes in animation names to avoid merging separate keyframe definitions.
 
 ## [0.7.0] - 2026-10-03
 

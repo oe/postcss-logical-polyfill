@@ -1,6 +1,6 @@
 {
   "name": "postcss-logical-polyfill",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Compile CSS logical properties into one stylesheet with LTR and RTL physical-property rules for older browsers and WebViews.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
