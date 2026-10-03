@@ -36,6 +36,12 @@ describe('transition-property', () => {
       expect(values(rule)['transition-delay']).toBe('100ms, 100ms, 200ms');
     }
   });
+  it('aligns scientific-notation times from a shorthand', async () => {
+    const result = await process('.x{transition:opacity 1e3ms, color 2e3ms;transition-property:margin-inline,opacity}');
+    for (const rule of (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='))) {
+      expect(values(rule)['transition-duration']).toBe('1e3ms, 1e3ms, 2e3ms');
+    }
+  });
   it('preserves important companion declarations', async () => {
     const result = await process('.x{transition-duration:1s,2s!important;transition:color 3s;transition-property:margin-inline,opacity}');
     const rules = (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='));
