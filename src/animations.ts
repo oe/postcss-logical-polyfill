@@ -56,8 +56,8 @@ function referenceNodes(decl: Declaration): { parsed: ReturnType<typeof valuePar
       } else if (node.type === 'word') {
         if (globals.test(token)) { valid = false; break; }
         if (/^[-+]?(?:\d*\.?\d+|\d+\.)(?:e[-+]?\d+)?(ms|s)$/.test(token)) {
-          slot = occupied.has('duration') ? 'delay' : 'duration';
-          if (occupied.has(slot) || (slot === 'duration' && parseFloat(token) < 0)) { valid = false; break; }
+          slot = !occupied.has('duration') && parseFloat(token) >= 0 ? 'duration' : 'delay';
+          if (occupied.has(slot)) { valid = false; break; }
         } else if (/^(ease|linear|ease-in|ease-out|ease-in-out|step-start|step-end)$/.test(token) && !occupied.has('easing')) slot = 'easing';
         else if ((token === 'infinite' || /^\+?(?:\d*\.?\d+|\d+\.)(?:e[-+]?\d+)?$/.test(token)) && !occupied.has('iterations')) slot = 'iterations';
         else if (/^(normal|reverse|alternate|alternate-reverse)$/.test(token) && !occupied.has('direction')) slot = 'direction';

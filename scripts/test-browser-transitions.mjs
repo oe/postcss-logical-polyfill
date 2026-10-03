@@ -10,7 +10,8 @@ const cases = [
   'transition-duration:1s,2s!important;transition:color 3s;transition-property:margin-inline,opacity',
   'transition-property:margin-inline-start,opacity;transition-duration:1s,2s;transition-delay:100ms,200ms',
   'transition:opacity 1e3ms linear,color 2e3ms linear;transition-property:margin-inline,opacity',
-  'transition-duration:1s,2s;transition:opacity -1s,color -2s;transition-property:margin-inline,opacity'
+  'transition-duration:1s,2s;transition:opacity 1s 2s 3s;transition-property:margin-inline,opacity',
+  'transition:opacity -100ms 1s linear,color -200ms 2s linear;transition-property:margin-inline,opacity'
 ].map(decls => `.x{margin-inline-start:0;opacity:1;${decls}}.x.end{margin-inline-start:100px;opacity:0}`);
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_BIN || '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 try {

@@ -53,7 +53,7 @@ describe('transition-property', () => {
     }
   });
   it('ignores invalid shorthand resets when aligning earlier valid timing lists', async () => {
-    const result = await process('.x{transition-duration:1s,2s;transition:opacity -1s,color -2s;transition-property:margin-inline,opacity}');
+    const result = await process('.x{transition-duration:1s,2s;transition:opacity 1s 2s 3s;transition-property:margin-inline,opacity}');
     for (const rule of (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='))) {
       expect(values(rule)['transition-duration']).toBe('1s, 1s, 2s');
     }

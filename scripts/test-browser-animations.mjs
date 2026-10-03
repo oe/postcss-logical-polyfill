@@ -8,6 +8,7 @@ const frames = '@keyframes slide{from{margin-inline-start:0}to{margin-inline-sta
 const cases = [
   frames + '.x{animation:slide 1s linear both}',
   frames + '.x{animation:slide 1e3ms linear both}',
+  frames + '.x{animation:slide -200ms 1s linear both}',
   frames + '.x{animation-name:slide;animation-duration:1s;animation-timing-function:linear;animation-fill-mode:both}',
   frames + '@keyframes fade{from{opacity:0}to{opacity:1}}.x{animation:slide 1s linear both,fade 2s linear both}',
   frames + '@media(min-width:1px){@keyframes slide{from{margin-left:0}to{margin-left:20px}}}.x{animation:slide 1s linear both}',

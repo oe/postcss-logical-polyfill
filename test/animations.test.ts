@@ -24,7 +24,7 @@ describe('opt-in logical animations', () => {
     expect(((definitions[1].first as Rule).first as Declaration).prop).toBe('margin-left');
     expect(((definitions[2].first as Rule).first as Declaration).prop).toBe('margin-right');
   });
-  it.each(['slide 1e3ms linear', 'slide +1s +2', 'slide -0s both', 'slide 1s linear', '1s ease-in 200ms 2 alternate both paused slide', 'slide 1s steps(2, end)'])('rewrites shorthand %s', async value => {
+  it.each(['slide -200ms 1s linear', 'slide -1s 2s', 'slide 1e3ms linear', 'slide +1s +2', 'slide -0s both', 'slide 1s linear', '1s ease-in 200ms 2 alternate both paused slide', 'slide 1s steps(2, end)'])('rewrites shorthand %s', async value => {
     const result = await process(frames + `.x{animation:${value}}`);
     expect(refs(result.root, 'animation').map(([, value]) => value)).toEqual([value.replace('slide', 'lp-slide-ltr'), value.replace('slide', 'lp-slide-rtl')]);
   });
@@ -91,8 +91,8 @@ describe('opt-in logical animations', () => {
     const result = await process(frames + '.x{animation-name:slide}');
     result.root.walkAtRules('keyframes', def => { def.walkRules(rule => { expect(rule.selector).not.toContain('dir='); }); });
   });
-  it('does not turn invalid numeric or negative-duration names into valid animations', async () => {
-    for (const css of [frames + '.x{animation:slide -1s}', '@keyframes "2"{from{margin-inline-start:0}to{margin-inline-start:1px}}.x{animation:2 1s 2}', '@keyframes 2{from{margin-inline-start:0}to{margin-inline-start:1px}}.x{animation-name:"2"}']) {
+  it('does not turn invalid numeric names or excess times into valid animations', async () => {
+    for (const css of [frames + '.x{animation:slide 1s 2s 3s}', '@keyframes "2"{from{margin-inline-start:0}to{margin-inline-start:1px}}.x{animation:2 1s 2}', '@keyframes 2{from{margin-inline-start:0}to{margin-inline-start:1px}}.x{animation-name:"2"}']) {
       expect((await process(css)).css).toBe(css);
     }
   });

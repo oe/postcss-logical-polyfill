@@ -13,15 +13,15 @@ function shorthand(value: string): Record<string, string> | null {
   const lists: Record<string, string[]> = Object.fromEntries(Object.keys(defaults).map(prop => [prop, []]));
   for (const item of postcss.list.comma(value)) {
     const values = { ...defaults };
-    let times = 0;
     const assigned = new Set<string>();
     for (const node of valueParser(item).nodes) {
       if (node.type === 'space' || node.type === 'comment') continue;
       const token = valueParser.stringify(node);
       if (node.type === 'word' && /^[-+]?(?:\d*\.?\d+|\d+\.)(?:e[-+]?\d+)?(?:ms|s)$/i.test(token)) {
-        if (times > 1) return null;
-        if (!times && parseFloat(token) < 0) return null;
-        values[times++ ? 'transition-delay' : 'transition-duration'] = token;
+        const slot = !assigned.has('duration') && parseFloat(token) >= 0 ? 'duration' : 'delay';
+        if (assigned.has(slot)) return null;
+        assigned.add(slot);
+        values[`transition-${slot}`] = token;
       } else if (/^(ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end)$/i.test(token) ||
                  (node.type === 'function' && /^(cubic-bezier|steps|linear)$/i.test(node.value))) {
         if (assigned.has('easing')) return null;
