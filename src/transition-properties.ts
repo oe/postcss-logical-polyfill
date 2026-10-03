@@ -13,19 +13,27 @@ function shorthand(value: string): Record<string, string> | null {
   const lists: Record<string, string[]> = Object.fromEntries(Object.keys(defaults).map(prop => [prop, []]));
   for (const item of postcss.list.comma(value)) {
     const values = { ...defaults };
-    let times = 0;
+    const assigned = new Set<string>();
     for (const node of valueParser(item).nodes) {
       if (node.type === 'space' || node.type === 'comment') continue;
       const token = valueParser.stringify(node);
       if (node.type === 'word' && /^[-+]?(?:\d*\.?\d+|\d+\.)(?:e[-+]?\d+)?(?:ms|s)$/i.test(token)) {
-        if (times > 1) return null;
-        values[times++ ? 'transition-delay' : 'transition-duration'] = token;
+        const slot = !assigned.has('duration') && parseFloat(token) >= 0 ? 'duration' : 'delay';
+        if (assigned.has(slot)) return null;
+        assigned.add(slot);
+        values[`transition-${slot}`] = token;
       } else if (/^(ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end)$/i.test(token) ||
                  (node.type === 'function' && /^(cubic-bezier|steps|linear)$/i.test(node.value))) {
+        if (assigned.has('easing')) return null;
+        assigned.add('easing');
         values['transition-timing-function'] = token;
       } else if (/^(normal|allow-discrete)$/i.test(token)) {
+        if (assigned.has('behavior')) return null;
+        assigned.add('behavior');
         values['transition-behavior'] = token;
       } else if (node.type === 'word' && !globalValues.test(token)) {
+        if (assigned.has('property')) return null;
+        assigned.add('property');
         values['transition-property'] = token;
       } else return null;
     }
@@ -42,6 +50,7 @@ export async function transformTransitionProperties(rule: Rule, processor: Plugi
     if (decl.parent !== rule) return;
     const prop = decl.prop.toLowerCase();
     const values = prop === 'transition' ? shorthand(decl.value) : null;
+    if (prop === 'transition' && !values && !globalValues.test(decl.value) && !/\b(?:var|env)\(/i.test(decl.value)) return;
     const entries = prop === 'transition' ? Object.keys(defaults).map(key => [key, values?.[key] ?? decl.value]) : [[prop, decl.value]];
     for (const [key, value] of entries) {
       const previous = state.get(key);
