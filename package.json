@@ -14,7 +14,7 @@
     "test": "vitest",
     "test:ci": "vitest run",
     "test:package": "node scripts/test-package.mjs",
-    "test:browser": "node scripts/test-browser.mjs",
+    "test:browser": "node scripts/test-browser.mjs && node scripts/test-browser-transitions.mjs",
     "test:coverage": "vitest run --coverage",
     "test:coverage:watch": "vitest --coverage",
     "test:coverage:ui": "vitest --coverage --ui",

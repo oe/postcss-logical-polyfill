@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Transform logical names in `transition-property`, keeping static duration, delay, timing-function and behavior lists aligned when a property expands into several physical names. Dynamic or inherited timing lists are retained with a warning when expansion cannot be safely aligned.
+
 ## [0.7.0] - 2026-10-03
 
 ### Fixed

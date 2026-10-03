@@ -7,8 +7,9 @@
  * 
  * Enhanced with shim support for additional logical properties and values.
  */
-import postcss, { Declaration, Rule, Result } from 'postcss';
+import postcss, { Declaration, Rule, Result, Plugin } from 'postcss';
 import logical from 'postcss-logical';
+import { transformTransitionProperties } from './transition-properties';
 import { extendProcessors } from './logical-shim';
 import { extendProcessorsWithExperimental, hasLogicalGradientDirection } from './logical-exp';
 
@@ -41,7 +42,7 @@ export function hasLogicalDeclaration(decl: Declaration): boolean {
   if (prop === 'background' || prop === 'background-image') return hasLogicalGradientDirection(decl.value);
   if (prop === 'float' || prop === 'clear') return ['inline-start', 'inline-end'].includes(decl.value.toLowerCase());
   if (prop === 'resize') return ['inline', 'block'].includes(decl.value.toLowerCase());
-  return supportedLogicalPropertiesSet.has(prop);
+  return prop === 'transition-property' || supportedLogicalPropertiesSet.has(prop);
 }
 
 /**
@@ -53,6 +54,7 @@ export async function applyLogicalTransformation(rule: Rule, direction: 'ltr' | 
   tempRoot.append(rule.clone());
   
   try {
+    await transformTransitionProperties(tempRoot.first as Rule, processor as Plugin, result, rule);
     const transformed = await postcss([processor]).process(tempRoot, { from: undefined });
     for (const warning of transformed.warnings()) {
       if (result && !result.warnings().some(existing => existing.node === rule && existing.text === warning.text)) {

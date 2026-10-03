@@ -390,3 +390,7 @@ Both `repeating-linear-gradient` and `repeating-radial-gradient` support all the
   right: 10px;
 }
 ```
+
+## Transition property lists
+
+`transition-property` maps logical names to their physical counterparts. Shorthands such as `margin-inline` expand to both sides. Static duration, delay, timing-function and behavior lists are aligned with the expanded list. When runtime variables or inherited timing lists make expansion ambiguous, the declaration is retained with a PostCSS warning.

@@ -153,11 +153,13 @@ See the [configuration guide](https://github.com/oe/postcss-logical-polyfill/blo
 ## Compatibility and limitations
 
 - Transformations assume horizontal writing modes. Vertical writing modes are not inferred.
-- Keyframes and certain other at-rules are left untouched. Logical property names in `transition` are transformed by the upstream processor; animation names and keyframe contents are not rewritten.
+- Keyframes and certain other at-rules are left untouched. Logical property names in `transition` and `transition-property` are transformed; animation names and keyframe contents are not rewritten.
 - Expand CSS nesting before this plugin, using a tool such as `postcss-nested` or `postcss-nesting`. Unexpanded nested rules are left intact with a PostCSS warning.
 - Direction prefixes add selector specificity. Overrides in separate rules should use matching direction scopes. For subtrees with conflicting direction ancestors, write explicit direction-scoped selectors so the plugin can use the rightmost context.
 - Repeated physical properties within an optimized rule are resolved by `!important` priority, then source order. Overlapping common shorthands are retained in direction rules where needed to preserve their ordering relative to directional longhands.
 - Browser compatibility depends on the physical properties and values in the output. Transforming a logical name does not polyfill unrelated CSS features such as custom properties, scroll behavior or containment.
+
+When `transition-property` expands a shorthand such as `margin-inline`, static companion timing lists are expanded to keep their original correspondence. Dynamic or inherited timing lists that cannot be aligned are preserved with a PostCSS warning.
 
 See [how it works](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/how-it-works.mdx) and [troubleshooting](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/troubleshooting.mdx).
 
