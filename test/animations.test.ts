@@ -51,6 +51,17 @@ describe('opt-in logical animations', () => {
     expect(result.css).toBe(css);
     expect(result.warnings()).toHaveLength(2);
   });
+  it('keeps literal backslashes distinct from hexadecimal escapes in animation names', async () => {
+    const css = String.raw`@keyframes "s\\31"{from{margin-inline-start:0}to{margin-inline-start:20px}}@keyframes "s\\000031"{from{margin-inline-start:0}to{margin-inline-start:100px}}.a{animation-name:"s\\31"}.b{animation-name:"s\\000031"}`;
+    const result = await process(css);
+    const names = refs(result.root).filter(([selector]) => selector.includes('dir="ltr"')).map(([, value]) => value);
+    expect(new Set(names).size).toBe(2);
+    const ends: string[] = [];
+    result.root.walkAtRules('keyframes', def => {
+      if (names.includes(`"${def.params}"`)) ends.push(((def.last as Rule).first as Declaration).value);
+    });
+    expect(ends).toEqual(['20px', '100px']);
+  });
   it('avoids collisions with existing or externally referenced animation names', async () => {
     const result = await process(frames + '@keyframes lp-slide-ltr{from{opacity:0}to{opacity:1}}.a{animation-name:slide}.b{animation-name:lp-slide-rtl}');
     expect(refs(result.root)).toContainEqual(['[dir="ltr"] .a', 'lp-slide-ltr-2']);

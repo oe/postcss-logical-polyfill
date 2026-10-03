@@ -16,7 +16,9 @@ const cases = [
   frames + '@keyframes lp-slide-ltr{from{opacity:0}to{opacity:1}}.x{animation:slide 1s linear both}',
   frames + '.x{animation-name:slide!important;animation:none;animation-duration:1s;animation-timing-function:linear}',
   frames.replace('@keyframes', '@-webkit-keyframes') + '.x{-webkit-animation:slide 1s linear both}',
-  frames + '.x{--motion:slide 1s linear both;animation:var(--motion)}'
+  frames + '.x{--motion:slide 1s linear both;animation:var(--motion)}',
+  String.raw`@keyframes "s\\31"{from{margin-inline-start:0}to{margin-inline-start:20px}}@keyframes "s\\000031"{from{margin-inline-start:0}to{margin-inline-start:100px}}.x{animation:"s\\31" 1s linear both}`,
+  String.raw`@keyframes "s\\31"{from{margin-inline-start:0}to{margin-inline-start:20px}}@keyframes "s\\000031"{from{margin-inline-start:0}to{margin-inline-start:100px}}.x{animation:"s\\000031" 1s linear both}`
 ];
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_BIN || '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 try {

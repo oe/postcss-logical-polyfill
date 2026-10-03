@@ -10,7 +10,7 @@ const keyframes = /^(?:-[a-z]+-)?keyframes$/i;
 
 // value-parser does not consume whitespace terminating a hexadecimal CSS escape.
 function normalizedEscapes(value: string): string {
-  return value.replace(/\\([\da-f]{1,6})(?:\r\n|[ \n\r\t\f])?/gi, (_, hex: string) => `\\${hex.padStart(6, '0')}`);
+  return value.replace(/\\(?:([\da-f]{1,6})(?:\r\n|[ \n\r\t\f])?|[^\n\r\f])/gi, (escape: string, hex: string) => hex ? `\\${hex.padStart(6, '0')}` : escape);
 }
 function decoded(value: string): string {
   return value.replace(/\\(?:([\da-f]{1,6})(?:\r\n|[ \n\r\t\f])?|(\r\n|[\n\r\f])|([\s\S]))/gi, (_, hex: string, newline: string, char: string) => {
