@@ -17,7 +17,7 @@ function shorthand(value: string): Record<string, string> | null {
     for (const node of valueParser(item).nodes) {
       if (node.type === 'space' || node.type === 'comment') continue;
       const token = valueParser.stringify(node);
-      if (node.type === 'word' && /^[-+]?(?:\d*\.)?\d+(?:ms|s)$/i.test(token)) {
+      if (node.type === 'word' && /^[-+]?(?:\d*\.?\d+|\d+\.)(?:e[-+]?\d+)?(?:ms|s)$/i.test(token)) {
         if (times > 1) return null;
         values[times++ ? 'transition-delay' : 'transition-duration'] = token;
       } else if (/^(ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end)$/i.test(token) ||
