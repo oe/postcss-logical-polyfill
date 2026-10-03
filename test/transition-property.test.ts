@@ -52,6 +52,12 @@ describe('transition-property', () => {
       expect(values(rule)['transition-duration']).toBe('1s, 1s, 2s');
     }
   });
+  it('ignores invalid shorthand resets when aligning earlier valid timing lists', async () => {
+    const result = await process('.x{transition-duration:1s,2s;transition:opacity -1s,color -2s;transition-property:margin-inline,opacity}');
+    for (const rule of (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='))) {
+      expect(values(rule)['transition-duration']).toBe('1s, 1s, 2s');
+    }
+  });
   it('retains a later shorthand reset', async () => {
     const result = await process('.x{transition-property:margin-inline-start;transition:none}');
     expect(result.root.nodes).toHaveLength(1);
