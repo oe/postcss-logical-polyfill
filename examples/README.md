@@ -49,3 +49,7 @@ Or run individual examples by navigating to their directories and following the 
 - Nested selectors with logical properties
 - Complex scenarios with both RTL and LTR rules
 - Difference between scoped and unscoped logical properties
+
+## Logical animations
+
+[Logical keyframes](./logical-animations/) demonstrates opt-in animation compilation and a browser direction toggle.

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Logical keyframes: LTR and RTL</title>
+  <link rel="stylesheet" href="output.css">
+</head>
+<body>
+  <h1>One stylesheet, two animation directions</h1>
+  <button type="button">Switch to RTL</button>
+  <p>The box moves away from the start edge in both directions.</p>
+  <div class="box"></div>
+  <script>
+    const button = document.querySelector('button');
+    button.addEventListener('click', () => {
+      const root = document.documentElement;
+      root.dir = root.dir === 'ltr' ? 'rtl' : 'ltr';
+      button.textContent = root.dir === 'ltr' ? 'Switch to RTL' : 'Switch to LTR';
+    });
+  </script>
+</body>
+</html>

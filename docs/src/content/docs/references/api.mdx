@@ -446,9 +446,9 @@ The plugin includes TypeScript definitions:
 
 ```typescript
 import postcss from 'postcss'
-import logicalPolyfill, { Options } from 'postcss-logical-polyfill'
+import logicalPolyfill, { LogicalPolyfillOptions } from 'postcss-logical-polyfill'
 
-const options: Options = {
+const options: LogicalPolyfillOptions = {
   preserve: false,
   dir: 'ltr',
   supports: true,
@@ -482,3 +482,7 @@ For large projects, consider:
 1. Using `preserve: false` in production
 2. Enabling `supports: true` for progressive enhancement
 3. Processing only relevant CSS files
+
+## Animation compilation
+
+`animations?: boolean` enables logical keyframe and static animation-reference compilation. Its default is `false`. Existing direction selectors and `outputOrder` also apply to the generated animation rules. See the [configuration guide](../../guides/configuration/#logical-keyframes) for limitations.

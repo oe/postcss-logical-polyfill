@@ -377,3 +377,15 @@ console.log('Transformed CSS:', result.css);
 ### From Other Logical Property Tools
 
 Like `postcss-logical`, this plugin converts logical properties to physical properties. It generates both horizontal LTR and RTL scopes in one stylesheet, rather than mapping all declarations for one configured direction. Review the generated selectors, specificity and supported properties when migrating.
+
+## Logical keyframes
+
+Enable animation compilation explicitly:
+
+```js
+logicalPolyfill({ animations: true });
+```
+
+The default is `false`. Referenced logical keyframes receive separate physical-property copies for LTR and RTL, with collision-free generated names. Static `animation-name` and `animation` shorthand references use the matching direction copy. Original definitions remain available. Duplicate names in conditional rules retain those conditions.
+
+Definitions and references must be available in the same PostCSS root; run `postcss-import` first for multi-file animations. Expand CSS nesting first. Dynamic names in `var()`/`env()` remain unchanged with a warning and do not receive an old-browser fallback.

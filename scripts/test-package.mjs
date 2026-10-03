@@ -29,10 +29,13 @@ try {
     const values = [];
     result.root.walkDecls(decl => values.push([decl.value, Boolean(decl.important)]));
     assert.deepEqual(values, [['10px', true], ['10px', true]]);
+    const animated = await postcss([creator({ animations: true })]).process('@keyframes slide{from{margin-inline-start:0}to{margin-inline-start:10px}}.x{animation:slide 1s}', { from: undefined });
+    assert.match(animated.css, /animation:lp-slide-ltr 1s/);
+    assert.match(animated.css, /animation:lp-slide-rtl 1s/);
   }
   const types = join(dirname(entry), '..', manifest.types);
   assert.match(readFileSync(types, 'utf8'), /LogicalPolyfillOptions/);
-  writeFileSync(join(directory, 'consumer.ts'), `import plugin, { LogicalPolyfillOptions } from 'postcss-logical-polyfill';\nimport postcss from 'postcss';\nconst options: LogicalPolyfillOptions = { outputOrder: 'rtl-first' };\npostcss([plugin(options)]);\n`);
+  writeFileSync(join(directory, 'consumer.ts'), `import plugin, { LogicalPolyfillOptions } from 'postcss-logical-polyfill';\nimport postcss from 'postcss';\nconst options: LogicalPolyfillOptions = { outputOrder: 'rtl-first', animations: true };\npostcss([plugin(options)]);\n`);
   const tsc = createRequire(join(root, 'package.json')).resolve('typescript/bin/tsc');
   execFileSync(process.execPath, [tsc, '--noEmit', '--strict', '--skipLibCheck', '--module', 'node16', '--moduleResolution', 'node16', '--target', 'es2020', join(directory, 'consumer.ts')], { cwd: directory, stdio: 'pipe' });
   console.log('Packed package: CommonJS, ES module and TypeScript consumers passed.');
