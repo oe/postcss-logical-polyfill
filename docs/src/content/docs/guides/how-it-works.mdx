@@ -13,6 +13,13 @@ PostCSS Logical Polyfill processes CSS through a sophisticated 7-phase optimizat
 
 When generating optimized direction-specific rules, repeated physical properties are resolved by declaration priority: `!important` takes precedence, and the last declaration wins among declarations of equal importance.
 
+When a common shorthand and a direction-dependent longhand overlap (for example, `margin` and `margin-left`), the direction rule also includes the overlapping declarations in their original winning order. This prevents selector specificity from changing the cascade. Each property still appears only once within an optimized rule.
+
+CSS nesting must be expanded before this plugin (for example, with `postcss-nested` or `postcss-nesting`). Unexpanded nested rules are left intact with a PostCSS warning. Logical properties use the horizontal writing mode; vertical writing modes are not inferred.
+
+Direction prefixes add selector specificity. Overrides in separate rules should use matching direction scopes. For subtrees with conflicting direction ancestors, write explicit direction-scoped selectors so the plugin can use the rightmost context.
+
+
 ## Processing Pipeline
 
 <Steps>

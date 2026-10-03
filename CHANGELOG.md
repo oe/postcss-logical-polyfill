@@ -10,7 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Resolve repeated physical properties by `!important` priority and source order when producing optimized direction-specific rules.
-- Preserve functions containing spaces in scroll margin and padding shorthand values.
+- Preserve functions containing spaces in scroll margin and padding shorthand values; ignore separating comments and leave invalid multi-value shorthands intact.
+- Keep shorthand/longhand cascade order when splitting common and direction-specific declarations, including overwritten winners.
+- Parse direction selectors as tokens, preserve negated/query conditions, recognize chained custom selectors and use the last matching context.
+- Apply every branch of a configured direction selector list to every subject selector.
+- Transform gradient direction tokens without rewriting custom property names, URLs or quoted strings.
+- Leave prefixed keyframes and unexpanded CSS nesting intact; warn when nesting needs preprocessing.
+- Preserve rule comments and their positions around generated declarations.
+- Map each generated declaration to its own original source position and recognize case-insensitive CSS properties and logical values.
 
 ### Changed
 

@@ -7,10 +7,10 @@
  * 
  * Enhanced with shim support for additional logical properties and values.
  */
-import postcss, { Rule } from 'postcss';
+import postcss, { Declaration, Rule } from 'postcss';
 import logical from 'postcss-logical';
 import { extendProcessors } from './logical-shim';
-import { extendProcessorsWithExperimental } from './logical-exp';
+import { extendProcessorsWithExperimental, hasLogicalGradientDirection } from './logical-exp';
 
 // Logical processors for LTR and RTL transformations
 const PROCESSORS = {
@@ -33,14 +33,15 @@ const supportedLogicalPropertiesSet = new Set(
  * Check if a rule contains logical properties
  */
 export function hasLogicalProperties(rule: Rule): boolean {
-  return rule.some(
-    (decl) => {
-      if (decl.type !== 'decl') return false;
-      
-      // Check for logical properties (including experimental ones via extended processors)
-      return supportedLogicalPropertiesSet.has(decl.prop);
-    }
-  );
+  return rule.some(node => node.type === 'decl' && hasLogicalDeclaration(node));
+}
+
+export function hasLogicalDeclaration(decl: Declaration): boolean {
+  const prop = decl.prop.toLowerCase();
+  if (prop === 'background' || prop === 'background-image') return hasLogicalGradientDirection(decl.value);
+  if (prop === 'float' || prop === 'clear') return ['inline-start', 'inline-end'].includes(decl.value.toLowerCase());
+  if (prop === 'resize') return ['inline', 'block'].includes(decl.value.toLowerCase());
+  return supportedLogicalPropertiesSet.has(prop);
 }
 
 /**
@@ -53,11 +54,8 @@ export async function applyLogicalTransformation(rule: Rule, direction: 'ltr' | 
   
   try {
     const transformed = await postcss([processor]).process(tempRoot, { from: undefined });
-    let transformedRule: Rule | null = null;
-    transformed.root.walkRules(r => {
-      transformedRule = r;
-    });
-    return transformedRule;
+    const transformedRule = transformed.root.nodes.find(node => node.type === 'rule');
+    return transformedRule?.type === 'rule' ? transformedRule : null;
   } catch (error) {
     console.warn('Failed to process logical properties:', error);
     return null;
@@ -69,17 +67,22 @@ export async function applyLogicalTransformation(rule: Rule, direction: 'ltr' | 
  * @internal - Used internally by rulesAreIdentical and analyzePropertyDifferences
  */
 function extractDeclarations(rule: Rule): Map<string, { value: string; important: boolean }> {
-  const declarations = new Map<string, { value: string; important: boolean }>();
+  return new Map([...winningDeclarations(rule)].map(([prop, decl]) => [prop, {
+    value: decl.value,
+    important: Boolean(decl.important)
+  }]));
+}
+
+/** Select each property's winner, optionally keeping its source position. */
+export function winningDeclarations(rule: Rule, sourceOrder = false): Map<string, Declaration> {
+  const declarations = new Map<string, Declaration>();
   rule.each(node => {
-    if (node.type === 'decl') {
-      const previous = declarations.get(node.prop);
-      // Important declarations beat normal ones; equal priority uses source order.
-      if (previous?.important && !node.important) return;
-      declarations.set(node.prop, {
-        value: node.value,
-        important: Boolean(node.important)
-      });
-    }
+    if (node.type !== 'decl') return;
+    const prop = node.prop.startsWith('--') ? node.prop : node.prop.toLowerCase();
+    const previous = declarations.get(prop);
+    if (previous?.important && !node.important) return;
+    if (sourceOrder) declarations.delete(prop);
+    declarations.set(prop, node);
   });
   return declarations;
 }

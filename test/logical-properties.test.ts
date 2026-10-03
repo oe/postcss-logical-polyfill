@@ -70,10 +70,22 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
           [dir="ltr"] .element {
             border-left: 2px dashed blue;
             border-right: 3px dotted green;
+            border-left-width: 4px;
+            border-right-width: 4px;
+            border-left-style: solid;
+            border-right-style: solid;
+            border-left-color: purple;
+            border-right-color: purple;
           }
           [dir="rtl"] .element {
             border-right: 2px dashed blue;
             border-left: 3px dotted green;
+            border-right-width: 4px;
+            border-left-width: 4px;
+            border-right-style: solid;
+            border-left-style: solid;
+            border-right-color: purple;
+            border-left-color: purple;
           }
         `
       },

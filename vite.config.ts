@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ['es', 'cjs']
     },
     rollupOptions: {
-      external: ['postcss', 'postcss-logical'],
+      external: ['postcss', 'postcss-logical', 'postcss-selector-parser', 'postcss-value-parser'],
       output: {
         exports: 'auto'
       }

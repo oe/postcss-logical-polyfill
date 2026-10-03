@@ -7,7 +7,7 @@
  * Logical property processing has been modularized into ./logical-properties
  * Selector-related logic has been modularized into ./selector-utils for better maintainability.
  */
-import { PluginCreator, Root, Rule, AtRule } from 'postcss';
+import { PluginCreator, Root, Rule, AtRule, Result } from 'postcss';
 import {
   detectDirection,
   generateSelector,
@@ -15,10 +15,13 @@ import {
 } from './selector-utils';
 import {
   hasLogicalProperties,
+  hasLogicalDeclaration,
   applyLogicalTransformation,
   rulesAreIdentical,
   analyzePropertyDifferences,
+  winningDeclarations,
 } from './logical-properties';
+import { orderCascadeProperties, retainCascadeDependencies } from './cascade';
 
 // Skip processing of @keyframes and other special at-rules that shouldn't be transformed
 const SKIP_AT_RULES = ['keyframes', 'font-face', 'counter-style', 'page'];
@@ -89,40 +92,33 @@ function categorizeSelectors(selectors: string[], config: DirectionConfig) {
 function createRuleWithPropertiesAndSelectors(
   baseRule: Rule,
   selectors: string[],
-  properties: Map<string, { value: string; important: boolean }>,
-  origDecl?: any // Pass the original logical declaration for sourcemap
+  properties: Map<string, { value: string; important: boolean }>
 ): Rule {
   const newRule = baseRule.clone();
   newRule.selectors = selectors;
   newRule.removeAll();
-  properties.forEach((decl, prop) => {
-    // Always clone from the original logical declaration if provided
-    if (origDecl) {
-      newRule.append(origDecl.clone({ 
-        prop, 
-        value: decl.value,
-        important: decl.important
-      }));
-    } else {
-      // Fallback: try to find a decl to clone, else create new
-      const foundDecl = baseRule.nodes.find(
-        node => node.type === 'decl'
-      );
-      if (foundDecl) {
-        newRule.append((foundDecl as any).clone({ 
-          prop, 
-          value: decl.value,
-          important: decl.important
-        }));
-      } else {
-        newRule.append({ 
-          prop, 
-          value: decl.value,
-          important: decl.important
-        });
-      }
+  const sources = winningDeclarations(baseRule);
+  const appendProperty = (prop: string) => {
+    const decl = properties.get(prop);
+    const source = sources.get(prop);
+    if (decl && source) {
+      const cloned = source.clone({ prop, value: decl.value, important: decl.important });
+      if (cloned.raws.important) cloned.raws.important = cloned.raws.important.replace(/!\s+/, '!');
+      newRule.append(cloned);
     }
-  });
+  };
+  if (baseRule.nodes.some(node => node.type === 'comment')) {
+    // Keep comments/directives in their original position relative to winners.
+    baseRule.nodes.forEach(node => {
+      if (node.type === 'comment') newRule.append(node.clone());
+      if (node.type === 'decl') {
+        const prop = node.prop.startsWith('--') ? node.prop : node.prop.toLowerCase();
+        if (sources.get(prop) === node) appendProperty(prop);
+      }
+    });
+  } else {
+    for (const prop of orderCascadeProperties(baseRule, properties).keys()) appendProperty(prop);
+  }
   return newRule;
 }
 
@@ -150,31 +146,11 @@ function createDirectionRule(
   selectors: string[],
   properties: Map<string, { value: string; important: boolean }>,
   direction: 'ltr' | 'rtl',
-  config: DirectionConfig,
-  origDecl?: any
+  config: DirectionConfig
 ): Rule | null {
   if (properties.size === 0) return null;
   const scopedSelectors = selectors.map(sel => generateSelector(sel, direction, config));
-  return createRuleWithPropertiesAndSelectors(baseRule, scopedSelectors, properties, origDecl);
-}
-
-// Helper function to process direction-specific rules from property analysis
-function processDirectionSpecificRules(
-  rule: Rule,
-  selectors: string[],
-  ltrProps: Map<string, { value: string; important: boolean }>,
-  rtlProps: Map<string, { value: string; important: boolean }>,
-  config: DirectionConfig,
-  outputOrder: 'ltr-first' | 'rtl-first'
-): Rule[] {
-  const directionRules: [Rule | null, Rule | null] = [
-    createDirectionRule(rule, selectors, ltrProps, 'ltr', config),
-    createDirectionRule(rule, selectors, rtlProps, 'rtl', config)
-  ];
-
-  const results: Rule[] = [];
-  addDirectionRules(results, directionRules, outputOrder);
-  return results;
+  return createRuleWithPropertiesAndSelectors(baseRule, scopedSelectors, properties);
 }
 
 // Optimized rule processing function - processes properties once, then generates rules by selector type
@@ -209,11 +185,14 @@ async function processRule(
 
       // Common properties rule
       if (commonProps.size > 0) {
-        results.push(createRuleWithPropertiesAndSelectors(rule, noscopeSelectors, commonProps));
+        results.push(createRuleWithPropertiesAndSelectors(ltrTransformed, noscopeSelectors, commonProps));
       }
 
       // Direction-specific rules
-      results.push(...processDirectionSpecificRules(rule, noscopeSelectors, ltrOnlyProps, rtlOnlyProps, config, outputOrder));
+      addDirectionRules(results, [
+        createDirectionRule(ltrTransformed, noscopeSelectors, retainCascadeDependencies(ltrTransformed, ltrOnlyProps, commonProps), 'ltr', config),
+        createDirectionRule(rtlTransformed, noscopeSelectors, retainCascadeDependencies(rtlTransformed, rtlOnlyProps, commonProps), 'rtl', config)
+      ], outputOrder);
     }
   }
 
@@ -233,22 +212,22 @@ async function processRule(
 }
 
 const logicalPolyfill: PluginCreator<LogicalPolyfillOptions> = (opts = {}) => {
-  const rtlSelector = opts.rtl?.selector || DEFAULT_CONFIG.rtlSelector;
-  const ltrSelector = opts.ltr?.selector || DEFAULT_CONFIG.ltrSelector;
+  const rtlSelector = opts.rtl?.selector?.trim() || DEFAULT_CONFIG.rtlSelector;
+  const ltrSelector = opts.ltr?.selector?.trim() || DEFAULT_CONFIG.ltrSelector;
   const outputOrder = opts.outputOrder || DEFAULT_CONFIG.outputOrder;
 
   return {
     postcssPlugin: 'postcss-logical-polyfill',
     
-    async Once(root) {
+    async Once(root, { result }) {
       // Simple approach: process rules and replace them in place
-      await processAllRules(root, ltrSelector, rtlSelector, outputOrder);
+      await processAllRules(root, ltrSelector, rtlSelector, outputOrder, result);
     }
   };
 };
 
 // Process all rules recursively, maintaining structure
-async function processAllRules(container: Root | AtRule, ltrSelector: string, rtlSelector: string, outputOrder: 'ltr-first' | 'rtl-first') {
+async function processAllRules(container: Root | AtRule, ltrSelector: string, rtlSelector: string, outputOrder: 'ltr-first' | 'rtl-first', result: Result) {
   const rulesToProcess: Rule[] = [];
   
   // First pass: collect rules that need processing
@@ -256,15 +235,20 @@ async function processAllRules(container: Root | AtRule, ltrSelector: string, rt
 
   container.each(node => {
     if (node.type === 'rule') {
-      const hasLogical = hasLogicalProperties(node);
-      if (hasLogical) rulesToProcess.push(node);
+      if (node.nodes.some(child => child.type === 'rule' || child.type === 'atrule')) {
+        let logical = false;
+        node.walkDecls(decl => { if (hasLogicalDeclaration(decl)) logical = true; });
+        if (logical) result.warn('Expand CSS nesting before postcss-logical-polyfill; this nested rule was left unchanged.', { node });
+        return;
+      }
+      if (hasLogicalProperties(node)) rulesToProcess.push(node);
     } else if (node.type === 'atrule') {
       // Don't process these at-rules, keep them as is
-      if (SKIP_AT_RULES.includes((node as AtRule).name)) return;
+      if (SKIP_AT_RULES.includes(node.name.toLowerCase()) || /^(?:-[a-z]+-)?keyframes$/i.test(node.name)) return;
       
       // Recursively process regular at-rules like media queries
       // Store the promise for later awaiting
-      promises.push(processAllRules(node, ltrSelector, rtlSelector, outputOrder));
+      promises.push(processAllRules(node, ltrSelector, rtlSelector, outputOrder, result));
     }
   });
   
