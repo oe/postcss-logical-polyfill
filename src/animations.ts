@@ -4,7 +4,7 @@ import { applyLogicalTransformation, hasLogicalProperties } from './logical-prop
 
 type Direction = 'ltr' | 'rtl';
 export type AnimationContext = Map<string, Record<Direction, string>>;
-const globals = /^(initial|inherit|unset|revert|revert-layer)$/i;
+const globals = /^(initial|inherit|unset|revert|revert-layer|default)$/i;
 const identifier = /^(?:--|-?(?:[_a-z]|[^\x00-\x7f]|\\[^\n\r\f]))(?:[_a-z0-9-]|[^\x00-\x7f]|\\[^\n\r\f])*$/i;
 const keyframes = /^(?:-[a-z]+-)?keyframes$/i;
 
@@ -55,11 +55,11 @@ function referenceNodes(decl: Declaration): { parsed: ReturnType<typeof valuePar
         else { valid = false; break; }
       } else if (node.type === 'word') {
         if (globals.test(token)) { valid = false; break; }
-        if (/^[-+]?(?:\d*\.)?\d+(ms|s)$/.test(token)) {
+        if (/^[-+]?(?:\d*\.?\d+|\d+\.)(?:e[-+]?\d+)?(ms|s)$/.test(token)) {
           slot = occupied.has('duration') ? 'delay' : 'duration';
-          if (occupied.has(slot) || (slot === 'duration' && token.startsWith('-'))) { valid = false; break; }
+          if (occupied.has(slot) || (slot === 'duration' && parseFloat(token) < 0)) { valid = false; break; }
         } else if (/^(ease|linear|ease-in|ease-out|ease-in-out|step-start|step-end)$/.test(token) && !occupied.has('easing')) slot = 'easing';
-        else if ((token === 'infinite' || /^(?:\d*\.)?\d+$/.test(token)) && !occupied.has('iterations')) slot = 'iterations';
+        else if ((token === 'infinite' || /^\+?(?:\d*\.?\d+|\d+\.)(?:e[-+]?\d+)?$/.test(token)) && !occupied.has('iterations')) slot = 'iterations';
         else if (/^(normal|reverse|alternate|alternate-reverse)$/.test(token) && !occupied.has('direction')) slot = 'direction';
         else if (/^(none|forwards|backwards|both)$/.test(token) && !occupied.has('fill')) slot = 'fill';
         else if (/^(running|paused)$/.test(token) && !occupied.has('play')) slot = 'play';

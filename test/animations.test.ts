@@ -24,7 +24,7 @@ describe('opt-in logical animations', () => {
     expect(((definitions[1].first as Rule).first as Declaration).prop).toBe('margin-left');
     expect(((definitions[2].first as Rule).first as Declaration).prop).toBe('margin-right');
   });
-  it.each(['slide 1s linear', '1s ease-in 200ms 2 alternate both paused slide', 'slide 1s steps(2, end)'])('rewrites shorthand %s', async value => {
+  it.each(['slide 1e3ms linear', 'slide +1s +2', 'slide -0s both', 'slide 1s linear', '1s ease-in 200ms 2 alternate both paused slide', 'slide 1s steps(2, end)'])('rewrites shorthand %s', async value => {
     const result = await process(frames + `.x{animation:${value}}`);
     expect(refs(result.root, 'animation').map(([, value]) => value)).toEqual([value.replace('slide', 'lp-slide-ltr'), value.replace('slide', 'lp-slide-rtl')]);
   });
