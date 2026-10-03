@@ -159,7 +159,7 @@ See the [configuration guide](https://github.com/oe/postcss-logical-polyfill/blo
 - Repeated physical properties within an optimized rule are resolved by `!important` priority, then source order. Overlapping common shorthands are retained in direction rules where needed to preserve their ordering relative to directional longhands.
 - Browser compatibility depends on the physical properties and values in the output. Transforming a logical name does not polyfill unrelated CSS features such as custom properties, scroll behavior or containment.
 
-When `transition-property` expands a shorthand such as `margin-inline`, static companion timing lists are expanded to keep their original correspondence. Dynamic or inherited timing lists that cannot be aligned are preserved with a PostCSS warning.
+When `transition-property` expands a shorthand such as `margin-inline`, static companion timing lists are expanded to keep their original correspondence. Dynamic or inherited lists, and component lists extracted from function-valued `transition` shorthands, are preserved with a PostCSS warning when they cannot be aligned safely. Explicit timing longhands with static functions can be aligned.
 
 See [how it works](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/how-it-works.mdx) and [troubleshooting](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/guides/troubleshooting.mdx).
 

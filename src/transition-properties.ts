@@ -8,10 +8,14 @@ const defaults: Record<string, string> = {
 };
 const mappingCache = new WeakMap<Plugin, Map<string, string[]>>();
 const globalValues = /^(initial|inherit|unset|revert|revert-layer)$/i;
+const identifier = /^(?:--|-?(?:[_a-z]|[^\x00-\x7f]|\\[^\n\r\f]))(?:[_a-z0-9-]|[^\x00-\x7f]|\\[^\n\r\f])*$/i;
 
-function shorthand(value: string): Record<string, string> | null {
+// null is invalid CSS; undefined means its component lists cannot be resolved safely.
+function shorthand(value: string): Record<string, string> | null | undefined {
   const lists: Record<string, string[]> = Object.fromEntries(Object.keys(defaults).map(prop => [prop, []]));
-  for (const item of postcss.list.comma(value)) {
+  const items = postcss.list.comma(value);
+  for (const item of items) {
+    if (!item.trim()) return null;
     const values = { ...defaults };
     const assigned = new Set<string>();
     for (const node of valueParser(item).nodes) {
@@ -22,21 +26,23 @@ function shorthand(value: string): Record<string, string> | null {
         if (assigned.has(slot)) return null;
         assigned.add(slot);
         values[`transition-${slot}`] = token;
-      } else if (/^(ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end)$/i.test(token) ||
-                 (node.type === 'function' && /^(cubic-bezier|steps|linear)$/i.test(node.value))) {
-        if (assigned.has('easing')) return null;
+      } else if (node.type === 'function') {
+        // Math and timing functions may depend on runtime values or be invalid.
+        // Keep the original property list rather than guessing their reset behavior.
+        return undefined;
+      } else if (/^(ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end)$/i.test(token) && !assigned.has('easing')) {
         assigned.add('easing');
         values['transition-timing-function'] = token;
-      } else if (/^(normal|allow-discrete)$/i.test(token)) {
-        if (assigned.has('behavior')) return null;
+      } else if (/^(normal|allow-discrete)$/i.test(token) && !assigned.has('behavior')) {
         assigned.add('behavior');
         values['transition-behavior'] = token;
-      } else if (node.type === 'word' && !globalValues.test(token)) {
+      } else if (node.type === 'word' && identifier.test(token) && !globalValues.test(token) && !/^default$/i.test(token)) {
         if (assigned.has('property')) return null;
         assigned.add('property');
         values['transition-property'] = token;
       } else return null;
     }
+    if (items.length > 1 && values['transition-property'].toLowerCase() === 'none') return null;
     for (const prop of Object.keys(defaults)) lists[prop].push(values[prop]);
   }
   return Object.fromEntries(Object.entries(lists).map(([prop, values]) => [prop, values.join(', ')]));
@@ -44,17 +50,17 @@ function shorthand(value: string): Record<string, string> | null {
 
 /** Expand the effective property list and keep its companion timing lists aligned. */
 export async function transformTransitionProperties(rule: Rule, processor: Plugin, result?: Result, warningNode = rule): Promise<void> {
-  type State = { value: string; important: boolean; source?: Declaration };
+  type State = { value: string; important: boolean; source?: Declaration; opaque?: boolean };
   const state = new Map<string, State>(Object.entries(defaults).map(([prop, value]) => [prop, { value, important: false }]));
   rule.walkDecls(decl => {
     if (decl.parent !== rule) return;
     const prop = decl.prop.toLowerCase();
     const values = prop === 'transition' ? shorthand(decl.value) : null;
-    if (prop === 'transition' && !values && !globalValues.test(decl.value) && !/\b(?:var|env)\(/i.test(decl.value)) return;
+    if (prop === 'transition' && values === null && !globalValues.test(decl.value) && !/\b(?:var|env)\(/i.test(decl.value)) return;
     const entries = prop === 'transition' ? Object.keys(defaults).map(key => [key, values?.[key] ?? decl.value]) : [[prop, decl.value]];
     for (const [key, value] of entries) {
       const previous = state.get(key);
-      if (previous && (!previous.important || decl.important)) state.set(key, { value, important: !!decl.important, source: decl });
+      if (previous && (!previous.important || decl.important)) state.set(key, { value, important: !!decl.important, source: decl, opaque: prop === 'transition' && values === undefined });
     }
   });
   const property = state.get('transition-property')!;
@@ -67,7 +73,7 @@ export async function transformTransitionProperties(rule: Rule, processor: Plugi
     mappingCache.set(processor, cache);
     if (cache.has(name)) { mappings.push(cache.get(name)!); continue; }
     if (!Object.prototype.hasOwnProperty.call(processor.Declaration, name.toLowerCase())) { mappings.push([name]); continue; }
-    const transformed = await postcss([processor]).process(`.x{${name}:initial}`, { from: undefined });
+    const transformed = await postcss([processor]).process(`.x{${name.toLowerCase()}:initial}`, { from: undefined });
     const first = transformed.root.first as Rule;
     const mapped = first.nodes.filter(node => node.type === 'decl').map(decl => decl.prop);
     cache.set(name, mapped);
@@ -75,11 +81,11 @@ export async function transformTransitionProperties(rule: Rule, processor: Plugi
   }
   if (mappings.every((mapped, index) => mapped.length === 1 && mapped[0] === names[index])) return;
   const warn = () => {
-    const text = 'Cannot align transition-property with dynamic or inherited timing lists; this declaration was left unchanged.';
+    const text = 'Cannot safely align transition-property with unresolved or inherited timing lists; this declaration was left unchanged.';
     if (result && !result.warnings().some(w => w.node === warningNode && w.text === text)) result.warn(text, { node: warningNode });
   };
   const companions = [...state].filter(([prop]) => prop !== 'transition-property');
-  if (mappings.some(mapped => mapped.length > 1) && companions.some(([, item]) => globalValues.test(item.value) || /\b(?:var|env)\(/i.test(item.value))) { warn(); return; }
+  if (mappings.some(mapped => mapped.length > 1) && companions.some(([, item]) => item.opaque || globalValues.test(item.value) || /\b(?:var|env)\(/i.test(item.value))) { warn(); return; }
   const expanded = mappings.flat();
   if (expanded.length > 10000) { warn(); return; }
   property.source.value = expanded.join(', ');

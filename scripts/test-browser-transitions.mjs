@@ -11,7 +11,16 @@ const cases = [
   'transition-property:margin-inline-start,opacity;transition-duration:1s,2s;transition-delay:100ms,200ms',
   'transition:opacity 1e3ms linear,color 2e3ms linear;transition-property:margin-inline,opacity',
   'transition-duration:1s,2s;transition:opacity 1s 2s 3s;transition-property:margin-inline,opacity',
-  'transition:opacity -100ms 1s linear,color -200ms 2s linear;transition-property:margin-inline,opacity'
+  'transition:opacity -100ms 1s linear,color -200ms 2s linear;transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:2 3s;transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:ease linear 3s;transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:normal allow-discrete 3s;transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:none 3s,opacity 2s;transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:opacity 3s,none 4s;transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:opacity calc(1s + 1s);transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:opacity 1s steps(0);transition-property:margin-inline,opacity',
+  'transition-duration:1s,2s;transition:opacity 1s cubic-bezier(2,0,2,1);transition-property:margin-inline,opacity',
+  'transition-property:MARGIN-INLINE-START,opacity;transition-duration:1s,2s'
 ].map(decls => `.x{margin-inline-start:0;opacity:1;${decls}}.x.end{margin-inline-start:100px;opacity:0}`);
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_BIN || '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 try {
