@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Preserve repeated CSS declarations, fallback values, declaration order and `!important` when producing direction-specific rules.
+- Preserve functions containing spaces in scroll margin and padding shorthand values.
+
+### Changed
+
+- Align runtime requirements with postcss-logical: Node.js >=18 and PostCSS ^8.4.
+- Update installation documentation and test Node.js 22 and 24 with pinned pnpm and frozen installs in CI.
+- Restrict documentation deployment to pushes to main.
+- Keep the plugin API and default options unchanged.
+
 ## [0.4.0] - 2025-05-27
 
 ### Added

@@ -15,7 +15,7 @@
  * @format
  */
 
-import { Declaration } from 'postcss';
+import { Declaration, list } from 'postcss';
 
 /**
  * Extended Declaration functions for scroll-related logical properties
@@ -48,7 +48,7 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-margin-inline': (decl, { inlineDirection }) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = list.space(decl.value);
     const startValue = values[0];
     const endValue = values[1] || startValue;
 
@@ -73,7 +73,7 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-margin-block': (decl) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = list.space(decl.value);
     const startValue = values[0];
     const endValue = values[1] || startValue;
 
@@ -102,7 +102,7 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-padding-inline': (decl, { inlineDirection }) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = list.space(decl.value);
     const startValue = values[0];
     const endValue = values[1] || startValue;
 
@@ -127,7 +127,7 @@ export const SHIM_DECLARATIONS: Record<
   },
 
   'scroll-padding-block': (decl) => {
-    const values = decl.value.trim().split(/\s+/);
+    const values = list.space(decl.value);
     const startValue = values[0];
     const endValue = values[1] || startValue;
 

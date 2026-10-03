@@ -211,6 +211,8 @@ This plugin intelligently processes CSS through a 7-phase optimization pipeline:
 6. **🎯 Smart Priority**: Implements rightmost selector precedence for predictable behavior
 7. **✨ Output**: Generates clean, optimized CSS for maximum compatibility
 
+When a transformation produces repeated physical properties, the plugin keeps complete direction-specific declaration sequences to preserve fallbacks, `!important`, and cascade order. Direction-independent declarations also remain in the common rule. This can produce larger CSS than the usual optimized output.
+
 **➡️ [Detailed technical explanation](./docs/HOW-IT-WORKS.md)**
 
 ## Getting Started
@@ -309,8 +311,8 @@ Having issues? Check our troubleshooting guide for common problems and solutions
 
 ## Requirements
 
-- Node.js 16.0.0 or later
-- PostCSS 8.0.0 or later
+- Node.js 18.4.0 or later
+- PostCSS 8.4.0 or later
 
 ## Contributing
 

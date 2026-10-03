@@ -15,12 +15,15 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
           }
         `,
         expected: `
-
           [dir="ltr"] .element {
+            margin-left: 1rem;
+            margin-right: 1rem;
             margin-left: 2rem;
             margin-right: 3rem;
           }
           [dir="rtl"] .element {
+            margin-right: 1rem;
+            margin-left: 1rem;
             margin-right: 2rem;
             margin-left: 3rem;
           }
@@ -37,10 +40,14 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
         `,
         expected: `
           [dir="ltr"] .element {
+            padding-left: 10px;
+            padding-right: 20px;
             padding-left: 15px;
             padding-right: 25px;
           }
           [dir="rtl"] .element {
+            padding-right: 10px;
+            padding-left: 20px;
             padding-right: 15px;
             padding-left: 25px;
           }
@@ -68,12 +75,28 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
             border-right-color: purple;
           }
           [dir="ltr"] .element {
+            border-left: 1px solid red;
+            border-right: 1px solid red;
             border-left: 2px dashed blue;
             border-right: 3px dotted green;
+            border-left-width: 4px;
+            border-right-width: 4px;
+            border-left-style: solid;
+            border-right-style: solid;
+            border-left-color: purple;
+            border-right-color: purple;
           }
           [dir="rtl"] .element {
+            border-right: 1px solid red;
+            border-left: 1px solid red;
             border-right: 2px dashed blue;
             border-left: 3px dotted green;
+            border-right-width: 4px;
+            border-left-width: 4px;
+            border-right-style: solid;
+            border-left-style: solid;
+            border-right-color: purple;
+            border-left-color: purple;
           }
         `
       },
@@ -88,10 +111,14 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
         `,
         expected: `
           [dir="ltr"] .element {
+            left: 10px;
+            right: 10px;
             left: 20px;
             right: 30px;
           }
           [dir="rtl"] .element {
+            right: 10px;
+            left: 10px;
             right: 20px;
             left: 30px;
           }
@@ -158,14 +185,22 @@ describe('All Logical Properties - Comprehensive Coverage', () => {
         `,
         expected: `
           [dir="ltr"] .element {
+            scroll-margin-left: 5px;
+            scroll-margin-right: 5px;
             scroll-margin-left: 10px;
             scroll-margin-right: 15px;
+            scroll-padding-left: 8px;
+            scroll-padding-right: 8px;
             scroll-padding-left: 12px;
             scroll-padding-right: 16px;
           }
           [dir="rtl"] .element {
+            scroll-margin-right: 5px;
+            scroll-margin-left: 5px;
             scroll-margin-right: 10px;
             scroll-margin-left: 15px;
+            scroll-padding-right: 8px;
+            scroll-padding-left: 8px;
             scroll-padding-right: 12px;
             scroll-padding-left: 16px;
           }

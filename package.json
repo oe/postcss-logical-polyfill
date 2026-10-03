@@ -13,6 +13,7 @@
     "build": "vite build",
     "test": "vitest",
     "test:ci": "vitest run",
+    "test:package": "node scripts/test-package.mjs",
     "test:coverage": "vitest run --coverage",
     "test:coverage:watch": "vitest --coverage",
     "test:coverage:ui": "vitest --coverage --ui",
@@ -50,10 +51,10 @@
   },
   "homepage": "https://github.com/oe/postcss-logical-polyfill#readme",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "peerDependencies": {
-    "postcss": "^8.0.0"
+    "postcss": "^8.4.0"
   },
   "dependencies": {
     "postcss-logical": "^8.1.0"

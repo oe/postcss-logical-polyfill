@@ -9,6 +9,10 @@ import { Card, CardGrid, Steps } from '@astrojs/starlight/components';
 
 PostCSS Logical Polyfill processes CSS through a sophisticated 7-phase optimization pipeline that intelligently transforms logical properties into physical properties while preserving directional behavior.
 
+## Declaration Preservation
+
+When a transformation produces repeated physical properties, the plugin keeps complete direction-specific declaration sequences to preserve fallbacks, `!important`, and cascade order. Direction-independent declarations also remain in the common rule. This can produce larger CSS than the usual optimized output.
+
 ## Processing Pipeline
 
 <Steps>
