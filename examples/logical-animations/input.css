@@ -1,0 +1,11 @@
+.box {
+  inline-size: 80px;
+  block-size: 80px;
+  background: #38bdf8;
+  animation: slide 2s linear infinite alternate;
+}
+
+@keyframes slide {
+  from { margin-inline-start: 0; }
+  to { margin-inline-start: 160px; }
+}

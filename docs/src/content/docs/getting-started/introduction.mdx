@@ -21,7 +21,7 @@ Other tools also generate combined LTR/RTL styles. This plugin focuses on logica
 
 ## Compatibility
 
-The plugin assumes horizontal writing modes. It transforms logical property names in `transition`, but leaves keyframe contents and animation names untouched. Expand CSS nesting before running the plugin.
+The plugin assumes horizontal writing modes. It transforms logical property names in `transition` and `transition-property`. Keyframes and animation references are left untouched by default; enable `animations: true` to compile static references to logical keyframes. Expand CSS nesting before running the plugin.
 
 Generated direction prefixes add specificity. Use matching scopes for overrides in separate rules and explicit direction-scoped selectors for subtrees with conflicting direction ancestors.
 

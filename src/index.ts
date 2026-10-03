@@ -21,6 +21,7 @@ import {
   analyzePropertyDifferences,
   winningDeclarations,
 } from './logical-properties';
+import { AnimationContext, prepareAnimations, hasAnimationReferences, transformAnimationReferences } from './animations';
 import { orderCascadeProperties, retainCascadeDependencies } from './cascade';
 
 // Skip processing of @keyframes and other special at-rules that shouldn't be transformed
@@ -70,6 +71,8 @@ export interface LogicalPolyfillOptions {
    * @default 'ltr-first'
    */
   outputOrder?: 'ltr-first' | 'rtl-first';
+  /** Compile referenced logical keyframes and animation names for both directions. Default: false. */
+  animations?: boolean;
 }
 
 // Categorize selectors by their direction context
@@ -159,7 +162,8 @@ async function processRule(
   ltrSelector: string,
   rtlSelector: string,
   outputOrder: 'ltr-first' | 'rtl-first',
-  result: Result
+  result: Result,
+  animations: AnimationContext
 ): Promise<Rule[]> {
   const config: DirectionConfig = { ltr: ltrSelector, rtl: rtlSelector };
   const results: Rule[] = [];
@@ -174,6 +178,9 @@ async function processRule(
   if (!ltrTransformed || !rtlTransformed) {
     return []; // Transformation failure
   }
+
+  transformAnimationReferences(ltrTransformed, animations, 'ltr');
+  transformAnimationReferences(rtlTransformed, animations, 'rtl');
 
   // Process unscoped selectors
   if (noscopeSelectors.length > 0) {
@@ -216,19 +223,21 @@ const logicalPolyfill: PluginCreator<LogicalPolyfillOptions> = (opts = {}) => {
   const rtlSelector = opts.rtl?.selector?.trim() || DEFAULT_CONFIG.rtlSelector;
   const ltrSelector = opts.ltr?.selector?.trim() || DEFAULT_CONFIG.ltrSelector;
   const outputOrder = opts.outputOrder || DEFAULT_CONFIG.outputOrder;
+  const animationsEnabled = Boolean(opts.animations);
 
   return {
     postcssPlugin: 'postcss-logical-polyfill',
     
     async Once(root, { result }) {
       // Simple approach: process rules and replace them in place
-      await processAllRules(root, ltrSelector, rtlSelector, outputOrder, result);
+      const animations = animationsEnabled ? await prepareAnimations(root, result, outputOrder) : new Map();
+      await processAllRules(root, ltrSelector, rtlSelector, outputOrder, result, animations);
     }
   };
 };
 
 // Process all rules recursively, maintaining structure
-async function processAllRules(container: Root | AtRule, ltrSelector: string, rtlSelector: string, outputOrder: 'ltr-first' | 'rtl-first', result: Result) {
+async function processAllRules(container: Root | AtRule, ltrSelector: string, rtlSelector: string, outputOrder: 'ltr-first' | 'rtl-first', result: Result, animations: AnimationContext) {
   const rulesToProcess: Rule[] = [];
   
   // First pass: collect rules that need processing
@@ -242,14 +251,14 @@ async function processAllRules(container: Root | AtRule, ltrSelector: string, rt
         if (logical) result.warn('Expand CSS nesting before postcss-logical-polyfill; this nested rule was left unchanged.', { node });
         return;
       }
-      if (hasLogicalProperties(node)) rulesToProcess.push(node);
+      if (hasLogicalProperties(node) || hasAnimationReferences(node, animations)) rulesToProcess.push(node);
     } else if (node.type === 'atrule') {
       // Don't process these at-rules, keep them as is
       if (SKIP_AT_RULES.includes(node.name.toLowerCase()) || /^(?:-[a-z]+-)?keyframes$/i.test(node.name)) return;
       
       // Recursively process regular at-rules like media queries
       // Store the promise for later awaiting
-      promises.push(processAllRules(node, ltrSelector, rtlSelector, outputOrder, result));
+      promises.push(processAllRules(node, ltrSelector, rtlSelector, outputOrder, result, animations));
     }
   });
   
@@ -258,7 +267,7 @@ async function processAllRules(container: Root | AtRule, ltrSelector: string, rt
   
   // Second pass: process rules
   for (const rule of rulesToProcess) {
-    const processedRules = await processRule(rule, ltrSelector, rtlSelector, outputOrder, result);
+    const processedRules = await processRule(rule, ltrSelector, rtlSelector, outputOrder, result, animations);
     
     // Replace the original rule with processed rules
     if (processedRules.length > 0) {

@@ -12,6 +12,8 @@ for (const family of ['margin', 'padding', 'scroll-margin', 'scroll-padding']) {
   shorthands.set(family, sides.map(side => `${family}-${side}`));
 }
 shorthands.set('transition', ['property', 'duration', 'timing-function', 'delay', 'behavior'].map(part => `transition-${part}`));
+shorthands.set('animation', ['name', 'duration', 'timing-function', 'delay', 'iteration-count', 'direction', 'fill-mode', 'play-state', 'timeline', 'range-start', 'range-end'].map(part => `animation-${part}`));
+shorthands.set('-webkit-animation', ['name', 'duration', 'timing-function', 'delay', 'iteration-count', 'direction', 'fill-mode', 'play-state'].map(part => `-webkit-animation-${part}`));
 shorthands.set('inset', sides);
 shorthands.set('border', sides.flatMap(side => borderParts.map(part => `border-${side}-${part}`)).concat(borderImage));
 for (const side of sides) shorthands.set(`border-${side}`, borderParts.map(part => `border-${side}-${part}`));
