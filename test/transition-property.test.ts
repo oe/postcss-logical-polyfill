@@ -42,6 +42,21 @@ describe('transition-property', () => {
       expect(values(rule)['transition-duration']).toBe('1e3ms, 1e3ms, 2e3ms');
     }
   });
+  it('aligns discrete-transition behavior from an earlier shorthand', async () => {
+    const result = await process('.x{transition:opacity 1s normal, display 2s allow-discrete;transition-property:margin-inline,display}');
+    const rules = (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='));
+    expect(rules).toHaveLength(2);
+    for (const rule of rules) {
+      expect(values(rule)['transition-behavior']).toBe('normal, normal, allow-discrete');
+      expect(values(rule)['transition-duration']).toBe('1s, 1s, 2s');
+    }
+  });
+  it('ignores a shorthand with conflicting behavior keywords', async () => {
+    const result = await process('.x{transition-behavior:normal,allow-discrete;transition:opacity 1s normal allow-discrete;transition-property:margin-inline,display}');
+    const rules = (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='));
+    expect(rules).toHaveLength(2);
+    for (const rule of rules) expect(values(rule)['transition-behavior']).toBe('normal, normal, allow-discrete');
+  });
   it('preserves important companion declarations', async () => {
     const result = await process('.x{transition-duration:1s,2s!important;transition:color 3s;transition-property:margin-inline,opacity}');
     const rules = (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='));
