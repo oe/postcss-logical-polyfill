@@ -91,4 +91,32 @@ describe('transition-property', () => {
   it('does not modify ordinary or dynamic property lists', async () => {
     for (const css of ['.x{transition-property:opacity,color}', '.x{transition-property:var(--properties)}']) expect((await process(css)).css).toBe(css);
   });
+  it.each(['2 3s', 'none 3s,opacity 2s', 'opacity 3s,none 4s'])('ignores invalid shorthand %s without resetting previous durations', async shorthand => {
+    const result = await process(`.x{transition-duration:1s,2s;transition:${shorthand};transition-property:margin-inline,opacity}`);
+    const rules = (result.root.nodes as Rule[]).filter(r => r.selector.includes('dir='));
+    expect(rules).toHaveLength(2);
+    for (const rule of rules) expect(values(rule)['transition-duration']).toBe('1s, 1s, 2s');
+  });
+  it.each(['ease linear 3s', 'normal allow-discrete 3s'])('accepts a keyword as the property name after its component slot is filled: %s', async shorthand => {
+    const result = await process(`.x{transition-duration:1s,2s;transition:${shorthand};transition-property:margin-inline,opacity}`);
+    expect(result.css).not.toContain('transition-duration:1s, 1s, 2s');
+    expect(result.warnings()).toHaveLength(0);
+  });
+  it.each(['opacity calc(1s + 1s)', 'opacity 1s steps(0)', 'opacity 1s cubic-bezier(2,0,2,1)'])('preserves the list when function-valued shorthand cannot be resolved safely: %s', async shorthand => {
+    const css = `.x{transition-duration:1s,2s;transition:${shorthand};transition-property:margin-inline,opacity}`;
+    const result = await process(css);
+    expect(result.css).toBe(css);
+    expect(result.warnings()).toHaveLength(1);
+  });
+  it('keeps unrelated rules intact, including fallback declarations and comments', async () => {
+    const css = '.x{color:red;/* fallback */color:unsupported();transition-property:opacity,color}';
+    expect((await process(css)).css).toBe(css);
+  });
+  it('recognizes case-insensitive logical property names', async () => {
+    const result = await process('.x{transition-property:MARGIN-INLINE-START,opacity}');
+    expect((result.root.nodes as Rule[]).map(values)).toEqual([
+      { 'transition-property': 'margin-left, opacity' },
+      { 'transition-property': 'margin-right, opacity' }
+    ]);
+  });
 });

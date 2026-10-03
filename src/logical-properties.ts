@@ -42,7 +42,8 @@ export function hasLogicalDeclaration(decl: Declaration): boolean {
   if (prop === 'background' || prop === 'background-image') return hasLogicalGradientDirection(decl.value);
   if (prop === 'float' || prop === 'clear') return ['inline-start', 'inline-end'].includes(decl.value.toLowerCase());
   if (prop === 'resize') return ['inline', 'block'].includes(decl.value.toLowerCase());
-  return prop === 'transition-property' || supportedLogicalPropertiesSet.has(prop);
+  if (prop === 'transition-property') return postcss.list.comma(decl.value).some(name => supportedLogicalPropertiesSet.has(name.toLowerCase()));
+  return supportedLogicalPropertiesSet.has(prop);
 }
 
 /**
@@ -143,5 +144,4 @@ export function analyzePropertyDifferences(ltrRule: Rule, rtlRule: Rule) {
 
   return { commonProps, ltrOnlyProps, rtlOnlyProps };
 }
-
 

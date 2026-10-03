@@ -393,4 +393,4 @@ Both `repeating-linear-gradient` and `repeating-radial-gradient` support all the
 
 ## Transition property lists
 
-`transition-property` maps logical names to their physical counterparts. Shorthands such as `margin-inline` expand to both sides. Static duration, delay, timing-function and behavior lists are aligned with the expanded list. When runtime variables or inherited timing lists make expansion ambiguous, the declaration is retained with a PostCSS warning.
+`transition-property` maps logical names to their physical counterparts. Shorthands such as `margin-inline` expand to both sides. Static duration, delay, timing-function and behavior lists are aligned with the expanded list. When runtime variables, inherited timing lists or function-valued `transition` shorthands make expansion ambiguous, the declaration is retained with a PostCSS warning. Explicit timing longhands with static functions can be aligned.
