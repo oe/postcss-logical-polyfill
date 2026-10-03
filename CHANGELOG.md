@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Clarify the plugin’s target users and alternatives, add ESM and explicit direction setup to quick starts, repair documentation links and describe browser compatibility limits.
+- Update the npm description and add relevant logical CSS and internationalization keywords.
+
 - Align runtime requirements with postcss-logical: Node.js >=18 and PostCSS ^8.4.
 - Update installation documentation and test Node.js 22 and 24 with pnpm pinned by packageManager and frozen installs in CI.
 - Restrict documentation deployment to pushes to main.

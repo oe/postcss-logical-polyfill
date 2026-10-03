@@ -120,46 +120,31 @@ Control the order of generated rules for unscoped properties:
 
 ### Next.js
 
+Use a PostCSS configuration rather than adding another CSS loader to Next.js:
+
 ```js
-// next.config.js
-module.exports = {
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.css$/,
-      use: [
-        'style-loader',
-        'css-loader',
-        {
-          loader: 'postcss-loader',
-          options: {
-            postcssOptions: {
-              plugins: [
-                require('postcss-logical-polyfill')({
-                  rtl: { selector: '[dir="rtl"]' },
-                  ltr: { selector: '[dir="ltr"]' }
-                })
-              ]
-            }
-          }
-        }
-      ]
-    });
-    return config;
+// postcss.config.mjs
+export default {
+  plugins: {
+    'postcss-logical-polyfill': {}
   }
 };
 ```
+
+A custom PostCSS configuration replaces Next.js defaults. Include the other plugins your application needs; run nesting expansion and any CSS-producing framework plugin before this plugin. Set the root HTML `dir` attribute in your layout.
 
 ### Vite
 
 ```js
 // vite.config.js
 import { defineConfig } from 'vite';
+import logicalPolyfill from 'postcss-logical-polyfill';
 
 export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        require('postcss-logical-polyfill')({
+        logicalPolyfill({
           outputOrder: 'ltr-first'
         })
       ]
@@ -202,31 +187,9 @@ module.exports = {
 
 ### Tailwind CSS
 
-```js
-// tailwind.config.js
-module.exports = {
-  content: ['./src/**/*.{html,js}'],
-  theme: {
-    extend: {}
-  },
-  plugins: [],
-  // Add to PostCSS processing
-  corePlugins: {
-    // Disable Tailwind's logical properties if using this plugin
-    margin: true,
-    padding: true
-  }
-};
+Run this plugin after Tailwind generates its CSS so that generated logical declarations can be transformed. Configure the Tailwind PostCSS plugin for your installed major version (`tailwindcss` for v3, `@tailwindcss/postcss` for v4). Keep any other processors required by your target browsers.
 
-// postcss.config.js
-module.exports = {
-  plugins: [
-    require('tailwindcss'),
-    require('postcss-logical-polyfill')(),
-    require('autoprefixer')
-  ]
-};
-```
+This plugin transforms logical properties; it does not mirror physical utilities such as `ml-*` and `mr-*`. Prefer logical utilities when you need direction-aware layouts.
 
 ## Advanced Configuration
 
@@ -298,7 +261,7 @@ function toggleDirection() {
 ### React Example
 
 ```jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function App() {
   const [direction, setDirection] = useState('ltr');
@@ -363,7 +326,7 @@ You can debug the transformation process by examining the generated CSS:
 const postcss = require('postcss');
 const logicalPolyfill = require('postcss-logical-polyfill');
 
-const result = postcss([logicalPolyfill()])
+const result = await postcss([logicalPolyfill()])
   .process(css, { from: undefined });
 
 console.log('Original CSS:', css);
@@ -390,7 +353,7 @@ console.log('Transformed CSS:', result.css);
 2. **Test Both Directions**: Test your layout in both LTR and RTL modes
 3. **Use Block Properties**: Prefer block-direction properties when possible for better performance
 4. **Consistent Selectors**: Use consistent direction selectors across your application
-5. **Framework Integration**: Configure the plugin early in your PostCSS pipeline
+5. **Framework Integration**: Run the plugin after CSS generation and nesting expansion
 
 ## Migration Guide
 
@@ -413,4 +376,4 @@ console.log('Transformed CSS:', result.css);
 
 ### From Other Logical Property Tools
 
-If migrating from other logical property tools, note that this plugin works in the opposite direction - it converts logical properties TO physical properties for compatibility.
+Like `postcss-logical`, this plugin converts logical properties to physical properties. It generates both horizontal LTR and RTL scopes in one stylesheet, rather than mapping all declarations for one configured direction. Review the generated selectors, specificity and supported properties when migrating.
