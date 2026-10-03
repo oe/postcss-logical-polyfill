@@ -158,7 +158,8 @@ async function processRule(
   rule: Rule,
   ltrSelector: string,
   rtlSelector: string,
-  outputOrder: 'ltr-first' | 'rtl-first' = 'ltr-first'
+  outputOrder: 'ltr-first' | 'rtl-first',
+  result: Result
 ): Promise<Rule[]> {
   const config: DirectionConfig = { ltr: ltrSelector, rtl: rtlSelector };
   const results: Rule[] = [];
@@ -167,8 +168,8 @@ async function processRule(
   const { ltrSelectors, rtlSelectors, noscopeSelectors } = categorizeSelectors(rule.selectors, config);
 
   // Transform properties once for the entire rule
-  const ltrTransformed = await applyLogicalTransformation(rule, 'ltr');
-  const rtlTransformed = await applyLogicalTransformation(rule, 'rtl');
+  const ltrTransformed = await applyLogicalTransformation(rule, 'ltr', result);
+  const rtlTransformed = await applyLogicalTransformation(rule, 'rtl', result);
 
   if (!ltrTransformed || !rtlTransformed) {
     return []; // Transformation failure
@@ -257,7 +258,7 @@ async function processAllRules(container: Root | AtRule, ltrSelector: string, rt
   
   // Second pass: process rules
   for (const rule of rulesToProcess) {
-    const processedRules = await processRule(rule, ltrSelector, rtlSelector, outputOrder);
+    const processedRules = await processRule(rule, ltrSelector, rtlSelector, outputOrder, result);
     
     // Replace the original rule with processed rules
     if (processedRules.length > 0) {

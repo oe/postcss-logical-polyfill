@@ -7,7 +7,7 @@
  * 
  * Enhanced with shim support for additional logical properties and values.
  */
-import postcss, { Declaration, Rule } from 'postcss';
+import postcss, { Declaration, Rule, Result } from 'postcss';
 import logical from 'postcss-logical';
 import { extendProcessors } from './logical-shim';
 import { extendProcessorsWithExperimental, hasLogicalGradientDirection } from './logical-exp';
@@ -47,13 +47,18 @@ export function hasLogicalDeclaration(decl: Declaration): boolean {
 /**
  * Apply logical property transformation to a rule
  */
-export async function applyLogicalTransformation(rule: Rule, direction: 'ltr' | 'rtl'): Promise<Rule | null> {
+export async function applyLogicalTransformation(rule: Rule, direction: 'ltr' | 'rtl', result?: Result): Promise<Rule | null> {
   const processor = PROCESSORS[direction];
   const tempRoot = postcss.root();
   tempRoot.append(rule.clone());
   
   try {
     const transformed = await postcss([processor]).process(tempRoot, { from: undefined });
+    for (const warning of transformed.warnings()) {
+      if (result && !result.warnings().some(existing => existing.node === rule && existing.text === warning.text)) {
+        result.warn(warning.text, { node: rule });
+      }
+    }
     const transformedRule = transformed.root.nodes.find(node => node.type === 'rule');
     return transformedRule?.type === 'rule' ? transformedRule : null;
   } catch (error) {

@@ -15,13 +15,13 @@ For example, `margin-inline-start` becomes `margin-left` in LTR and `margin-righ
 | Compile logical properties for one configured direction or writing mode | [postcss-logical](https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-logical), also available through [postcss-preset-env](https://github.com/csstools/postcss-plugins/tree/main/plugin-packs/postcss-preset-env) |
 | Mirror existing physical LTR styles into RTL styles | [RTLCSS](https://github.com/MohammadYounes/rtlcss) or [postcss-rtlcss](https://github.com/elchininet/postcss-rtlcss) |
 | Compile logical properties into one stylesheet with horizontal LTR/RTL scopes, including existing direction selectors | **postcss-logical-polyfill** |
-| Need logical-property transformations for vertical writing modes, transitions or keyframes | Evaluate [postcss-logical-properties-polyfill](https://github.com/erickskrauch/postcss-logical-properties-polyfill), whose documentation lists these features |
+| Need logical-property transformations for vertical writing modes or keyframes | Evaluate [postcss-logical-properties-polyfill](https://github.com/erickskrauch/postcss-logical-properties-polyfill), whose documentation lists these features |
 
 Other tools also generate combined LTR/RTL styles. This plugin focuses on logical-property input, existing direction scopes, common declarations and additional logical values. Check the [supported properties](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/references/supported-properties.mdx) and limitations below against your application.
 
 ## Compatibility
 
-The plugin assumes horizontal writing modes. It does not transform keyframes or rewrite logical property names in transitions and animations. Expand CSS nesting before running the plugin.
+The plugin assumes horizontal writing modes. It transforms logical property names in `transition`, but leaves keyframe contents and animation names untouched. Expand CSS nesting before running the plugin.
 
 Generated direction prefixes add specificity. Use matching scopes for overrides in separate rules and explicit direction-scoped selectors for subtrees with conflicting direction ancestors.
 

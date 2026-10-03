@@ -18,13 +18,13 @@ Use this plugin when your internationalized application needs both directions in
 | Compile logical properties for one configured direction or writing mode | [postcss-logical](https://github.com/csstools/postcss-plugins/tree/main/plugins/postcss-logical), also available through [postcss-preset-env](https://github.com/csstools/postcss-plugins/tree/main/plugin-packs/postcss-preset-env) |
 | Mirror existing physical LTR styles into RTL styles | [RTLCSS](https://github.com/MohammadYounes/rtlcss) or [postcss-rtlcss](https://github.com/elchininet/postcss-rtlcss) |
 | Compile logical properties into one stylesheet with horizontal LTR/RTL scopes, including existing direction selectors | **postcss-logical-polyfill** |
-| Need logical-property transformations for vertical writing modes, transitions or keyframes | Evaluate [postcss-logical-properties-polyfill](https://github.com/erickskrauch/postcss-logical-properties-polyfill), whose documentation lists these features |
+| Need logical-property transformations for vertical writing modes or keyframes | Evaluate [postcss-logical-properties-polyfill](https://github.com/erickskrauch/postcss-logical-properties-polyfill), whose documentation lists these features |
 
 Other tools also generate combined LTR/RTL styles. This plugin focuses on logical-property input, existing direction scopes, common declarations and additional logical values. Check the [supported properties](https://github.com/oe/postcss-logical-polyfill/blob/main/docs/src/content/docs/references/supported-properties.mdx) and limitations below against your application.
 
 ## Quick start
 
-Requires Node.js **18.0.0 or later** and PostCSS **8.4.0 or later within version 8**.
+Requires Node.js **20.19.0 or later** and PostCSS **8.4.0 or later within version 8**.
 
 ```bash
 npm install --save-dev postcss postcss-logical-polyfill
@@ -153,7 +153,7 @@ See the [configuration guide](https://github.com/oe/postcss-logical-polyfill/blo
 ## Compatibility and limitations
 
 - Transformations assume horizontal writing modes. Vertical writing modes are not inferred.
-- Keyframes and certain other at-rules are left untouched. Logical property names in transitions and animations are not rewritten.
+- Keyframes and certain other at-rules are left untouched. Logical property names in `transition` are transformed by the upstream processor; animation names and keyframe contents are not rewritten.
 - Expand CSS nesting before this plugin, using a tool such as `postcss-nested` or `postcss-nesting`. Unexpanded nested rules are left intact with a PostCSS warning.
 - Direction prefixes add selector specificity. Overrides in separate rules should use matching direction scopes. For subtrees with conflicting direction ancestors, write explicit direction-scoped selectors so the plugin can use the rightmost context.
 - Repeated physical properties within an optimized rule are resolved by `!important` priority, then source order. Overlapping common shorthands are retained in direction rules where needed to preserve their ordering relative to directional longhands.
